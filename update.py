@@ -10,6 +10,7 @@ Arguably this could be done in JS or in the app itself; but I already knew how
 to do it this way.
 """
 
+import argparse
 import csv
 import json
 import os
@@ -19,7 +20,7 @@ import time
 from datetime import timedelta
 from fastcache import lru_cache
 
-# shitty code re-use better than no reuse?
+# shitty code re-use better than no reuse? Not from a github perspective...
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../chamber_music_played/")
 import sheet_utils
 
@@ -44,7 +45,7 @@ def get_sheet_contents(name, cache_days=0):
     if os.path.exists(filename):
         td = time.time() - os.path.getmtime(filename)
         d = timedelta(seconds=td)
-        if d.days > cache_days:
+        if d.days >= cache_days:
             print("Cached data is %d days old; refreshing" % d.days)
         else:
             print("Cached data is %d days old, re-using since that's less than %d days" % (d.days, cache_days))
@@ -59,7 +60,7 @@ def get_sheet_contents(name, cache_days=0):
     return values
 
 
-def main():
+def main(cache_days):
     fields = {
         'greats': ["composer", "title", "catalog", "completed", "opus_nickname", "work_number", "work_nickname", "key", "notes", "wikipedia", "imslp", "opus_imslp", "opus_notes"],
         'composers': ["name", "birth", "death", "full name", "wikipedia", "portrait"]
@@ -67,7 +68,7 @@ def main():
 
     data = {}
     for sheet_name in ["The Greats", "The Composers"]:
-        values = get_sheet_contents(sheet_name, cache_days=1)
+        values = get_sheet_contents(sheet_name, cache_days=cache_days)
 
         key = sheet_name.split(' ')[1].lower()
         n = len(fields[key])
@@ -84,4 +85,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    ap = argparse.ArgumentParser(description='Pull Google Sheet to data JSON')
+    ap.add_argument("-c", "--cache_days", nargs='?', type=int, default=1,
+        help='Days after which to invalidate the cache')
+    args = ap.parse_args()
+    main(args.cache_days)
