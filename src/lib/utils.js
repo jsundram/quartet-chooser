@@ -17,6 +17,12 @@ import shostakovich from "../images/Shostakovich.svg"
 
 export const name = 'utils';
 
+function choose_one(a){
+    // for an array a, return a random element
+    const ix = Math.floor(Math.random() * a.length);
+    return a[ix];
+}
+
 function get_image(composer_name) {
     // again, stupid, but what else to do?
     let image_map = {
@@ -42,15 +48,14 @@ function get_image(composer_name) {
 }
 
 function get_work_title(work){
-    let catalog = n => n.catalog + (n.work_number ? '#' + n.work_number : '');
-    let number = n => n.title;
+    let catalog = n => 'Quartet ' + n.catalog + (n.work_number ? '#' + n.work_number : '');
+    let number = n => 'Quartet #' + n.title;
     let singular = n => 'Quartet';
-    let mozart = n => n.catalog;
 
     // each composer's quartes are commonly identified a bit differently.
     // let the title reflect that.
     let idf = {
-        'Bach': catalog,
+        'Bach': n => n.title + " (" + n.catalog + ")",
         'Bartok': number,
         'Beethoven': catalog,
         'Brahms': catalog,
@@ -59,7 +64,7 @@ function get_work_title(work){
         'Grieg': singular,
         'Haydn': catalog,
         'Mendelssohn': catalog,
-        'Mozart': mozart,
+        'Mozart': n => n.catalog,
         'Prokofiev': number,
         'Ravel': singular,
         'Schubert': catalog,
@@ -117,4 +122,4 @@ const COMPOSERS = [
     'Shostakovich'
 ];
 
-export {get_image, get_work_title, slugify, COMPOSERS};
+export {get_image, get_work_title, slugify, COMPOSERS, choose_one};

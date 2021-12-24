@@ -1,5 +1,6 @@
 import * as React from "react"
-import {get_work_title, slugify, get_image} from  "../lib/utils"
+import { Link } from 'gatsby'
+import {get_work_title, slugify, get_image, choose_one} from  "../lib/utils"
 
 export default function Composer({ pageContext }) {
     console.log(pageContext);
@@ -20,13 +21,16 @@ export default function Composer({ pageContext }) {
                 height={600}
             />
 
-            <p>{composer.birth} - {composer.death}</p>
+            <p>{composer.birth} &ndash; {composer.death}</p>
+            { works.length > 1 ?
+                (<p>Pick a <Link to={slugify(choose_one(works))}>random quartet</Link></p>) :
+                null
+            }
 
             <ul>
             {
                 works.map(work => (
                     <li key={get_work_title(work)}>
-                        Quartet&nbsp;
                             <a key={get_work_title(work)} href={slugify(work)}>{get_work_title(work)}</a>
                             &nbsp;in {work.key}
                             {nick(work)}

@@ -29,21 +29,25 @@ export default function Work({ pageContext }) {
     */
     return (
         <main >
-            <h1><a href={work.composer}>{work.composer}</a>: {title} in {work.key} {nick(work)}</h1>
-
             <img
                 alt={composerInfo.full_name}
                 src={image}
                 height={300}
             />
 
-            <p><i>{work.notes}</i></p>
-            <p>Completed in {work.completed}</p>
-            <p>Opus nickname: {work.opus_nickname}</p>
+            <h1><a href={work.composer}>{work.composer}</a>: {title} in {work.key} {nick(work)}</h1>
 
-            <p>Read more on <a href={work.wikipedia}>wikipedia</a></p>
-            <p>Check out the score on  <a href={work.opus_imslp}>IMSLP</a></p>
+            <p>Completed in {work.completed}</p>
+            {work.opus_nickname !== "" ?
+                (<p>Opus nickname: {work.opus_nickname}</p>) : null
+            }
+            <p><i>{work.notes}</i></p>
+
             <p>See other quartets by <a href={work.composer}>{work.composer}</a></p>
+            <p>Read more on <a href={work.wikipedia}>wikipedia</a></p>
+            {work.opus_imslp ?
+                (<p>Check out the score on  <a href={work.opus_imslp}>IMSLP</a></p>) : null
+            }
 
         </main>
     )

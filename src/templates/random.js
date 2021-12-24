@@ -1,13 +1,13 @@
 // Step 1: Import your component
 import * as React from 'react'
 import { Link } from 'gatsby'
-import {get_work_title, slugify} from  "../lib/utils"
+import {get_work_title, slugify, choose_one} from  "../lib/utils"
 
 
 const RandomPage = ( {pageContext} ) => {
     console.log(pageContext.node);
     const works = pageContext.node.greats;
-    let work = works[Math.floor(Math.random()*works.length)];
+    let work = choose_one(works)
     console.log(work)
     let random = slugify(work);
     const isBrowser = typeof window !== `undefined`;
