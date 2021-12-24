@@ -23,10 +23,28 @@ function choose_one(a){
     return a[ix];
 }
 
+function groupby(x, key){
+    // https://stackoverflow.com/questions/14446511/
+    return x.reduce((a, b) => ((a[key(b)] ||= []).push(b), a), {});
+}
+
+
 function sentence_case(s){
+    s = s.trim();
     return s.charAt(0).toUpperCase() +
            s.slice(1) +
-           (s.charAt(s.length-1) === '.' ? '' : '.');
+           ((s.length === 0 || s.charAt(s.length-1) === '.') ? '' : '.');
+}
+
+function work_nickname(w, siblings){
+    if (w.work_nickname !== "")
+        return w.work_nickname;
+    else if (w.opus_nickname !== "" && siblings.length == 1 && w.composer != "Mozart")
+        return w.opus_nickname;
+    else if (w.title !== "Quartet" && isNaN(parseInt(w.title))) // Grosse Fuge ...
+        return w.title;
+
+    return "";
 }
 
 function get_image(composer_name) {
@@ -128,4 +146,13 @@ const COMPOSERS = [
     'Shostakovich'
 ];
 
-export {get_image, get_work_title, slugify, COMPOSERS, choose_one, sentence_case};
+export {
+    COMPOSERS,
+    choose_one,
+    get_image,
+    get_work_title,
+    groupby,
+    sentence_case,
+    slugify,
+    work_nickname,
+};

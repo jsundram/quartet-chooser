@@ -6,11 +6,11 @@ export default function Work({ pageContext }) {
     console.log(pageContext);
     const work = pageContext.node;
     const title = Utils.get_work_title(work);
-    const composerInfo = pageContext.data.find(c => c.name === work.composer);
+    const composerInfo = pageContext.data.composers.find(c => c.name === work.composer);
+    const siblings = pageContext.data.greats.filter(w => w.catalog === work.catalog && w.composer === work.composer);
     const image = Utils.get_image(work.composer);
-    console.log(composerInfo);
-    console.log(Utils);
-    let nick = w => w.work_nickname ? ( <i>&nbsp;&mdash;&nbsp;{w.work_nickname}</i> ) : null;
+    let nickname = Utils.work_nickname(work, siblings);
+    let nick = nickname ? ( <i>&nbsp;&mdash;&nbsp;{nickname}</i> ) : null;
     let imslp = w => w.imslp ? w.imslp : w.opus_imslp ? w.opus_imslp : null;
 
     /*
@@ -36,8 +36,8 @@ export default function Work({ pageContext }) {
                 height={300}
             />
 
-            <h1><a href={work.composer}>{work.composer}</a>: {title} in {work.key} {nick(work)}</h1>
-            {work.opus_nickname !== "" ?
+            <h1><a href={work.composer}>{work.composer}</a>: {title} in {work.key} {nick}</h1>
+            {(siblings.length > 1 && work.opus_nickname !== "") ?
                 (<p>Opus nickname: {work.opus_nickname}</p>) : null
             }
 

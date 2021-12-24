@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from 'gatsby'
-import {get_work_title, slugify, get_image, choose_one} from  "../lib/utils"
+import {get_work_title, work_nickname, slugify, get_image, choose_one, groupby} from  "../lib/utils"
 
 export default function Composer({ pageContext }) {
     console.log(pageContext);
@@ -9,7 +9,9 @@ export default function Composer({ pageContext }) {
     console.log(works)
     let image = get_image(composer.name);
 
-    let nick = w => w.work_nickname ? ( <i>&nbsp;&mdash;&nbsp;{w.work_nickname}</i> ) : null;
+    const groups = groupby(works, w => w.catalog); // {catalog => list of works with that catlog number}
+    let nick = w => work_nickname(w, groups[w.catalog]) ?
+        ( <i>&nbsp;&mdash;&nbsp;{work_nickname(w, groups[w.catalog])}</i> ) : null;
 
     return (
         <main >

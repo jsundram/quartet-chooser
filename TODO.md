@@ -1,5 +1,4 @@
 ## TODO
-* Deal with opus / work nicknames better (Serioso, Quartetsatz)
 * back button bug
 * Group multiples by opus number on composer page
 * Separate composer signature from drawings?
@@ -13,4 +12,5 @@
 * hide opus nickname header if it doesn't apply
 * reformat work details.
 * hide "see more quartets by COMPOSER" if there aren't any...
+* Deal with opus / work nicknames better (Serioso, Quartetsatz)
 

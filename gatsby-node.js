@@ -101,7 +101,7 @@ exports.createPages = async function ({ actions, graphql }) {
         actions.createPage({
             path: slug,
             component: require.resolve(`./src/templates/work.js`),
-            context: { node: node, data: data.dataJson.composers },
+            context: { node: node, data: data.dataJson },
         })
     })
 
