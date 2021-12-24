@@ -11,6 +11,7 @@ export default function Work({ pageContext }) {
     console.log(composerInfo);
     console.log(Utils);
     let nick = w => w.work_nickname ? ( <i>&nbsp;&mdash;&nbsp;{w.work_nickname}</i> ) : null;
+    let imslp = w => w.imslp ? w.imslp : w.opus_imslp ? w.opus_imslp : null;
 
     /*
         catalog: "Opus 33"
@@ -36,19 +37,23 @@ export default function Work({ pageContext }) {
             />
 
             <h1><a href={work.composer}>{work.composer}</a>: {title} in {work.key} {nick(work)}</h1>
-
-            <p>Completed in {work.completed}</p>
             {work.opus_nickname !== "" ?
                 (<p>Opus nickname: {work.opus_nickname}</p>) : null
             }
-            <p><i>{work.notes}</i></p>
 
-            <p>See other quartets by <a href={work.composer}>{work.composer}</a></p>
-            <p>Read more on <a href={work.wikipedia}>wikipedia</a></p>
-            {work.opus_imslp ?
-                (<p>Check out the score on  <a href={work.opus_imslp}>IMSLP</a></p>) : null
+            <p>
+                Completed in {work.completed}.
+                &nbsp;{Utils.sentence_case(work.notes)}
+                &nbsp;Read more on <a href={work.wikipedia}>wikipedia</a>.
+            </p>
+
+            {composerInfo.quartets > 1 ?
+                (<p>See other quartets by <a href={work.composer}>{work.composer}</a></p>) : null
             }
 
+            {imslp(work) ?
+                (<p>Check out the score on  <a href={imslp(work)}>IMSLP</a>.</p>) : null
+            }
         </main>
     )
 

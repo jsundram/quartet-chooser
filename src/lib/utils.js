@@ -23,6 +23,12 @@ function choose_one(a){
     return a[ix];
 }
 
+function sentence_case(s){
+    return s.charAt(0).toUpperCase() +
+           s.slice(1) +
+           (s.charAt(s.length-1) === '.' ? '' : '.');
+}
+
 function get_image(composer_name) {
     // again, stupid, but what else to do?
     let image_map = {
@@ -122,4 +128,4 @@ const COMPOSERS = [
     'Shostakovich'
 ];
 
-export {get_image, get_work_title, slugify, COMPOSERS, choose_one};
+export {get_image, get_work_title, slugify, COMPOSERS, choose_one, sentence_case};

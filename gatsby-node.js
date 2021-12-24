@@ -30,6 +30,31 @@ exports.createPages = async function ({ actions, graphql }) {
         }
     `)
 
+    // add a count of quartets by each composer to their entry. Don't hard code
+    // because e.g. schubert and mendelssohn could get more quartets added ...
+    let counts = {
+        'Bach': 0,
+        'Bartok': 0,
+        'Beethoven': 0,
+        'Brahms': 0,
+        'Debussy': 0,
+        'Dvorak': 0,
+        'Grieg': 0,
+        'Haydn': 0,
+        'Mendelssohn': 0,
+        'Mozart': 0,
+        'Prokofiev': 0,
+        'Ravel': 0,
+        'Schubert': 0,
+        'Schumann': 0,
+        'Shostakovich': 0,
+    }
+
+    data.dataJson.greats.forEach(node => {
+        counts[node.composer] += 1;
+    });
+    data.dataJson.composers.forEach(node => node.quartets = counts[node.name]);
+
     console.log(JSON.stringify(data.dataJson, null, 4))
     data.dataJson.composers.forEach(node => {
         console.log(node);
