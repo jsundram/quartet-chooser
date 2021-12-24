@@ -1,6 +1,5 @@
 import * as React from "react"
 import { Link, useStaticQuery, graphql } from 'gatsby'
-import { StaticImage } from 'gatsby-plugin-image'
 import { COMPOSERS, get_image } from  "../lib/utils"
 
 
@@ -26,11 +25,12 @@ const IndexPage = () => {
             <div>
             {
                 COMPOSERS.map(composer => (
-                    <Link to={composer}>
+                    <Link to={composer} key={composer}>
                         <img
-                            alt={composer.full_name}
+                            alt={composer}
                             src={get_image(composer)}
                             height={200}
+                            key={composer}
                         />
                     </Link>
                 ))
