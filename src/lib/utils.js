@@ -39,9 +39,9 @@ function sentence_case(s){
 function work_nickname(w, siblings){
     if (w.work_nickname !== "")
         return w.work_nickname;
-    else if (w.opus_nickname !== "" && siblings.length == 1 && w.composer != "Mozart")
+    else if (w.opus_nickname !== "" && siblings.length === 1 && w.composer !== "Mozart")
         return w.opus_nickname;
-    else if (w.title !== "Quartet" && isNaN(parseInt(w.title))) // Grosse Fuge ...
+    else if (w.title !== "Quartet" && isNaN(parseInt(w.title))) // Grosse Fuge vs "12"
         return w.title;
 
     return "";
