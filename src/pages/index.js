@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link, useStaticQuery, graphql } from 'gatsby'
-import { COMPOSERS, get_image } from  "../lib/utils"
+import { COMPOSERS, get_portrait } from  "../lib/utils"
 
 
 // markup
@@ -28,7 +28,7 @@ const IndexPage = () => {
                     <Link to={composer} key={composer}>
                         <img
                             alt={composer}
-                            src={get_image(composer)}
+                            src={get_portrait(composer)}
                             height={200}
                             key={composer}
                         />

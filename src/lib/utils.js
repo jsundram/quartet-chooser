@@ -1,19 +1,3 @@
-// this is dumb but I don't know how you are supposed to do it?
-import bach from "../images/Bach.svg"
-import bartok from "../images/Bartok.svg"
-import beethoven from "../images/Beethoven.svg"
-import brahms from "../images/Brahms.svg"
-import debussy from "../images/Debussy.svg"
-import dvorak from "../images/Dvorak.svg"
-import grieg from "../images/Grieg.svg"
-import haydn from "../images/Haydn.svg"
-import mendelssohn from "../images/Mendelssohn.svg"
-import mozart from "../images/Mozart.svg"
-import prokofiev from "../images/Prokofiev.svg"
-import ravel from "../images/Ravel.svg"
-import schubert from "../images/Schubert.svg"
-import schumann from "../images/Schumann.svg"
-import shostakovich from "../images/Shostakovich.svg"
 
 export const name = 'utils';
 
@@ -48,27 +32,15 @@ function work_nickname(w, siblings){
 }
 
 function get_image(composer_name) {
-    // again, stupid, but what else to do?
-    let image_map = {
-         'Bach': bach,
-         'Bartok': bartok,
-         'Beethoven': beethoven,
-         'Brahms': brahms,
-         'Debussy': debussy,
-         'Dvorak': dvorak,
-         'Grieg': grieg,
-         'Haydn': haydn,
-         'Mendelssohn': mendelssohn,
-         'Mozart': mozart,
-         'Prokofiev': prokofiev,
-         'Ravel': ravel,
-         'Schubert': schubert,
-         'Schumann': schumann,
-         'Shostakovich': shostakovich
-    }
+    return "/" + composer_name + "-Original.svg";
+}
 
-    let image = image_map[composer_name];
-    return image;
+function get_portrait(composer_name) {
+    return "/" + composer_name + ".svg"; // portrait
+}
+
+function get_signature(composer_name) {
+    return "/" + composer_name + "-Signature.svg";
 }
 
 function get_work_title(work){
@@ -149,6 +121,8 @@ const COMPOSERS = [
 export {
     COMPOSERS,
     choose_one,
+    get_portrait,
+    get_signature,
     get_image,
     get_work_title,
     groupby,
