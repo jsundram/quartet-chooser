@@ -55,9 +55,9 @@ exports.createPages = async function ({ actions, graphql }) {
     });
     data.dataJson.composers.forEach(node => node.quartets = counts[node.name]);
 
-    console.log(JSON.stringify(data.dataJson, null, 4))
+    // console.log(JSON.stringify(data.dataJson, null, 4))
     data.dataJson.composers.forEach(node => {
-        console.log(node);
+        // console.log(node);
         actions.createPage({
             path: node.name,
             component: require.resolve(`./src/templates/composer.js`),
@@ -95,8 +95,8 @@ exports.createPages = async function ({ actions, graphql }) {
     }
 
     data.dataJson.greats.forEach(node => {
-        console.log(JSON.stringify(node));
-        console.log(slugify(node));
+        // console.log(JSON.stringify(node));
+        // console.log(slugify(node));
         const slug = slugify(node);
         actions.createPage({
             path: slug,
