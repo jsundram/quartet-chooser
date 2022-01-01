@@ -12,6 +12,7 @@ export default function Work({ pageContext }) {
     let nickname = Utils.work_nickname(work, siblings);
     let nick = nickname ? ( <i>&nbsp;&mdash;&nbsp;{nickname}</i> ) : null;
     let imslp = w => w.imslp ? w.imslp : w.opus_imslp ? w.opus_imslp : null;
+    let composer_url = "/" + work.composer;
 
     /*
         catalog: "Opus 33"
@@ -30,13 +31,15 @@ export default function Work({ pageContext }) {
     */
     return (
         <main >
-            <img
-                alt={composerInfo.full_name}
-                src={image}
-                height={300}
-            />
+            <a href={composer_url}>
+                <img
+                    alt={composerInfo.full_name}
+                    src={image}
+                    height={300}
+                />
+            </a>
 
-            <h1><a href={work.composer}>{work.composer}</a>: {title} in {work.key} {nick}</h1>
+            <h1><a href={composer_url}>{work.composer}</a>: {title} in {work.key} {nick}</h1>
             {(siblings.length > 1 && work.opus_nickname !== "") ?
                 (<p>Opus nickname: {work.opus_nickname}</p>) : null
             }
@@ -48,7 +51,7 @@ export default function Work({ pageContext }) {
             </p>
 
             {composerInfo.quartets > 1 ?
-                (<p>See other quartets by <a href={work.composer}>{work.composer}</a></p>) : null
+                (<p>See other quartets by <a href={composer_url}>{work.composer}</a></p>) : null
             }
 
             {imslp(work) ?
