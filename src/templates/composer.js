@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from 'gatsby'
-import {get_work_title, work_nickname, slugify, get_image, choose_one, groupby} from  "../lib/utils"
+import {get_work_title, work_nickname, slugify, get_portrait, get_signature, choose_one, groupby} from  "../lib/utils"
 
 
 export default function Composer({ pageContext }) {
@@ -8,8 +8,6 @@ export default function Composer({ pageContext }) {
     let composer = pageContext.node;
     const works = pageContext.data.filter(w => w.composer === composer.name);
     console.log(works)
-    let portrait = "/" + composer.name + ".svg";
-    let signature = "/" + composer.name + "-Signature.svg";
 
     const groups = groupby(works, w => w.catalog); // {catalog => list of works with that catlog number}
     let nick = w => work_nickname(w, groups[w.catalog]) ?
@@ -18,14 +16,15 @@ export default function Composer({ pageContext }) {
 
     return (
         <main >
-            <h1><a href={composer.wikipedia}>{composer.name}</a></h1>
+            <h1><a href={composer.wikipedia}>
+                <img src={get_signature(composer.name)} alt={composer.full_name} style={{height: "100px"}} />
+            </a></h1>
 
-            <img src={signature} alt={composer.full_name} />
 
 
             <img
                 alt={composer.full_name}
-                src={portrait}
+                src={get_portrait(composer.name)}
                 height={600}
             />
 
