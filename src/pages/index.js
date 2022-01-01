@@ -25,7 +25,7 @@ const IndexPage = () => {
             <div>
             {
                 COMPOSERS.map(composer => (
-                    <Link to={composer} key={composer}>
+                    <Link to={"/" + composer + "/"} key={composer}>
                         <img
                             alt={composer}
                             src={get_portrait(composer)}

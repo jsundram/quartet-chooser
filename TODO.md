@@ -1,13 +1,13 @@
 ## TODO
 * Group multiples by opus number on composer page
-* Move SVG styling to css? SVG Animations?
 * Add a header (Home | Random Work | Random Composer | About)
+* Move SVG styling to css? SVG Animations?
 * Font / Design / CSS / 
-* Mobile-friendly layout
-* Jackpot style "random" page animation?
+    * Composer signatures under portraits on main page
+    * Jackpot style "random" page animation?
+    * Mobile-friendly layout
+    * Make all composers face the same way?
 * back button bug
-* Make all composers face the same way?
-    
 
 
 ## Done

@@ -12,7 +12,7 @@ export default function Work({ pageContext }) {
     let nickname = Utils.work_nickname(work, siblings);
     let nick = nickname ? ( <i>&nbsp;&mdash;&nbsp;{nickname}</i> ) : null;
     let imslp = w => w.imslp ? w.imslp : w.opus_imslp ? w.opus_imslp : null;
-    let composer_url = "/" + work.composer;
+    let composer_url = "/" + work.composer + "/";
 
     /*
         catalog: "Opus 33"

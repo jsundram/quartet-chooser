@@ -56,10 +56,11 @@ exports.createPages = async function ({ actions, graphql }) {
     data.dataJson.composers.forEach(node => node.quartets = counts[node.name]);
 
     // console.log(JSON.stringify(data.dataJson, null, 4))
+    // https://jonsully.net/blog/trailing-slashes-and-gatsby/
     data.dataJson.composers.forEach(node => {
         // console.log(node);
         actions.createPage({
-            path: node.name,
+            path: node.name + '/',
             component: require.resolve(`./src/templates/composer.js`),
             context: { node: node, data: data.dataJson.greats },
         })
@@ -91,7 +92,7 @@ exports.createPages = async function ({ actions, graphql }) {
             'Shostakovich': number,
         }
         return  '/' + node.composer.toLowerCase()  +
-                '-' + idf[node.composer](node);
+                '-' + idf[node.composer](node) + '/';
     }
 
     data.dataJson.greats.forEach(node => {

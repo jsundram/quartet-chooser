@@ -9,6 +9,8 @@ function choose_one(a){
 
 function groupby(x, key){
     // https://stackoverflow.com/questions/14446511/
+    // disabling lint for my copy pasta ...
+    // eslint-disable-next-line no-sequences
     return x.reduce((a, b) => ((a[key(b)] ||= []).push(b), a), {});
 }
 
@@ -97,7 +99,7 @@ function slugify(work){
         'Shostakovich': number,
     }
     return  '/' + work.composer.toLowerCase()  +
-            '-' + idf[work.composer](work);
+            '-' + idf[work.composer](work) + '/';
 }
 
 const COMPOSERS = [
