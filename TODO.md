@@ -8,6 +8,13 @@
     * Mobile-friendly layout
     * Make all composers face the same way?
 * back button bug
+    * Repro steps: 
+    * 1) load http://localhost:8000/ 
+    * 2) click on a composer
+    * 3) Click on a quartet
+    * 4) Press Back (returns to composer page)
+    * 5) click back again (should return home), instead
+        * `Error in function WS.send in http://localhost:`
 
 
 ## Done
@@ -39,3 +46,4 @@
         * Go to elements on the bottom, and search for a big element, then click delete
     * 4) rename copy to COMPOSER.svg
 * Add Composer Signatures to top of composer pages
+    * needed to move to the static folder, there may be a better solution? https://www.gatsbyjs.com/docs/how-to/images-and-media/static-folder/
