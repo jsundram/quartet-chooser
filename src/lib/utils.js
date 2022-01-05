@@ -45,89 +45,148 @@ function get_signature(composer_name) {
     return "/" + composer_name + "-Signature.svg";
 }
 
-function get_work_title(work){
-    let catalog = n => 'Quartet ' + n.catalog + (n.work_number ? '#' + n.work_number : '');
-    let number = n => 'Quartet #' + n.title;
-    let singular = n => 'Quartet';
+let title_catalog = w => 'Quartet ' + w.catalog + (w.work_number ? '#' + w.work_number : '');
+let title_number = w => 'Quartet #' + w.title;
+let title_singular = w => 'Quartet';
 
-    // each composer's quartes are commonly identified a bit differently.
-    // let the title reflect that.
-    let idf = {
-        'Bach': n => n.title + " (" + n.catalog + ")",
-        'Bartok': number,
-        'Beethoven': catalog,
-        'Brahms': catalog,
-        'Debussy': singular,
-        'Dvorak': catalog,
-        'Grieg': singular,
-        'Haydn': catalog,
-        'Mendelssohn': catalog,
-        'Mozart': n => n.catalog,
-        'Prokofiev': number,
-        'Ravel': singular,
-        'Schubert': catalog,
-        'Schumann': number,
-        'Shostakovich': number,
-    }
-    return idf[work.composer](work);
+let slugify_catalog = w => w.catalog.toLowerCase().split(" ").join("-") + (w.work_number ? '-' + w.work_number : '');
+let slugify_number = w => w.title;
+let slugify_singular = w => 'quartet';
+
+
+let group_catalog = w => w.catalog;
+let group_nickname = w => w.opus_nickname !== "" ? w.opus_nickname: w.catalog;
+let group_none = w => null;
+
+let group_name_default = g => grouper(g[0].composer)(g[0]);
+let group_name_nicknames = g =>group_name_default(g) + (g[0].opus_nickname !== "" ? " '" + g[0].opus_nickname + "'": "");
+
+let DISPATCHER = {
+    'Bach': {
+        'slugify_work': w => slugify(w, slugify_catalog),
+        'title_work': w => w.title + " (" + w.catalog + ")",
+        'group_work': group_none,
+        'name_works': group_name_default ,
+    },
+    'Bartok': {
+        'slugify_work': slugify_number,
+        'title_work': title_number,
+        'group_work': group_none,
+        'name_works': group_name_default ,
+    },
+    'Beethoven': {
+        'slugify_work': slugify_catalog,
+        'title_work': title_catalog,
+        'group_work': group_nickname,
+        'name_works': group_name_default ,
+    },
+    'Brahms': {
+        'slugify_work': slugify_catalog,
+        'title_work': title_catalog,
+        'group_work': group_catalog,
+        'name_works': group_name_default,
+    },
+    'Debussy': {
+        'slugify_work': slugify_singular,
+        'title_work': title_singular,
+        'group_work': group_none,
+        'name_works': group_name_default,
+    },
+    'Dvorak': {
+        'slugify_work': slugify_catalog,
+        'title_work': title_catalog,
+        'group_work': group_none,
+        'name_works': group_name_default,
+    },
+    'Grieg': {
+        'slugify_work': slugify_singular,
+        'title_work': title_singular,
+        'group_work': group_none,
+        'name_works': group_name_default,
+    },
+    'Haydn': {
+        'slugify_work': slugify_catalog,
+        'title_work': title_catalog,
+        'group_work': group_catalog,
+        'name_works': group_name_nicknames,
+    },
+    'Mendelssohn': {
+        'slugify_work': slugify_catalog,
+        'title_work': title_catalog,
+        'group_work': group_catalog,
+        'name_works': group_name_default,
+    },
+    'Mozart': {
+        'slugify_work': w => w.catalog.replace("K", "k-"), // K387 -> k-387
+        'title_work': w => w.catalog,
+        'group_work': group_nickname,
+        'name_works': group_name_default,
+    },
+    'Prokofiev': {
+        'slugify_work': slugify_number,
+        'title_work': title_number,
+        'group_work': group_none,
+        'name_works': group_name_default,
+    },
+    'Ravel': {
+        'slugify_work': slugify_singular,
+        'title_work': title_singular,
+        'group_work': group_none,
+        'name_works': group_name_default,
+    },
+    'Schubert': {
+        'slugify_work': slugify_catalog,
+        'title_work': title_catalog,
+        'group_work': group_none,
+        'name_works': group_name_default,
+    },
+    'Schumann': {
+        'slugify_work': slugify_number,
+        'title_work': title_number,
+        'group_work': group_catalog,
+        'name_works': group_name_default,
+    },
+    'Shostakovich': {
+        'slugify_work': slugify_number,
+        'title_work': title_number,
+        'group_work': group_none,
+        'name_works': group_name_default,
+    },
 }
 
-// copied from gatsby-node because I don't know how re-use works.
-function slugify(work){
-    let catalog = n => n.catalog.toLowerCase().split(" ").join("-") + (n.work_number ? '-' + n.work_number : '');
-    let number = n => n.title;
-    let singular = n => 'quartet';
-    let mozart = n => "k-" + n.catalog.replace("K", ""); // K387 -> k-387
-
-    // each composer's quartes are commonly identified a bit differently.
-    // let the slug reflect that.
-    let idf = {
-        'Bach': catalog,
-        'Bartok': number,
-        'Beethoven': catalog,
-        'Brahms': catalog,
-        'Debussy': singular,
-        'Dvorak': catalog,
-        'Grieg': singular,
-        'Haydn': catalog,
-        'Mendelssohn': catalog,
-        'Mozart': mozart,
-        'Prokofiev': number,
-        'Ravel': singular,
-        'Schubert': catalog,
-        'Schumann': number,
-        'Shostakovich': number,
-    }
-    return  '/' + work.composer.toLowerCase()  +
-            '-' + idf[work.composer](work) + '/';
+function get_work_title(w){
+    return DISPATCHER[w.composer]['title_work'](w);
 }
 
-const COMPOSERS = [
-    'Bach',
-    'Bartok',
-    'Beethoven',
-    'Brahms',
-    'Debussy',
-    'Dvorak',
-    'Grieg',
-    'Haydn',
-    'Mendelssohn',
-    'Mozart',
-    'Prokofiev',
-    'Ravel',
-    'Schubert',
-    'Schumann',
-    'Shostakovich'
-];
+function slugify(w){
+    let work_fn = DISPATCHER[w.composer]['slugify_work'];
+    return  '/' + w.composer.toLowerCase()  + '-' + work_fn(w) + '/';
+}
+
+function grouper(composer) {
+    // returns the function that does the grouping over works
+    return DISPATCHER[composer]['group_work'];
+}
+
+function group_name(group){
+    // group is a list of works by the same composer
+    // let same_catalog = Object.entries(groupby(group, w => w.catalog)).length == 1;
+    let composer = group[0].composer;
+    return DISPATCHER[composer]['name_works'](group);
+}
+
+const COMPOSERS = Object.keys(DISPATCHER);
 
 export {
     COMPOSERS,
     choose_one,
+    get_image,
     get_portrait,
     get_signature,
-    get_image,
     get_work_title,
+    group_name,
     groupby,
+    grouper,
     sentence_case,
     slugify,
     work_nickname,

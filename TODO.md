@@ -1,5 +1,4 @@
 ## TODO
-* Group multiples by opus number on composer page
 * Add a header (Home | Random Work | Random Composer | About)
 * Move SVG styling to css? SVG Animations?
 * Font / Design / CSS / 
@@ -15,6 +14,7 @@
     * 4) Press Back (returns to composer page)
     * 5) click back again (should return home), instead
         * `Error in function WS.send in http://localhost:`
+    * attempted to fix via adding slashes to every page route and link... doesn't seem to kill it.
 
 
 ## Done
@@ -47,3 +47,4 @@
     * 4) rename copy to COMPOSER.svg
 * Add Composer Signatures to top of composer pages
     * needed to move to the static folder, there may be a better solution? https://www.gatsbyjs.com/docs/how-to/images-and-media/static-folder/
+* Group multiples by opus number on composer page
