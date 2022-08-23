@@ -63,7 +63,7 @@ let group_name_nicknames = g =>group_name_default(g) + (g[0].opus_nickname !== "
 
 let DISPATCHER = {
     'Bach': {
-        'slugify_work': w => slugify(w, slugify_catalog),
+        'slugify_work': slugify_catalog,
         'title_work': w => w.title + " (" + w.catalog + ")",
         'group_work': group_none,
         'name_works': group_name_default ,
