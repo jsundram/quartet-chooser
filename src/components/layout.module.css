@@ -1,0 +1,51 @@
+.nav-links {
+  display: flex;
+  list-style: none;
+  padding-left: 0;
+}
+
+.nav-link-item {
+  padding-right: 2rem;
+}
+
+.nav-link-text {
+  color: gray;
+}
+
+.heading {
+  color: cornflowerblue;
+}
+
+@media screen and (min-width: 800px) {
+    .container {
+      margin: auto;
+      max-width: 800px;
+      font-family: -apple-system, Roboto, sans-serif, serif;
+      color: #232129;
+      padding: 96;
+    }
+
+    .site-title {
+      font-size: 3rem;
+      color: gray;
+      font-weight: 700;
+    }
+}
+
+
+@media screen and (max-width: 799px) {
+    .container {
+      margin: auto;
+      max-width: 600px;
+      font-family: -apple-system, Roboto, sans-serif, serif;
+      color: #232129;
+      padding: 96;
+    }
+
+    .site-title {
+      font-size: 2rem;
+      color: gray;
+      font-weight: 700;
+      margin: auto;
+    }
+}

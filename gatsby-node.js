@@ -111,4 +111,10 @@ exports.createPages = async function ({ actions, graphql }) {
         component: require.resolve(`./src/templates/random.js`),
         context: { node: data.dataJson },
     })
+
+    actions.createPage({
+        path: "/random-composer",
+        component: require.resolve(`./src/templates/random-composer.js`),
+        context: { node: data.dataJson },
+    })
 }

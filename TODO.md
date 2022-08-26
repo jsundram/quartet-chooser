@@ -1,9 +1,10 @@
 ## TODO
-* Add a header (Home | Random Work | Random Composer | About)
 * Font / Design / CSS / 
+    * Mobile-friendly layout
+        * Composer pages have portraits that are too big 
+    * Composer Layout
     * Composer signatures under portraits on main page
     * Jackpot style "random" page animation?
-    * Mobile-friendly layout
     * Move SVG styling to css? SVG Animations?
     * Make all composers face the same way?
 * back button bug
@@ -15,6 +16,8 @@
     * 5) click back again (should return home), instead
         * `Error in function WS.send in http://localhost:`
     * attempted to fix via adding slashes to every page route and link... doesn't seem to kill it.
+    * attempting to fix via `window.location.replace(random)` instead of `window.location.href = random`
+*  
 
 
 ## Done
@@ -47,4 +50,9 @@
     * 4) rename copy to COMPOSER.svg
 * Add Composer Signatures to top of composer pages
     * needed to move to the static folder, there may be a better solution? https://www.gatsbyjs.com/docs/how-to/images-and-media/static-folder/
+* svg sizing was a bit weird; needed to edit the actual svgs
+    * https://css-tricks.com/scale-svg/
 * Group multiples by opus number on composer page
+* Add a header (Home | Random Work | Random Composer | About)
+* Create About Page
+* Create Random Composer Page

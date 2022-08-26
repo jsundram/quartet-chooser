@@ -1,6 +1,8 @@
 import * as React from "react"
 import * as Utils from "../lib/utils"
 
+import Layout from '../components/layout'
+
 
 export default function Work({ pageContext }) {
     console.log(pageContext);
@@ -13,6 +15,7 @@ export default function Work({ pageContext }) {
     let nick = nickname ? ( <i>&nbsp;&mdash;&nbsp;{nickname}</i> ) : null;
     let imslp = w => w.imslp ? w.imslp : w.opus_imslp ? w.opus_imslp : null;
     let composer_url = "/" + work.composer + "/";
+    let name = work.composer + ": " + title + " in " + work.key; // TOOD: nick?
 
     /*
         catalog: "Opus 33"
@@ -30,7 +33,7 @@ export default function Work({ pageContext }) {
         work_number: "5"
     */
     return (
-        <main >
+        <Layout pageTitle={name} >
             <a href={composer_url}>
                 <img
                     alt={composerInfo.full_name}
@@ -57,7 +60,7 @@ export default function Work({ pageContext }) {
             {imslp(work) ?
                 (<p>Check out the score on  <a href={imslp(work)}>IMSLP</a>.</p>) : null
             }
-        </main>
+        </Layout>
     )
 
 }

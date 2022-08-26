@@ -3,6 +3,7 @@ import * as React from 'react'
 import { Link } from 'gatsby'
 import {get_work_title, slugify, choose_one} from  "../lib/utils"
 
+import Layout from '../components/layout'
 
 const RandomPage = ( {pageContext} ) => {
     console.log(pageContext.node);
@@ -13,14 +14,14 @@ const RandomPage = ( {pageContext} ) => {
     const isBrowser = typeof window !== `undefined`;
 
     if (isBrowser){
-        window.location.href = random
+        window.location.replace(random);
     }
 
     return (
-          <main>
-            <h1>Random</h1>
+          <Layout pageTitle="Random Quartet">
+            <h1>Random Quartet</h1>
             <p>Redirecting to a random quartet: <Link to={random}>{work.composer}:&nbsp;{get_work_title(work)}</Link> &hellip;</p>
-          </main>
+          </Layout>
       )
 }
 

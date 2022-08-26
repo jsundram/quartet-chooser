@@ -12,6 +12,8 @@ import {
     work_nickname,
 } from  "../lib/utils"
 
+import Layout from '../components/layout'
+
 
 export default function Composer({ pageContext }) {
     console.log(pageContext);
@@ -24,7 +26,7 @@ export default function Composer({ pageContext }) {
     let nick = w => dash(work_nickname(w, siblings[w.catalog]));
 
     return (
-        <main>
+        <Layout pageTitle={composer.full_name}>
             <h1><a href={composer.wikipedia}>
                 <img src={get_signature(composer.name)} alt={composer.full_name} style={{height: "100px"}} />
             </a></h1>
@@ -77,6 +79,6 @@ export default function Composer({ pageContext }) {
                 })
             }
           </ul>
-        </main>
+        </Layout>
     )
 }
