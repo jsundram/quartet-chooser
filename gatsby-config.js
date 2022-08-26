@@ -1,10 +1,9 @@
 module.exports = {
   siteMetadata: {
-    siteUrl: "https://www.yourdomain.tld",
+    siteUrl: "https://quartet-chooser.gtsb.io",
     title: "Quartet Chooser",
   },
   plugins: [
-    "gatsby-plugin-image",
     {
       resolve: "gatsby-plugin-google-analytics",
       options: {
