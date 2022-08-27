@@ -7,14 +7,12 @@
     * Jackpot style "random" page animation?
     * Move SVG styling to css? SVG Animations?
     * Make all composers face the same way?
-* Link to daily composers
-* Fix Beethoven nicknames 
+* Link to daily composers for each birth/death date
 * get a domain: https://domains.google.com/registrar/search?searchTerm=quartet%20chooser&hl=en#
     * quartetpicker.com?
     * selectquartets.com
     * quartetoracle.com
 * Remove some Dvoraks?
-* Random per opus 
 * Add composer number and work total to About Page
 * Features that require data work:
     * Random practice -- what measures?
@@ -74,3 +72,5 @@
     * Link to quartet composers viz 
     * Link to feedback / ideas
         * mailing list?
+* Fix Beethoven nicknames 
+* Random per opus 

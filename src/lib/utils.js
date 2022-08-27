@@ -25,7 +25,7 @@ function sentence_case(s){
 function work_nickname(w, siblings){
     if (w.work_nickname !== "")
         return w.work_nickname;
-    else if (w.opus_nickname !== "" && siblings.length === 1 && w.composer !== "Mozart")
+    else if (w.opus_nickname !== "" && siblings.length === 1 && w.composer !== "Mozart" && w.composer !== "Beethoven")
         return w.opus_nickname;
     else if (w.title !== "Quartet" && isNaN(parseInt(w.title))) // Grosse Fuge vs "12"
         return w.title;
@@ -66,19 +66,19 @@ let DISPATCHER = {
         'slugify_work': slugify_catalog,
         'title_work': w => w.title + " (" + w.catalog + ")",
         'group_work': group_none,
-        'name_works': group_name_default ,
+        'name_works': group_name_default,
     },
     'Bartok': {
         'slugify_work': slugify_number,
         'title_work': title_number,
         'group_work': group_none,
-        'name_works': group_name_default ,
+        'name_works': group_name_default,
     },
     'Beethoven': {
         'slugify_work': slugify_catalog,
         'title_work': title_catalog,
         'group_work': group_nickname,
-        'name_works': group_name_default ,
+        'name_works': group_name_default,
     },
     'Brahms': {
         'slugify_work': slugify_catalog,

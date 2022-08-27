@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link } from 'gatsby'
+import { Link, navigate } from 'gatsby'
 import {
     choose_one,
     get_portrait,
@@ -14,6 +14,9 @@ import {
 
 import Layout from '../components/layout'
 
+import {
+  button,
+} from './composer.module.css'
 
 export default function Composer({ pageContext }) {
     console.log(pageContext);
@@ -58,14 +61,19 @@ export default function Composer({ pageContext }) {
                         )
                     }
                     else {
+                        let random_in_group = function(){
+                            let random = slugify(choose_one(group));
+                            navigate(random);
+                        }
                         return (
                             <li key={grouping}>
                                 <i>{group_name(group)}</i>
+                                <button className={button} onClick={random_in_group}>🔀</button>
                                 <ul>
                                 {
                                     group.map(work => (
                                         <li key={get_work_title(work)}>
-                                                <a key={get_work_title(work)} href={slugify(work)}>{get_work_title(work)}</a>
+                                                <Link key={get_work_title(work)} to={slugify(work)}>{get_work_title(work)}</Link>
                                                 &nbsp;in {work.key}
                                                 {nick(work)}
                                         </li>
