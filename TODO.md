@@ -1,6 +1,4 @@
 ## TODO
-* Add opus numbers to work listings for Debussy, Grieg, Prokofiev, Ravel, Schubert, Shostakovich
-* Add catalog numbers to work listings for Bartok, Ravel, Schubert,
 * Link to daily composers for each birth/death date
 * Add work total to About Page 
 * get a domain: https://domains.google.com/registrar/search?searchTerm=quartet%20chooser&hl=en#
@@ -82,4 +80,6 @@
     * qc (quality control!) from flaticon. keeping for now?
 * Add composer count to About Page
 * Add a note about submitting nicknames to about page
+* Add opus numbers to work listings for Debussy, Grieg, Prokofiev, Shostakovich
+* Add catalog numbers to work listings for Bartok, Ravel, Schubert,
  

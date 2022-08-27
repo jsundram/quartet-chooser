@@ -47,6 +47,7 @@ function get_signature(composer_name) {
 
 let title_catalog = w => 'Quartet ' + w.catalog + (w.work_number ? '#' + w.work_number : '');
 let title_number = w => 'Quartet #' + w.title;
+let title_number_catalog = w => 'Quartet #' + w.title + ', ' + w.catalog;
 let title_singular = w => 'Quartet';
 
 let slugify_catalog = w => w.catalog.toLowerCase().split(" ").join("-") + (w.work_number ? '-' + w.work_number : '');
@@ -70,7 +71,7 @@ let DISPATCHER = {
     },
     'Bartok': {
         'slugify_work': slugify_number,
-        'title_work': title_number,
+        'title_work': title_number_catalog,
         'group_work': group_catalog,
         'name_works': group_name_default,
     },
@@ -88,7 +89,7 @@ let DISPATCHER = {
     },
     'Debussy': {
         'slugify_work': slugify_singular,
-        'title_work': title_singular,
+        'title_work': title_catalog,
         'group_work': group_none,
         'name_works': group_name_default,
     },
@@ -100,7 +101,7 @@ let DISPATCHER = {
     },
     'Grieg': {
         'slugify_work': slugify_singular,
-        'title_work': title_singular,
+        'title_work': title_catalog,
         'group_work': group_none,
         'name_works': group_name_default,
     },
@@ -124,19 +125,19 @@ let DISPATCHER = {
     },
     'Prokofiev': {
         'slugify_work': slugify_number,
-        'title_work': title_number,
+        'title_work': title_number_catalog,
         'group_work': group_catalog,
         'name_works': group_name_default,
     },
     'Ravel': {
         'slugify_work': slugify_singular,
-        'title_work': title_singular,
+        'title_work': title_catalog,
         'group_work': group_none,
         'name_works': group_name_default,
     },
     'Schubert': {
         'slugify_work': slugify_catalog,
-        'title_work': title_catalog,
+        'title_work': title_number_catalog,
         'group_work': group_catalog,
         'name_works': group_name_default,
     },
@@ -148,7 +149,7 @@ let DISPATCHER = {
     },
     'Shostakovich': {
         'slugify_work': slugify_number,
-        'title_work': title_number,
+        'title_work': title_number_catalog,
         'group_work': group_catalog,
         'name_works': group_name_default,
     },
