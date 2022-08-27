@@ -11,14 +11,20 @@ I pulled Marina's palette out of the svgs:
     display: flex;
     list-style: none;
     padding-left: 0;
+    /* top right bottom left */
+    /*padding: 10px 10px 10px 0px;*/
+    /*background: #dddddd;*/
+    /*width: fit-content;*/
 }
 
 .nav-link-item {
+    /*padding-left: 2rem;*/
     padding-right: 2rem;
 }
 
 .nav-link-text {
     color: #b82327;
+    white-space: nowrap;
 }
 
 a {

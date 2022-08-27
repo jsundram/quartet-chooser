@@ -16,8 +16,6 @@ const IndexPage = () => {
     console.log(get_signature(COMPOSERS[0]));
     return (
         <Layout pageTitle="Home">
-            <p><i>Go to a random quartet <Link to="/random">here</Link>!</i></p>
-
             <div className={wrapper}>
             {
                 COMPOSERS.map(composer => (
