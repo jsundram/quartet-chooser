@@ -1,20 +1,30 @@
+/* 
+I pulled Marina's palette out of the svgs:
+    > grep -o ".\{0,7\}fill\:.\{0,8\}" static/Haydn.svg | sort | uniq -c
+   7 style="fill:#111011; (black)
+  15 style="fill:#5dcbf5; (cyan)
+  14 style="fill:#b82327; (red)
+   2 style="fill:#f7f7f3; (white)
+*/
+
 .nav-links {
-  display: flex;
-  list-style: none;
-  padding-left: 0;
+    display: flex;
+    list-style: none;
+    padding-left: 0;
 }
 
 .nav-link-item {
-  padding-right: 2rem;
+    padding-right: 2rem;
 }
 
 .nav-link-text {
-  color: gray;
+    color: #b82327;
 }
 
-.heading {
-  color: cornflowerblue;
+a {
+    color:#5dcbf5;
 }
+
 
 @media screen and (min-width: 800px) {
     .container {
@@ -27,7 +37,7 @@
 
     .site-title {
       font-size: 3rem;
-      color: gray;
+      color:#5dcbf5;
       font-weight: 700;
       text-decoration: none;
     }
@@ -45,7 +55,7 @@
 
     .site-title {
       font-size: 2rem;
-      color: gray;
+      color:#5dcbf5;
       font-weight: 700;
       margin: auto;
       text-decoration: none;

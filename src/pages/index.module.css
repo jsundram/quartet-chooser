@@ -1,0 +1,41 @@
+
+@media screen and (min-width: 1000px) {
+    .wrapper {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .image {
+        height: 200px;
+    }
+
+    .signature {
+        height: 25px;
+        max-width: 150px;
+        margin: auto;
+        /*-border: 3px solid green;*/
+        /* top right bottom left */
+        padding: 0px 0px 10px 10px;
+    }
+}
+
+
+@media screen and (max-width: 999px) {
+    .wrapper {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .image {
+        height: 200px;
+        min-width: 200px;
+    }
+
+    .signature {
+        height: 25px;
+        max-width: 150px;
+        margin: auto;
+        /*-border: 3px solid green;*/
+        padding: 0px 0px 10px 10px;
+    }
+}

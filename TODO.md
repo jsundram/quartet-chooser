@@ -1,7 +1,6 @@
 ## TODO
 * Font / Design / CSS / 
-    * Composer Layout
-    * Composer signatures under portraits on main page
+    * favicon that isn't Gatsby's
     * Jackpot style "random" page animation?
     * Move SVG styling to css? SVG Animations?
     * Make all composers face the same way?
@@ -73,3 +72,6 @@
 * Fix Beethoven nicknames 
 * Random per opus 
 * Composer pages have portraits that are too big 
+* Main Page: Composer Layout
+* Main Page: Composer signatures under portraits on main page
+* Sitewide: pull theme colors out of svgs and apply.
