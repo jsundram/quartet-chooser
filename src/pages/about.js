@@ -24,7 +24,7 @@ const AboutPage = () => {
 
             <p>The code is available <a href="https://github.com/jsundram/quartet-chooser">on Github</a>.</p>
 
-            <p>Please submit bugs, feature requests, feedback, or other ideas <a href="https://forms.gle/chvU7wmH7vunk9MX6">here</a>.</p>
+            <p>Bug reports, feature requests, nickname suggestions, feedback, and other ideas are welcome <a href="https://forms.gle/chvU7wmH7vunk9MX6">here</a>!</p>
         </Layout>
     )
 }
