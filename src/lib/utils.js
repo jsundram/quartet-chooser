@@ -71,7 +71,7 @@ let DISPATCHER = {
     'Bartok': {
         'slugify_work': slugify_number,
         'title_work': title_number,
-        'group_work': group_none,
+        'group_work': group_catalog,
         'name_works': group_name_default,
     },
     'Beethoven': {
@@ -95,7 +95,7 @@ let DISPATCHER = {
     'Dvorak': {
         'slugify_work': slugify_catalog,
         'title_work': title_catalog,
-        'group_work': group_none,
+        'group_work': group_catalog,
         'name_works': group_name_default,
     },
     'Grieg': {
@@ -125,7 +125,7 @@ let DISPATCHER = {
     'Prokofiev': {
         'slugify_work': slugify_number,
         'title_work': title_number,
-        'group_work': group_none,
+        'group_work': group_catalog,
         'name_works': group_name_default,
     },
     'Ravel': {
@@ -137,7 +137,7 @@ let DISPATCHER = {
     'Schubert': {
         'slugify_work': slugify_catalog,
         'title_work': title_catalog,
-        'group_work': group_none,
+        'group_work': group_catalog,
         'name_works': group_name_default,
     },
     'Schumann': {
@@ -149,7 +149,7 @@ let DISPATCHER = {
     'Shostakovich': {
         'slugify_work': slugify_number,
         'title_work': title_number,
-        'group_work': group_none,
+        'group_work': group_catalog,
         'name_works': group_name_default,
     },
 }
