@@ -1,9 +1,7 @@
 // Step 1: Import your component
 import * as React from 'react'
-import { Link } from 'gatsby'
 
 import Layout from '../components/layout'
-
 
 
 // Step 2: Define your component
@@ -24,8 +22,6 @@ const AboutPage = () => {
             <p>The code is available <a href="https://github.com/jsundram/quartet-chooser">on Github</a>.</p>
 
             <p>Please submit bugs, feature requests, feedback, or other ideas <a href="https://forms.gle/chvU7wmH7vunk9MX6">here</a>.</p>
-
-
         </Layout>
     )
 }
