@@ -1,6 +1,5 @@
 ## TODO
 * Font / Design / CSS / 
-    * favicon that isn't Gatsby's
     * Jackpot style "random" page animation?
     * Move SVG styling to css? SVG Animations?
     * Make all composers face the same way?
@@ -75,3 +74,8 @@
 * Main Page: Composer Layout
 * Main Page: Composer signatures under portraits on main page
 * Sitewide: pull theme colors out of svgs and apply.
+* favicon that isn't Gatsby's 
+    * attempt to convert a portrait: https://gist.github.com/azam/3b6995a29b9f079282f3
+        * doesn't look great
+    * next button from flaticon; would maybe like to change colors to match site; need a photo editor...
+    * qc (quality control!) from flaticon. keeping for now?
