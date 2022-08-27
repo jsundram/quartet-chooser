@@ -1,5 +1,6 @@
 // Step 1: Import your component
 import * as React from 'react'
+import { COMPOSERS } from  "../lib/utils"
 
 import Layout from '../components/layout'
 
@@ -17,7 +18,9 @@ const AboutPage = () => {
                 Deciding what is "standard" rep is certainly a matter of opinion; I've biased towards music that lots of people I know tend to have. You can check out <a href="http://viz.runningwithdata.com/quartet_composers/">this (old) visualization I made of String Quartet Composers</a>, showing how prolific and familiar different composers are to get a sense of who is getting left out.
             </p>
 
-            <p>The composer portraits were created by <a href="https://www.instagram.com/marusyachaika/">Marusya Chaika</a>.</p>
+            <p>
+                The composer portraits were created by <a href="https://www.instagram.com/marusyachaika/">Marusya Chaika</a>. The list of {COMPOSERS.length} composers is limited by portrait availability&hellip;so if you want to suggest a composer, see if Marusya has already created an image for them <a href="https://www.shutterstock.com/g/marusyachaika">here</a>.
+            </p>
 
             <p>The code is available <a href="https://github.com/jsundram/quartet-chooser">on Github</a>.</p>
 

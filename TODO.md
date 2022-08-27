@@ -1,15 +1,14 @@
 ## TODO
-* Font / Design / CSS / 
-    * Jackpot style "random" page animation?
-    * Move SVG styling to css? SVG Animations?
-    * Make all composers face the same way?
 * Link to daily composers for each birth/death date
+* Add work total to About Page 
 * get a domain: https://domains.google.com/registrar/search?searchTerm=quartet%20chooser&hl=en#
     * quartetpicker.com?
     * selectquartets.com
     * quartetoracle.com
-* Remove some Dvoraks?
-* Add composer number and work total to About Page
+* Font / Design / CSS / 
+    * Jackpot style "random" page animation?
+    * Move SVG styling to css? SVG Animations?
+    * Make all composers face the same way?
 * Features that require data work:
     * Random practice -- what measures?
     * Link to Spotify / YouTube recordings?
@@ -79,3 +78,6 @@
         * doesn't look great
     * next button from flaticon; would maybe like to change colors to match site; need a photo editor...
     * qc (quality control!) from flaticon. keeping for now?
+* Add composer number to About Page
+ 
+ 
