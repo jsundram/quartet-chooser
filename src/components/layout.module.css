@@ -29,6 +29,7 @@
       font-size: 3rem;
       color: gray;
       font-weight: 700;
+      text-decoration: none;
     }
 }
 
@@ -47,5 +48,6 @@
       color: gray;
       font-weight: 700;
       margin: auto;
+      text-decoration: none;
     }
 }

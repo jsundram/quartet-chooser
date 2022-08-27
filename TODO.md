@@ -7,17 +7,23 @@
     * Jackpot style "random" page animation?
     * Move SVG styling to css? SVG Animations?
     * Make all composers face the same way?
-* back button bug
-    * Repro steps: 
-    * 1) load http://localhost:8000/ 
-    * 2) click on a composer
-    * 3) Click on a quartet
-    * 4) Press Back (returns to composer page)
-    * 5) click back again (should return home), instead
-        * `Error in function WS.send in http://localhost:`
-    * attempted to fix via adding slashes to every page route and link... doesn't seem to kill it.
-    * attempting to fix via `window.location.replace(random)` instead of `window.location.href = random`
-*  
+* Link to daily composers
+* Fix Beethoven nicknames 
+* get a domain: https://domains.google.com/registrar/search?searchTerm=quartet%20chooser&hl=en#
+    * quartetpicker.com?
+    * selectquartets.com
+    * quartetoracle.com
+* Remove some Dvoraks?
+* Random per opus 
+* About Page 
+    * Add composer number and work total
+    * Link to quartet composers viz 
+    * Link to feedback / ideas
+        * mailing list?
+* Features that require data work:
+    * Random practice -- what measures?
+    * Link to Spotify / YouTube recordings?
+    * Link to IMSLP scores 
 
 
 ## Done
@@ -56,3 +62,16 @@
 * Add a header (Home | Random Work | Random Composer | About)
 * Create About Page
 * Create Random Composer Page
+* back button bug
+    * Repro steps: 
+    * 1) load http://localhost:8000/ 
+    * 2) click on a composer
+    * 3) Click on a quartet
+    * 4) Press Back (returns to composer page)
+    * 5) click back again (should return home), instead
+        * `Error in function WS.send in http://localhost:`
+    * attempted to fix via adding slashes to every page route and link... doesn't seem to kill it.
+    * attempting to fix via `window.location.replace(random)` instead of `window.location.href = random`
+        * this appears to have worked!
+* Make Quartet Chooser header link to Home (but don't underline)
+
