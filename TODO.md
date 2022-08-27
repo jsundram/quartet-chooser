@@ -15,11 +15,7 @@
     * quartetoracle.com
 * Remove some Dvoraks?
 * Random per opus 
-* About Page 
-    * Add composer number and work total
-    * Link to quartet composers viz 
-    * Link to feedback / ideas
-        * mailing list?
+* Add composer number and work total to About Page
 * Features that require data work:
     * Random practice -- what measures?
     * Link to Spotify / YouTube recordings?
@@ -74,4 +70,7 @@
     * attempting to fix via `window.location.replace(random)` instead of `window.location.href = random`
         * this appears to have worked!
 * Make Quartet Chooser header link to Home (but don't underline)
-
+* About Page 
+    * Link to quartet composers viz 
+    * Link to feedback / ideas
+        * mailing list?
