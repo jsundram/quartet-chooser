@@ -1,7 +1,5 @@
 ## TODO
 * Font / Design / CSS / 
-    * Mobile-friendly layout
-        * Composer pages have portraits that are too big 
     * Composer Layout
     * Composer signatures under portraits on main page
     * Jackpot style "random" page animation?
@@ -74,3 +72,4 @@
         * mailing list?
 * Fix Beethoven nicknames 
 * Random per opus 
+* Composer pages have portraits that are too big 

@@ -5,3 +5,23 @@
     overflow: hidden;
     outline: none;
 }
+
+@media screen and (min-width: 800px) {
+    .signature {
+        height: 100px;
+    }
+    .image {
+        height: 600px;
+    }
+
+}
+
+
+@media screen and (max-width: 799px) {
+    .signature {
+        height: 50px;
+    }
+    .image {
+        height: 200px;
+    }
+}

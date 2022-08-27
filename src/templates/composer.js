@@ -15,7 +15,9 @@ import {
 import Layout from '../components/layout'
 
 import {
-  button,
+    image,
+    signature,
+    button,
 } from './composer.module.css'
 
 export default function Composer({ pageContext }) {
@@ -31,13 +33,13 @@ export default function Composer({ pageContext }) {
     return (
         <Layout pageTitle={composer.full_name}>
             <h1><a href={composer.wikipedia}>
-                <img src={get_signature(composer.name)} alt={composer.full_name} style={{height: "100px"}} />
+                <img src={get_signature(composer.name)} alt={composer.full_name} className={signature} />
             </a></h1>
 
             <img
                 alt={composer.full_name}
                 src={get_portrait(composer.name)}
-                height={600}
+                className={image}
             />
 
             <p>{composer.birth} &ndash; {composer.death}</p>
