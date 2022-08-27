@@ -10,7 +10,7 @@ import Layout from '../components/layout'
 const AboutPage = () => {
     return (
         <Layout pageTitle="About">
-            <h1>About</h1>
+            <h2>About</h2>
             <p>
                 Quartet Chooser was created to help break the "what should we play" indecision by codifying a purposely small list of "standard" rep and helping people by adding a "random" button to figure out what to play next.
             </p>
