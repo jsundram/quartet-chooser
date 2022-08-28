@@ -3,4 +3,7 @@
 
 The code behind https://quartetroulette.com. See more at [https://quartetroulette.com/about/](https://quartetroulette.com/about/).
 
+* Data is sourced from [this Google Sheet](https://docs.google.com/spreadsheets/d/1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4/edit#gid=0)
+* Feedback is welcome [here](https://forms.gle/JUCS5FT9CkNtvRZT9).
+
 *Built with GatsbyJS.*

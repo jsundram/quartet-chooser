@@ -1,4 +1,7 @@
 ## TODO
+* create a rep submission form for people to suggest quartets to add.
+    * in progress here: https://docs.google.com/forms/d/1iChWbZn7tBGpmPlWAku6KRaosO8XPfZXv3v2s5mONZw/edit
+    * Add links for it to About page. 
 * initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
 * create background color for header bar to make hierarchy clearer.
     * todo: what should the width be?
