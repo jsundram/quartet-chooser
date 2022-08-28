@@ -1,4 +1,5 @@
 ## TODO
+* fix preview on site, shows up as "Home<!-- -->" on iMessage. 
 * create a rep submission form for people to suggest quartets to add.
     * in progress here: https://docs.google.com/forms/d/1iChWbZn7tBGpmPlWAku6KRaosO8XPfZXv3v2s5mONZw/edit
     * Add links for it to About page. 
