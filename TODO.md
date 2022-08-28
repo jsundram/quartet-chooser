@@ -1,8 +1,11 @@
 ## TODO
+* Link to daily composers for each birth/death date
+* Rename to quartet roulette
+    * Get a roulette icon. trying [this](https://www.flaticon.com/free-icon/roulette_1254429)
+
+* initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
 * create background color for header bar to make hierarchy clearer.
     * todo: what should the width be?
-* initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
-* Link to daily composers for each birth/death date
 * Add work total to About Page 
 * get a domain: https://domains.google.com/registrar/search?searchTerm=quartet%20chooser&hl=en#
     * quartetpicker.com?
@@ -12,6 +15,7 @@
     * Random practice -- what measures?
     * Link to Spotify / YouTube recordings?
     * Link to IMSLP scores 
+    * Add movement titles 
 
 
 ## Done
@@ -83,3 +87,4 @@
 * Add catalog numbers to work listings for Bartok, Ravel, Schubert,
 * move Random Work to Random Quartet and remove sentence from landing page
 * don't wrap Random Quartet / Random Composer
+* Link to how to make a chamber music log

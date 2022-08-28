@@ -11,7 +11,11 @@ const AboutPage = () => {
         <Layout pageTitle="About">
             <h2>About</h2>
             <p>
-                Quartet Chooser was created to help break the "what should we play" indecision by codifying a purposely small list of "standard" rep and helping people by adding a "random" button to figure out what to play next.
+                Quartet Roulette was created to help break the "what should we play" indecision by codifying a purposely small list of "standard" rep and helping people by adding a "random" button to figure out what to play next.
+            </p>
+
+            <p>
+                If you're interested in keeping a log of what you play, this site doesn't (yet?) support that functionality. You can follow <a href="https://gist.io/@jsundram/703c2b4f51c6bc7c1613280e30a7d0cc">the instructions I posted here</a> to create a chamber music log of your own, the same way I do.
             </p>
 
             <p>

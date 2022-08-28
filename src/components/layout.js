@@ -24,6 +24,7 @@ const Layout = ({ pageTitle, children }) => {
     <main className={container}>
       <title>{pageTitle} | {data.site.siteMetadata.title}</title>
       <Link className={siteTitle} to="/">{data.site.siteMetadata.title}</Link>
+      &nbsp;&nbsp;<img src="/icon.png" alt="site icon" height="35px"/>
 
       <nav>
         <ul className={navLinks}>

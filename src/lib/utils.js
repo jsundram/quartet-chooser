@@ -48,7 +48,6 @@ function get_signature(composer_name) {
 let title_catalog = w => 'Quartet ' + w.catalog + (w.work_number ? '#' + w.work_number : '');
 let title_number = w => 'Quartet #' + w.title;
 let title_number_catalog = w => 'Quartet #' + w.title + ', ' + w.catalog;
-let title_singular = w => 'Quartet';
 
 let slugify_catalog = w => w.catalog.toLowerCase().split(" ").join("-") + (w.work_number ? '-' + w.work_number : '');
 let slugify_number = w => w.title;

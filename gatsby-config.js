@@ -1,7 +1,7 @@
 module.exports = {
   siteMetadata: {
     siteUrl: "https://quartet-chooser.gtsb.io",
-    title: "Quartet Chooser",
+    title: "Quartet Roulette",
   },
   plugins: [
     {
