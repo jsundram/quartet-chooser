@@ -2,7 +2,6 @@
 * initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
 * create background color for header bar to make hierarchy clearer.
     * todo: what should the width be?
-* Add work total to About Page 
 * Features that require data work:
     * Random practice -- what measures?
     * Link to Spotify / YouTube recordings?
@@ -87,3 +86,4 @@
         * selectquartets.com
         * quartetoracle.com
 * Link to daily composers for each birth/death date
+* Add work total to About Page 

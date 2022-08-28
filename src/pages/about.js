@@ -1,5 +1,6 @@
 // Step 1: Import your component
 import * as React from 'react'
+import { useStaticQuery, graphql } from 'gatsby'
 import { COMPOSERS } from  "../lib/utils"
 
 import Layout from '../components/layout'
@@ -7,6 +8,19 @@ import Layout from '../components/layout'
 
 // Step 2: Define your component
 const AboutPage = () => {
+    const result = useStaticQuery(graphql`
+        query {
+            dataJson(parent: {}) {
+                greats {
+                  title
+                  composer
+                  catalog
+                }
+            }
+        }`
+    );
+    let work_count = result.dataJson.greats.length;
+
     return (
         <Layout pageTitle="About">
             <h2>About</h2>
@@ -19,7 +33,7 @@ const AboutPage = () => {
             </p>
 
             <p>
-                Deciding what is "standard" rep is certainly a matter of opinion; I've biased towards music that lots of people I know tend to have. You can check out <a href="http://viz.runningwithdata.com/quartet_composers/">this (old) visualization I made of String Quartet Composers</a>, showing how prolific and familiar different composers are to get a sense of who is getting left out.
+                Deciding on the {work_count} quartets presented here as "standard" rep is certainly a matter of opinion; I've biased towards music that lots of people I know tend to have. You can check out <a href="http://viz.runningwithdata.com/quartet_composers/">this (old) visualization I made of String Quartet Composers</a>, showing how prolific and familiar different composers are to get a sense of who is getting left out.
             </p>
 
             <p>
