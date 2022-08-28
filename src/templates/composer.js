@@ -30,6 +30,12 @@ export default function Composer({ pageContext }) {
     let dash = s => s !== "" ? wrap(s) : null;
     let nick = w => dash(work_nickname(w, siblings[w.catalog]));
 
+    let day = function(s){
+        let d = new Date(s);
+        return "https://dailycomposersmain.gatsbyjs.io/" + (d.getMonth() + 1) + "-" + d.getDate();
+    }
+    let title = "See composers born on this day!";
+
     return (
         <Layout pageTitle={composer.full_name}>
             <h1><a href={composer.wikipedia}>
@@ -42,7 +48,10 @@ export default function Composer({ pageContext }) {
                 className={image}
             />
 
-            <p>{composer.birth} &ndash; {composer.death}</p>
+            <p>
+                <a title={title} href={day(composer.birth)}>{composer.birth}</a> &ndash;&nbsp;
+                <a title={title} href={day(composer.death)}>{composer.death}</a>
+            </p>
             { works.length > 1 ?
                 (<p>Pick a <Link to={slugify(choose_one(works))}>random quartet</Link></p>) :
                 null
