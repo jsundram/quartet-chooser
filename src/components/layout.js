@@ -8,6 +8,7 @@ import {
   navLinkItem,
   navLinkText,
   siteTitle,
+  siteIcon,
 } from './layout.module.css'
 
 const Layout = ({ pageTitle, children }) => {
@@ -22,9 +23,10 @@ const Layout = ({ pageTitle, children }) => {
 
   return (
     <main className={container}>
-      <title>{pageTitle} | {data.site.siteMetadata.title}</title>
+      {pageTitle ? <title>{pageTitle} | {data.site.siteMetadata.title}</title> : <title>{data.site.siteMetadata.title}</title>}
+
       <Link className={siteTitle} to="/">{data.site.siteMetadata.title}</Link>
-      &nbsp;&nbsp;<img src="/icon.png" alt="site icon" height="35px"/>
+      &nbsp;&nbsp;<img src="/icon.png" alt="site icon" className={siteIcon}/>
 
       <nav>
         <ul className={navLinks}>

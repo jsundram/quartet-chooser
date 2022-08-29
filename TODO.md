@@ -1,5 +1,5 @@
 ## TODO
-* fix preview on site, shows up as "Home<!-- -->" on iMessage. 
+* Add attribution for site icon from https://www.flaticon.com/free-icon/roulette_1254318
 * create a rep submission form for people to suggest quartets to add.
     * in progress here: https://docs.google.com/forms/d/1iChWbZn7tBGpmPlWAku6KRaosO8XPfZXv3v2s5mONZw/edit
     * Add links for it to About page. 
@@ -91,3 +91,7 @@
         * quartetoracle.com
 * Link to daily composers for each birth/death date
 * Add work total to About Page 
+* Style site icon to be smaller on mobile.
+* fix preview on site, shows up as "Home<!-- -->" on iMessage. 
+    * attempted to change title for main to just show the site title, we shall see.
+    * may need to play around with [opengraph meta tags](https://stackoverflow.com/questions/50161794/using-gatsby-js-how-do-i-add-a-route-specific-ogimage-meta-tag)

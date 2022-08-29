@@ -12,10 +12,8 @@ import {
 
 // markup
 const IndexPage = () => {
-    console.log(COMPOSERS);
-    console.log(get_signature(COMPOSERS[0]));
     return (
-        <Layout pageTitle="Home">
+        <Layout pageTitle="">
             <div className={wrapper}>
             {
                 COMPOSERS.map(composer => (

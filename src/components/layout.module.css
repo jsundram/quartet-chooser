@@ -47,6 +47,10 @@ a {
       font-weight: 700;
       text-decoration: none;
     }
+
+    .site-icon {
+        height: 35px;
+    }
 }
 
 
@@ -65,5 +69,9 @@ a {
       font-weight: 700;
       margin: auto;
       text-decoration: none;
+    }
+
+    .site-icon {
+        height: 25px;
     }
 }
