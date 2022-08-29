@@ -40,6 +40,10 @@ const AboutPage = () => {
                 The composer portraits were created by <a href="https://www.instagram.com/marusyachaika/">Marusya Chaika</a>. The list of {COMPOSERS.length} composers is limited by portrait availability&hellip;so if you want to suggest a composer, see if Marusya has already created an image for them <a href="https://www.shutterstock.com/g/marusyachaika">here</a>.
             </p>
 
+            <p>
+                The roulette icon was created by <a href="https://www.flaticon.com/free-icons/casino" title="casino icons">smalllikeart on flaticon</a>
+            </p>
+
             <p>The code is available <a href="https://github.com/jsundram/quartet-chooser">on Github</a>.</p>
 
             <p>Bug reports, feature requests, nickname suggestions, feedback, and other ideas are welcome <a href="https://forms.gle/chvU7wmH7vunk9MX6">here</a>!</p>
