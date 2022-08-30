@@ -2393,7 +2393,9 @@
             "death": "28 July 1750",
             "full name": "Johann Sebastian Bach",
             "wikipedia": "https://en.wikipedia.org/wiki/Johann_Sebastian_Bach",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Bartok",
@@ -2401,7 +2403,9 @@
             "death": "26 September 1945",
             "full name": "B\u00e9la Bart\u00f3k",
             "wikipedia": "https://en.wikipedia.org/wiki/B%C3%A9la_Bart%C3%B3k",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Beethoven",
@@ -2409,7 +2413,9 @@
             "death": "26 March 1827",
             "full name": "Ludwig van Beethoven",
             "wikipedia": "https://en.wikipedia.org/wiki/Ludwig_van_Beethoven",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Brahms",
@@ -2417,7 +2423,9 @@
             "death": "3 April 1897",
             "full name": "Johannes Brahms",
             "wikipedia": "https://en.wikipedia.org/wiki/Johannes_Brahms",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Debussy",
@@ -2425,7 +2433,9 @@
             "death": "25 March 1918",
             "full name": "Claude Debussy",
             "wikipedia": "https://en.wikipedia.org/wiki/Claude_Debussy",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Dvorak",
@@ -2433,7 +2443,9 @@
             "death": "1 May 1904",
             "full name": "Anton\u00edn Dvo\u0159\u00e1k",
             "wikipedia": "https://en.wikipedia.org/wiki/Anton%C3%ADn_Dvo%C5%99%C3%A1k",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Grieg",
@@ -2441,7 +2453,9 @@
             "death": "4 September 1907",
             "full name": "Edvard Grieg",
             "wikipedia": "https://en.wikipedia.org/wiki/Edvard_Grieg",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Haydn",
@@ -2449,7 +2463,9 @@
             "death": "31 May 1809",
             "full name": "Joseph Haydn",
             "wikipedia": "https://en.wikipedia.org/wiki/Joseph_Haydn",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "http://viz.runningwithdata.com/haydn-dashboard/",
+            "extra link title": "The Haydn Dashboard"
         },
         {
             "name": "Mendelssohn",
@@ -2457,7 +2473,9 @@
             "death": "4 November 1847",
             "full name": "Felix Mendelssohn",
             "wikipedia": "https://en.wikipedia.org/wiki/Felix_Mendelssohn",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Mozart",
@@ -2465,7 +2483,9 @@
             "death": "5 December 1791",
             "full name": "Wolfgang Amadeus Mozart",
             "wikipedia": "https://en.wikipedia.org/wiki/Wolfgang_Amadeus_Mozart",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Prokofiev",
@@ -2473,7 +2493,9 @@
             "death": "5 March 1953",
             "full name": "Sergei Prokofiev",
             "wikipedia": "https://en.wikipedia.org/wiki/Sergei_Prokofiev",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Ravel",
@@ -2481,7 +2503,9 @@
             "death": "28 December 1937",
             "full name": "Maurice Ravel",
             "wikipedia": "https://en.wikipedia.org/wiki/Maurice_Ravel",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Schubert",
@@ -2489,7 +2513,9 @@
             "death": "19 November 1828",
             "full name": "Franz Schubert",
             "wikipedia": "https://en.wikipedia.org/wiki/Franz_Schubert",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Schumann",
@@ -2497,7 +2523,9 @@
             "death": "29 July 1856",
             "full name": "Robert Schumann",
             "wikipedia": "https://en.wikipedia.org/wiki/Robert_Schumann",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         },
         {
             "name": "Shostakovich",
@@ -2505,7 +2533,9 @@
             "death": "9 August 1975",
             "full name": "Dmitri Shostakovich",
             "wikipedia": "https://en.wikipedia.org/wiki/Dmitri_Shostakovich",
-            "portrait": ""
+            "portrait": "",
+            "extra link": "",
+            "extra link title": ""
         }
     ]
 }

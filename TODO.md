@@ -93,3 +93,4 @@
     * may need to play around with [opengraph meta tags](https://stackoverflow.com/questions/50161794/using-gatsby-js-how-do-i-add-a-route-specific-ogimage-meta-tag)
 * Add attribution for site icon from https://www.flaticon.com/free-icon/roulette_1254318
 * Create a rep submission form for people to suggest quartets to add and link it from About page
+* Add link to the Haydn Dashboard http://viz.runningwithdata.com/haydn-dashboard/ 

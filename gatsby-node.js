@@ -10,6 +10,8 @@ exports.createPages = async function ({ actions, graphql }) {
                     birth
                     death
                     wikipedia
+                    extra_link
+                    extra_link_title
                 }
                 greats {
                     composer

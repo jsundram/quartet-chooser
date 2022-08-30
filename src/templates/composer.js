@@ -52,6 +52,7 @@ export default function Composer({ pageContext }) {
                 <a title={title} href={day(composer.birth)}>{composer.birth}</a> &ndash;&nbsp;
                 <a title={title} href={day(composer.death)}>{composer.death}</a>
             </p>
+            {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
             { works.length > 1 ?
                 (<p>Pick a <Link to={slugify(choose_one(works))}>random quartet</Link></p>) :
                 null
