@@ -1,8 +1,8 @@
 ## TODO
 * initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
 * Google analytics -- unique visitors and link clicks
-* [SEO](https://www.google.com/search?q=quartet+roulette&rlz=1CDGOYI_enUS706US707&oq=quartet+roulette&aqs=chrome..69i57j0i546l2j69i60l3.4068j0j4&hl=en-US&sourceid=chrome-mobile&ie=UTF-8#ip=1)
-    * submit to [search console](https://search.google.com/search-console/inspect?resource_id=sc-domain%3Aquartetroulette.com&id=U9CVkf14ftj9UhnBOC4McA)
+* [SEO](https://www.google.com/search?q=quartet+roulette)
+    * submit to [search console](https://search.google.com/search-console?resource_id=sc-domain:quartetroulette.com)
 * create background color for header bar to make hierarchy clearer.
     * todo: what should the width be?
 * Features that require data work:
