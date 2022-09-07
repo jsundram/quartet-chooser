@@ -1,6 +1,6 @@
 module.exports = {
   siteMetadata: {
-    siteUrl: "https://quartetroulette.com",
+    siteUrl: `https://quartetroulette.com`,
     title: "Quartet Roulette",
   },
   plugins: [
@@ -14,6 +14,20 @@ module.exports = {
       resolve: "gatsby-plugin-manifest",
       options: {
         icon: "./static/icon.png",
+      },
+    },
+    {
+      resolve: "gatsby-plugin-sitemap",
+      options: {
+        resolveSiteUrl: () => `https://quartetroulette.com`,  // not sure why this is needed
+        query: `
+        query MyQuery {
+          allSitePage {
+            nodes {
+              path
+            }
+          }
+        }`,
       },
     },
     {
