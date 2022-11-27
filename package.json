@@ -2,7 +2,7 @@
   "name": "quartet-chooser",
   "version": "1.0.0",
   "private": true,
-  "description": "Quartet Roulette Application",
+  "description": "Quartet Chooser",
   "author": "Jason Sundram",
   "keywords": [
     "gatsby"
@@ -15,11 +15,13 @@
     "clean": "gatsby clean"
   },
   "dependencies": {
-    "gatsby": "^5.2.0",
-    "gatsby-plugin-manifest": "^5.2.0",
-    "gatsby-plugin-sitemap": "^6.2.0",
-    "gatsby-source-filesystem": "^5.2.0",
-    "gatsby-transformer-json": "^5.2.0",
+    "gatsby": "^4.19.2",
+    "gatsby-plugin-google-analytics": "latest",
+    "gatsby-plugin-manifest": "^4.19.0",
+    "gatsby-plugin-sitemap": "^5.22.0",
+    "gatsby-source-filesystem": "^4.19.0",
+    "gatsby-transformer-json": "^4.19.0",
+    "got": "^12.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }
