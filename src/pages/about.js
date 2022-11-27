@@ -50,7 +50,7 @@ const AboutPage = () => {
             <p>Bug reports, feature requests, nickname suggestions, feedback, and other ideas are welcome <a href="https://forms.gle/chvU7wmH7vunk9MX6">here</a>!</p>
 
             <p>
-                If you'd like to nominate a quartet to be added to the site, please fill out <a href="https://forms.gle/Ga4LqCm6w9JJwwEk9I">this form</a>.
+                If you'd like to nominate a quartet to be added to the site, please fill out <a href="https://forms.gle/F179UideebWptoQj6">this form</a>.
             </p>
         </Layout>
     )
