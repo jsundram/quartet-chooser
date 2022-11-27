@@ -1,4 +1,5 @@
 ## TODO
+* fix [security problem with got](https://github.com/jsundram/quartet-chooser/security/dependabot/1) via upgrading ... somehow? 
 * initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
 * Google analytics -- unique visitors and link clicks
 * [SEO](https://www.google.com/search?q=quartet+roulette)

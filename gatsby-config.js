@@ -5,12 +5,6 @@ module.exports = {
     },
     plugins: [
         {
-            resolve: "gatsby-plugin-google-analytics",
-            options: {
-                trackingId: "G-7TZZMJ8149",
-            },
-        },
-        {
             resolve: "gatsby-plugin-manifest",
             options: {
                 icon: "./static/icon.png",
