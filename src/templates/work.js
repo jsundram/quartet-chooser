@@ -60,7 +60,7 @@ export default function Work({ pageContext }) {
                 <tr>
                     <th>#</th>
                     <th>Movement</th>
-                    <th>Link</th>
+                    <th>Recording</th>
                 </tr>
             </thead>
             <tbody>

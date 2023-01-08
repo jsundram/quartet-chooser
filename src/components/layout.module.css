@@ -63,7 +63,7 @@ a {
 @media screen and (max-width: 1199px) {
     .container {
       margin: auto;
-      margin-left: 60px;
+      margin-left: 10px;
       max-width: 600px;
       font-family: -apple-system, Roboto, sans-serif, serif;
       color: #232129;

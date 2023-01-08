@@ -10,8 +10,8 @@
   min-width: 100%;
   grid-template-columns: 
     minmax(30px, .3fr)
-    minmax(150px, 1.67fr)
-    minmax(150px, 1.67fr);
+    minmax(75px, 1fr)
+    minmax(225px, 4fr);
 }
 
 thead,
