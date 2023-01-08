@@ -3,6 +3,9 @@ import * as Utils from "../lib/utils"
 
 import Layout from '../components/layout'
 
+import {
+   table
+} from './work.module.css'
 
 export default function Work({ pageContext }) {
     console.log(pageContext);
@@ -17,21 +20,63 @@ export default function Work({ pageContext }) {
     let composer_url = "/" + work.composer + "/";
     let name = work.composer + ": " + title + " in " + work.key; // TOOD: nick?
 
-    /*
-        catalog: "Opus 33"
-        completed: "1781"
-        composer: "Haydn"
-        imslp: ""
-        key: "G major"
-        notes: "dedicated to Grand Duke Paul of Russia; the quartets were premiered in his wife's Vienna apartments on Christmas, 1781. Provoked Mozart's \"Haydn\" quartets."
-        opus_imslp: ""
-        opus_nickname: "Russian"
-        opus_notes: ""
-        title: "33"
-        wikipedia: "https://en.wikipedia.org/wiki/String_Quartets,_Op._33_(Haydn)"
-        work_nickname: "How do you do?"
-        work_number: "5"
-    */
+    const mvmts = pageContext.data.movements.filter(m =>
+        m.composer === work.composer &&
+        m.catalog === work.catalog &&
+        m.work_number === work.work_number
+    ).sort((x, y) => x.movement_number - y.movement_number);
+
+    let style = function(composer, work){
+        if (composer.name === "Bach"){
+            return "bullets";
+        }
+        if (work.catalog === "Opus 133" && composer.name === "Beethoven"){
+            return "none";
+        }
+        return "table"; // return "numerals";
+    }
+
+    let player = function (m){
+        return (<iframe
+            src={m.spotify.replace("/track/", "/embed/track/")}
+            title={m.title}
+            width="100%" height="80" frameBorder="0" allowFullScreen=""
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy" >
+        </iframe>);
+    }
+
+    const items = mvmts.map(m => (
+        <li key={m.movement_number} title={m.key}>
+            {m.title}
+            {player(m)}
+        </li>
+    ));
+
+    // mvmt #, mvmt title, link
+    const mvmt_table = (
+        <table className={table}>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Movement</th>
+                    <th>Link</th>
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    mvmts.map(m => (
+                        <tr>
+                            <td>{Utils.to_roman(m.movement_number)}</td>
+                            <td title={m.title}>{m.title}</td>
+                            <td>{player(m)}</td>
+                        </tr>
+                    ))
+                }
+            </tbody>
+        </table>
+    );
+
     return (
         <Layout pageTitle={name} >
             <a href={composer_url}>
@@ -53,13 +98,34 @@ export default function Work({ pageContext }) {
                 &nbsp;Read more on <a href={work.wikipedia}>wikipedia</a>.
             </p>
 
+            {
+                {
+                    "bullets": (
+                        <ul>
+                            {items}
+                        </ul>
+                    ),
+                    "numerals": (
+                        <ol type="I" start={mvmts[0].movement_number}>
+                            {items}
+                        </ol>
+                    ),
+                    "table": (
+                        mvmt_table
+                    ),
+                    "none": player(mvmts[0])
+                }[style(composerInfo, work)]
+            }
+
+            <p>
             {composerInfo.quartets > 1 ?
-                (<p>See other quartets by <a href={composer_url}>{work.composer}</a></p>) : null
+                (<i>See other quartets by <a href={composer_url}>{work.composer}</a>. </i>) : null
             }
 
             {imslp(work) ?
-                (<p>Check out the score on  <a href={imslp(work)}>IMSLP</a>.</p>) : null
+                (<i>Check out the score on  <a href={imslp(work)}>IMSLP</a>.</i>) : null
             }
+            </p>
         </Layout>
     )
 

@@ -41,7 +41,7 @@ const AboutPage = () => {
             </p>
 
             <p>
-                The roulette icon was created by <a href="https://www.flaticon.com/free-icons/casino" title="casino icons">smalllikeart on flaticon</a>
+                The <a href="https://www.flaticon.com/free-icon/roulette_1254355" title="roulette">roulette icon</a> was created by <a href="https://www.flaticon.com/authors/smalllikeart" title="casino icons">smalllikeart</a> on <a href="https://www.flaticon.com/">flaticon</a>.
             </p>
 
             <p>The code is available <a href="https://github.com/jsundram/quartet-chooser">on Github</a>.</p>

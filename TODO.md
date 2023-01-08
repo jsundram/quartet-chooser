@@ -1,4 +1,8 @@
 ## TODO
+* FB/IG/messenger share sheet looks weird (need some og: tags?)
+* Add Playlist / Album links to composer pages
+* Make a timeline visualization of all the quartets / composers
+* Make a timeline visualization for each composer
 * fix [security problem with got](https://github.com/jsundram/quartet-chooser/security/dependabot/1) via upgrading ... somehow? 
 * initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
 * Google analytics -- unique visitors and link clicks
@@ -8,18 +12,20 @@
     * todo: what should the width be?
 * Features that require data work:
     * Random practice -- what measures?
-    * Link to Spotify / YouTube recordings?
-    * Link to IMSLP scores 
-    * Add movement titles 
-* Instructions for adding a new composer and their works:
-    * Commission portrait
-    * convert eps to svg as detailed in ./portraits/credit.md
-    * Make sure the works and composer info are added to the [backing google sheet](https://docs.google.com/spreadsheets/d/1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4/edit#gid=0) on the appropriate tabs (starting with "The")
-    * run `./update.py -c 0` to pull in the latest data 
-    * edit `./gatsby-node.js` to add composer names to `counts` and `idf`
-    * go to `./src/lib/utils.js` and update `DISPATCHER` and `HIDDEN`
-    * update `src/pages/index.module.css` to change the number of rows/cols.
-    * update  `components/layout.module.css` to match changes made in `index.module.css`
+    * Link to IMSLP scores (directly; pick the best-looking ones)
+    * YouTube recording links?
+    * Bach -- comment on movements of Art of Fugue with ordering in the Klemm/Weymar edition?
+
+
+## Instructions for adding a new composer and their works
+* Commission portrait
+* convert eps to svg as detailed in ./portraits/credit.md
+* Make sure the works and composer info are added to the [backing google sheet](https://docs.google.com/spreadsheets/d/1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4/edit#gid=0) on the appropriate tabs (starting with "The")
+* run `./update.py -c 0` to pull in the latest data 
+* edit `./gatsby-node.js` to add composer names to `counts` and `idf`
+* go to `./src/lib/utils.js` and update `DISPATCHER` and `HIDDEN`
+* update `src/pages/index.module.css` to change the number of rows/cols.
+* update  `components/layout.module.css` to match changes made in `index.module.css`
 
 
 ## Done
@@ -109,3 +115,21 @@
 * Add link to the Haydn Dashboard http://viz.runningwithdata.com/haydn-dashboard/ 
 * Link to Haydn enthusiasts 
 * Add sitemap
+* Update Broken Survey Link (and style surveys to match each other and the site theme)
+* Add Boccherini
+* Add Britten
+* Add Tchaikovsky
+* Attribution for casino icon should go to https://www.flaticon.com/authors/smalllikeart
+* Add references to Peters Volumes for Haydn
+* Add movements to work pages
+    * [x] use roman numerals for movement numbers
+    * [x] grosse fuge (needs fixing? No actual tempo indications)
+    * [x] art of fugue (would be better to skip numerals)
+    * [x] Schubert d-703 (quartetsatz)
+    * [x] haydn 103 (mvmts 2 and 3)
+* Add recording links to work pages
+* Change movement presentation table
+    * movement titles wrap
+    * minimize padding
+    * colors? (changed to use alpha 88/FF)
+    * mobile friendliness?

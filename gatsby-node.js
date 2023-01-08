@@ -28,6 +28,17 @@ exports.createPages = async function ({ actions, graphql }) {
                     work_nickname
                     work_number
                 }
+                movements {
+                  catalog
+                  composer
+                  grouping
+                  key
+                  movement_number
+                  spotify
+                  title
+                  work_number
+                  notes
+                }
             }
         }
     `)

@@ -63,11 +63,12 @@ def get_sheet_contents(name, cache_days=0):
 def main(cache_days):
     fields = {
         'greats': ["composer", "title", "catalog", "completed", "opus_nickname", "work_number", "work_nickname", "key", "notes", "wikipedia", "imslp", "opus_imslp", "opus_notes"],
-        'composers': ["name", "birth", "death", "full name", "wikipedia", "portrait", "extra link", "extra link title"]
+        'composers': ["name", "birth", "death", "full name", "wikipedia", "portrait", "extra link", "extra link title"],
+        'movements': ['composer', 'title', 'catalog', 'grouping', 'work_number', 'movement_number', 'title', 'key', 'spotify', 'notes'],
     }
 
     data = {}
-    for sheet_name in ["The Greats", "The Composers"]:
+    for sheet_name in ["The Greats", "The Composers", "The Movements"]:
         values = get_sheet_contents(sheet_name, cache_days=cache_days)
 
         key = sheet_name.split(' ')[1].lower()

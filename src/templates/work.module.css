@@ -1,0 +1,48 @@
+/* from https://adamlynch.com/flexible-data-tables-with-css-grid/ */
+
+* {
+  box-sizing: border-box;
+}
+
+.table {
+  display: grid;
+  border-collapse: collapse;
+  min-width: 100%;
+  grid-template-columns: 
+    minmax(30px, .3fr)
+    minmax(150px, 1.67fr)
+    minmax(150px, 1.67fr);
+}
+
+thead,
+tbody,
+tr {
+  display: contents;
+}
+
+td {
+  padding-left: 15px;
+  padding-bottom: 0px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #111011;
+}
+
+th {
+  position: sticky;
+  padding: 15px;
+  top: 0;
+  background: #b82327AA;
+  text-align: left;
+  font-weight: normal;
+  font-size: 1.1rem;
+  color: white;
+}
+
+th:last-child {
+  border: 0;
+}
+
+tr:nth-child(even) td {
+  background: #5DCBF588;
+}
