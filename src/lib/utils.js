@@ -1,10 +1,12 @@
 
 export const name = 'utils';
 
-function choose_one(a){
-    // for an array a, return a random element
-    const ix = Math.floor(Math.random() * a.length);
-    return a[ix];
+function choose_one(a, hidden=true){
+    // For an array a, return a random element ...
+    // as long as it wasn't composed by a HIDDEN composer!
+    let b = hidden ? a.filter(i => !HIDDEN[i.composer]) : a;
+    const ix = Math.floor(Math.random() * b.length);
+    return b[ix];
 }
 
 function groupby(x, key){
@@ -25,7 +27,7 @@ function sentence_case(s){
 function work_nickname(w, siblings){
     if (w.work_nickname !== "")
         return w.work_nickname;
-    else if (w.opus_nickname !== "" && siblings.length === 1 && w.composer !== "Mozart" && w.composer !== "Beethoven")
+    else if (w.opus_nickname !== "" && siblings.length === 1 && w.composer !== "Mozart" && w.composer !== "Beethoven" && w.composer !== "Boccherini")
         return w.opus_nickname;
     else if (w.title !== "Quartet" && isNaN(parseInt(w.title))) // Grosse Fuge vs "12"
         return w.title;
@@ -59,7 +61,7 @@ let group_nickname = w => w.opus_nickname !== "" ? w.opus_nickname: w.catalog;
 let group_none = w => null;
 
 let group_name_default = g => grouper(g[0].composer)(g[0]);
-let group_name_nicknames = g =>group_name_default(g) + (g[0].opus_nickname !== "" ? " '" + g[0].opus_nickname + "'": "");
+let group_name_nicknames = g => group_name_default(g) + (g[0].opus_nickname !== "" ? " '" + g[0].opus_nickname + "'": "");
 
 let DISPATCHER = {
     'Bach': {
@@ -80,9 +82,21 @@ let DISPATCHER = {
         'group_work': group_nickname,
         'name_works': group_name_default,
     },
+    'Boccherini': {
+        'slugify_work': w => w.catalog.replace("G", "g"), // G387 -> g387
+        'title_work': w => w.catalog,
+        'group_work': group_nickname,
+        'name_works': group_name_default,
+    },
     'Brahms': {
         'slugify_work': slugify_catalog,
         'title_work': title_catalog,
+        'group_work': group_catalog,
+        'name_works': group_name_default,
+    },
+    'Britten': {
+        'slugify_work': slugify_number,
+        'title_work': title_number_catalog,
         'group_work': group_catalog,
         'name_works': group_name_default,
     },
@@ -152,6 +166,12 @@ let DISPATCHER = {
         'group_work': group_catalog,
         'name_works': group_name_default,
     },
+    'Tchaikovsky': {
+        'slugify_work': slugify_number,
+        'title_work': title_number_catalog,
+        'group_work': group_catalog,
+        'name_works': group_name_default,
+    }
 }
 
 function get_work_title(w){
@@ -176,6 +196,7 @@ function group_name(group){
 }
 
 const COMPOSERS = Object.keys(DISPATCHER);
+const HIDDEN = {"Boccherini": true};
 
 export {
     COMPOSERS,

@@ -54,7 +54,7 @@ export default function Composer({ pageContext }) {
             </p>
             {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
             { works.length > 1 ?
-                (<p>Pick a <Link to={slugify(choose_one(works))}>random quartet</Link></p>) :
+                (<p>Pick a <Link to={slugify(choose_one(works, false))}>random quartet</Link></p>) :
                 null
             }
 
@@ -74,7 +74,7 @@ export default function Composer({ pageContext }) {
                     }
                     else {
                         let random_in_group = function(){
-                            let random = slugify(choose_one(group));
+                            let random = slugify(choose_one(group, false));
                             navigate(random);
                         }
                         return (

@@ -11,6 +11,15 @@
     * Link to Spotify / YouTube recordings?
     * Link to IMSLP scores 
     * Add movement titles 
+* Instructions for adding a new composer and their works:
+    * Commission portrait
+    * convert eps to svg as detailed in ./portraits/credit.md
+    * Make sure the works and composer info are added to the [backing google sheet](https://docs.google.com/spreadsheets/d/1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4/edit#gid=0) on the appropriate tabs (starting with "The")
+    * run `./update.py -c 0` to pull in the latest data 
+    * edit `./gatsby-node.js` to add composer names to `counts` and `idf`
+    * go to `./src/lib/utils.js` and update `DISPATCHER` and `HIDDEN`
+    * update `src/pages/index.module.css` to change the number of rows/cols.
+    * update  `components/layout.module.css` to match changes made in `index.module.css`
 
 
 ## Done

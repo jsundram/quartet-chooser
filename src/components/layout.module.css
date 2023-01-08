@@ -32,9 +32,10 @@ a {
 }
 
 
-@media screen and (min-width: 800px) {
+@media screen and (min-width: 1200px) {
     .container {
       margin: auto;
+      margin-left: 10%;
       max-width: 800px;
       font-family: -apple-system, Roboto, sans-serif, serif;
       color: #232129;
@@ -54,9 +55,10 @@ a {
 }
 
 
-@media screen and (max-width: 799px) {
+@media screen and (max-width: 1199px) {
     .container {
       margin: auto;
+      margin-left: 60px;
       max-width: 600px;
       font-family: -apple-system, Roboto, sans-serif, serif;
       color: #232129;

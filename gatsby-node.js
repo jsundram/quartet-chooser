@@ -32,13 +32,15 @@ exports.createPages = async function ({ actions, graphql }) {
         }
     `)
 
-    // add a count of quartets by each composer to their entry. Don't hard code
+    // add a count of quartets by each composer to their entry. Don't hard code work counts
     // because e.g. schubert and mendelssohn could get more quartets added ...
     let counts = {
         'Bach': 0,
         'Bartok': 0,
         'Beethoven': 0,
+        'Boccherini': 0,
         'Brahms': 0,
+        'Britten': 0,
         'Debussy': 0,
         'Dvorak': 0,
         'Grieg': 0,
@@ -50,12 +52,14 @@ exports.createPages = async function ({ actions, graphql }) {
         'Schubert': 0,
         'Schumann': 0,
         'Shostakovich': 0,
+        'Tchaikovsky': 0,
     }
 
     data.dataJson.greats.forEach(node => {
         counts[node.composer] += 1;
     });
     data.dataJson.composers.forEach(node => node.quartets = counts[node.name]);
+    // console.log(JSON.stringify(data.dataJson, null, 4))
 
     // console.log(JSON.stringify(data.dataJson, null, 4))
     // https://jonsully.net/blog/trailing-slashes-and-gatsby/
@@ -73,6 +77,7 @@ exports.createPages = async function ({ actions, graphql }) {
         let number = n => n.title;
         let singular = n => 'quartet';
         let mozart = n => "k-" + n.catalog.replace("K", ""); // K387 -> k-387
+        let boccherini = n => n.catalog.toLowerCase();
 
         // each composer's quartes are commonly identified a bit differently.
         // let the slug reflect that.
@@ -80,7 +85,9 @@ exports.createPages = async function ({ actions, graphql }) {
             'Bach': catalog,
             'Bartok': number,
             'Beethoven': catalog,
+            'Boccherini': boccherini,
             'Brahms': catalog,
+            'Britten': number,
             'Debussy': singular,
             'Dvorak': catalog,
             'Grieg': singular,
@@ -92,6 +99,7 @@ exports.createPages = async function ({ actions, graphql }) {
             'Schubert': catalog,
             'Schumann': number,
             'Shostakovich': number,
+            'Tchaikovsky': number,
         }
         return  '/' + node.composer.toLowerCase()  +
                 '-' + idf[node.composer](node) + '/';
