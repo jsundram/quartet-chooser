@@ -4,14 +4,31 @@
   box-sizing: border-box;
 }
 
-.table {
+.play-icon {
+    height: 24px;
+    margin: auto;
+}
+
+.table-mobile {
   display: grid;
   border-collapse: collapse;
-  min-width: 100%;
+  min-width: 350px;
+  max-width: 800px;
   grid-template-columns: 
-    minmax(30px, .3fr)
-    minmax(75px, 1fr)
-    minmax(225px, 4fr);
+    minmax(45px, .5fr)
+    minmax(200px, 4fr)
+    minmax(100px, .5fr);
+}
+
+.table-big {
+  display: grid;
+  border-collapse: collapse;
+  min-width: 350px;
+  max-width: 800px;
+  grid-template-columns: 
+    minmax(45px, .5fr)
+    minmax(200px, 4fr)
+    minmax(400px, 1fr);
 }
 
 thead,
@@ -26,6 +43,7 @@ td {
   overflow: hidden;
   text-overflow: ellipsis;
   color: #111011;
+  display: flex;
 }
 
 th {

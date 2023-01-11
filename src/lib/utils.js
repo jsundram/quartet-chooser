@@ -1,4 +1,3 @@
-
 export const name = 'utils';
 
 function choose_one(a, hidden=true){
@@ -29,6 +28,15 @@ function to_roman(num) {
     while (i--)
         roman = (key[+digits.pop() + (i * 10)] || "") + roman;
     return Array(+digits.join("") + 1).join("M") + roman;
+}
+
+
+function is_mobile() {
+    let mobile = false;
+    if (typeof window !== `undefined`){ // check if is browser
+        mobile = ('ontouchstart' in window || navigator.maxtouchpoints);
+    }
+    return mobile;
 }
 
 function sentence_case(s){
@@ -222,6 +230,7 @@ export {
     group_name,
     groupby,
     grouper,
+    is_mobile,
     to_roman,
     sentence_case,
     slugify,
