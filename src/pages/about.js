@@ -41,7 +41,10 @@ const AboutPage = () => {
             </p>
 
             <p>
-                The <a href="https://www.flaticon.com/free-icon/roulette_1254355" title="roulette">roulette icon</a> was created by <a href="https://www.flaticon.com/authors/smalllikeart" title="casino icons">smalllikeart</a> on <a href="https://www.flaticon.com/">flaticon</a>.
+                Thanks to <a href="https://www.flaticon.com/" title="Flaticon">flaticon</a> creators:&nbsp;
+<a href="https://www.flaticon.com/authors/smalllikeart" title="casino icons">smalllikeart</a> (<a href="https://www.flaticon.com/free-icon/roulette_1254355" title="roulette">roulette icon</a>) and
+<a href="https://www.flaticon.com/authors/maxim-basinski-premium" title="Maxim Basinski Premium"> Maxim Basinski Premium </a>
+(<a href="https://www.flaticon.com/free-icon/play-button_1055007">play button</a>).
             </p>
 
             <p>The code is available <a href="https://github.com/jsundram/quartet-chooser">on Github</a>.</p>
