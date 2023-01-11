@@ -1,10 +1,14 @@
 ## TODO
+* Mobile: initial zoom is a little too close -- zooming out actually fixes it; but should be right at first.
+    * Index.js
+    * Work page (menu on top isn't shown fully)
+    * Composer page (menu on top isn't shown fully, and some signatures cut off as a result)
+* random work and random composer interstitial page has flashy rendering. (get rid of interstitial?)
 * FB/IG/messenger share sheet looks weird (need some og: tags?)
 * Add Playlist / Album links to composer pages
 * Make a timeline visualization of all the quartets / composers
 * Make a timeline visualization for each composer
 * fix [security problem with got](https://github.com/jsundram/quartet-chooser/security/dependabot/1) via upgrading ... somehow? 
-* initial zoom on mobile is a little too close -- zooming out actually fixes it; but should be right at first.
 * Google analytics -- unique visitors and link clicks
 * [SEO](https://www.google.com/search?q=quartet+roulette)
     * submit to [search console](https://search.google.com/search-console?resource_id=sc-domain:quartetroulette.com)
@@ -133,3 +137,10 @@
     * minimize padding
     * colors? (changed to use alpha 88/FF)
     * mobile friendliness?
+* use [ngrok](https://ngrok.com/) to do mobile debugging? [github oauth]
+* Work Page - text wrap is weird (mozart k575)
+* Spotify links on mobile play 30 second previews; even after logging into spotify in another tab.
+    * I think this is a [3rd party cookies problem](https://stackoverflow.com/questions/52280122/spotify-play-button-is-not-working-playing-only-previews-in-recent-chrome); 
+    * There [doesn't seem to be a workaround](https://community.spotify.com/t5/Music-Discussion/Embedded-playlists-play-only-30-seconds-on-mobile-phone-browser/td-p/4986711)
+    * replace with links to the tracks directly on mobile. (add play button)
+* fix overlapping composers on main page
