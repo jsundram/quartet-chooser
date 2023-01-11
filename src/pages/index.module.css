@@ -1,12 +1,18 @@
-
 @media screen and (min-width: 1200px) {
     .wrapper {
         display: grid;
         grid-template-columns: repeat(6, 1fr);
+        width: 100%;
+    }
+
+    .composer_box {
+        width: 200px;
+        padding: auto;
     }
 
     .image {
         height: 200px;
+        max-width: 100%;
     }
 
     .signature {
@@ -24,11 +30,19 @@
     .wrapper {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
+        min-width:  300px;
+        max-width: 600px;
+    }
+
+    .composer_box {
+        min-width: 150px;
+        max-width: 200px;
+        padding: auto;
     }
 
     .image {
         height: 200px;
-        min-width: 200px;
+        max-width: 100%;
     }
 
     .signature {

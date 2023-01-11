@@ -8,6 +8,7 @@ import {
     image,
     signature,
     wrapper,
+    composer_box
 } from './index.module.css'
 
 // markup
@@ -17,7 +18,7 @@ const IndexPage = () => {
             <div className={wrapper}>
             {
                 COMPOSERS.map(composer => (
-                    <Link to={"/" + composer + "/"} key={composer}>
+                    <Link to={"/" + composer + "/"} key={composer} className={composer_box}>
                         <img
                             alt={composer}
                             src={get_portrait(composer)}
