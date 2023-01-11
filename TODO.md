@@ -1,8 +1,4 @@
 ## TODO
-* Mobile: initial zoom is a little too close -- zooming out actually fixes it; but should be right at first.
-    * Index.js
-    * Work page (menu on top isn't shown fully)
-    * Composer page (menu on top isn't shown fully, and some signatures cut off as a result)
 * random work and random composer interstitial page has flashy rendering. (get rid of interstitial?)
 * FB/IG/messenger share sheet looks weird (need some og: tags?)
 * Add Playlist / Album links to composer pages
@@ -144,3 +140,7 @@
     * There [doesn't seem to be a workaround](https://community.spotify.com/t5/Music-Discussion/Embedded-playlists-play-only-30-seconds-on-mobile-phone-browser/td-p/4986711)
     * replace with links to the tracks directly on mobile. (add play button)
 * fix overlapping composers on main page
+* Mobile: initial zoom is a little too close -- zooming out actually fixes it; but should be right at first.
+    * Index.js
+    * Work page (menu on top isn't shown fully)
+    * Composer page (menu on top isn't shown fully, and some signatures cut off)

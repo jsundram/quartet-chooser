@@ -82,3 +82,26 @@ a {
         height: 25px;
     }
 }
+
+@media screen and (max-width: 600px) {
+    .container {
+      margin: auto;
+      margin-left: 10px;
+      max-width: 100%;
+      font-family: -apple-system, Roboto, sans-serif, serif;
+      color: #232129;
+      padding: 5;
+    }
+
+    .site-title {
+      font-size: 2rem;
+      color:#5dcbf5;
+      font-weight: 700;
+      margin: auto;
+      text-decoration: none;
+    }
+
+    .site-icon {
+        height: 25px;
+    }
+}

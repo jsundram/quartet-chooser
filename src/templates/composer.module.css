@@ -9,6 +9,7 @@
 @media screen and (min-width: 800px) {
     .signature {
         height: 100px;
+        max-width: 100%;
     }
     .image {
         height: 600px;
@@ -20,8 +21,10 @@
 @media screen and (max-width: 799px) {
     .signature {
         height: 50px;
+        max-width: 100%;
     }
     .image {
         height: 200px;
     }
 }
+
