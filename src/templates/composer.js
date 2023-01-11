@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Link, navigate } from 'gatsby'
+import { Link } from 'gatsby'
 import {
     choose_one,
     get_portrait,
@@ -17,8 +17,11 @@ import Layout from '../components/layout'
 import {
     image,
     signature,
-    button,
 } from './composer.module.css'
+
+import {
+    button
+} from '../components/layout.module.css'
 
 export default function Composer({ pageContext }) {
     console.log(pageContext);
@@ -54,7 +57,7 @@ export default function Composer({ pageContext }) {
             </p>
             {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
             { works.length > 1 ?
-                (<p>Pick a <Link to={slugify(choose_one(works, false))}>random quartet</Link></p>) :
+                (<p>Pick a <Link className={button} to={slugify(choose_one(works, false))}>random quartet 🔀</Link></p>) :
                 null
             }
 
@@ -73,14 +76,10 @@ export default function Composer({ pageContext }) {
                         )
                     }
                     else {
-                        let random_in_group = function(){
-                            let random = slugify(choose_one(group, false));
-                            navigate(random);
-                        }
                         return (
                             <li key={grouping}>
-                                <i>{group_name(group)}</i>
-                                <button className={button} onClick={random_in_group}>🔀</button>
+                                <i>{group_name(group)}&nbsp;</i>
+                                <Link className={button} to={slugify(choose_one(group, false))}>🔀</Link>
                                 <ul>
                                 {
                                     group.map(work => (

@@ -1,9 +1,20 @@
 ## TODO
+* shuffle icon on composer page groups of works has a weird gray oval around it on mobile chrome (but not mobile safari)
 * random work and random composer interstitial page has flashy rendering. (get rid of interstitial?)
 * FB/IG/messenger share sheet looks weird (need some og: tags?)
+    * https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-head/ can help?
+    * https://www.gatsbyjs.com/docs/how-to/adding-common-features/adding-seo-component/
 * Add Playlist / Album links to composer pages
-* Make a timeline visualization of all the quartets / composers
-* Make a timeline visualization for each composer
+* Timelines
+    * Make a timeline visualization of all the quartets / composers
+    * Make a timeline visualization for each composer
+    * Inspo:
+        * https://observablehq.com/@tezzutezzu/world-history-timeline
+        * https://observablehq.com/@mbostock/a-timeline-of-democratic-presidential-candidates
+        * https://observablehq.com/@mbostock/a-timeline-of-apple-products
+        * https://observablehq.com/@aias/patient-timeline
+        * https://observablehq.com/@agware/timeline-in-office (linked visualizations with brushing)
+        * https://user-images.githubusercontent.com/230541/130283717-71d42637-89e4-4794-82e6-9a8570bb527d.png from [here](https://github.com/observablehq/plot/blob/main/CHANGELOG.md)
 * fix [security problem with got](https://github.com/jsundram/quartet-chooser/security/dependabot/1) via upgrading ... somehow? 
 * Google analytics -- unique visitors and link clicks
 * [SEO](https://www.google.com/search?q=quartet+roulette)
@@ -144,3 +155,5 @@
     * Index.js
     * Work page (menu on top isn't shown fully)
     * Composer page (menu on top isn't shown fully, and some signatures cut off)
+* Use shuffle icon for pick random quartet by composer
+* shuffle icon hard to touch on mobile. Expanded touch area

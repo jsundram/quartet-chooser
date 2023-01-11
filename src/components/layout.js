@@ -3,6 +3,7 @@ import { Link } from 'gatsby'
 import { useStaticQuery, graphql } from 'gatsby'
 
 import {
+  button,
   container,
   navLinks,
   navLinkItem,
@@ -31,8 +32,8 @@ const Layout = ({ pageTitle, children }) => {
       <nav>
         <ul className={navLinks}>
           <li className={navLinkItem}><Link to="/" className={navLinkText}>Home</Link></li>
-          <li className={navLinkItem}><Link to="/random" className={navLinkText} title="Random Quartet">Quartet 🔀</Link></li>
-          <li className={navLinkItem}><Link to="/random-composer" className={navLinkText} title="Random Composer">Composer 🔀</Link></li>
+          <li className={navLinkItem}><Link to="/random" className={[navLinkText, button].join(" ")} title="Random Quartet">Quartet 🔀</Link></li>
+          <li className={navLinkItem}><Link to="/random-composer" className={[navLinkText, button].join(" ")} title="Random Composer">Composer 🔀</Link></li>
           <li className={navLinkItem}><Link to="/about" className={navLinkText}>About</Link></li>
         </ul>
       </nav>
