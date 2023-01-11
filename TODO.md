@@ -1,5 +1,6 @@
 ## TODO
 * shuffle icon on composer page groups of works has a weird gray oval around it on mobile chrome (but not mobile safari)
+    * using `-webkit-tap-highlight-color: rgba(0,0,0,0)` doesn't fix this
 * random work and random composer interstitial page has flashy rendering. (get rid of interstitial?)
 * FB/IG/messenger share sheet looks weird (need some og: tags?)
     * https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-head/ can help?
