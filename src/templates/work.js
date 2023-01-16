@@ -99,8 +99,8 @@ export default function Work({ pageContext }) {
             </a>
 
             <h1><a href={composer_url}>{work.composer}</a>: {title} in {work.key} {nick}</h1>
-            {(siblings.length > 1 && work.opus_nickname !== "") ?
-                (<p>Opus nickname: {work.opus_nickname}</p>) : null
+            {(work.opus_nickname !== "") ?
+                (<p>Group nickname: {work.opus_nickname}</p>) : null
             }
 
             <p>
