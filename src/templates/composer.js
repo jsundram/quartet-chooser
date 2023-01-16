@@ -29,7 +29,7 @@ export default function Composer({ pageContext }) {
     let composer = pageContext.node;
     const works = pageContext.data.filter(w => w.composer === composer.name);
     const siblings = groupby(works, w => w.catalog); // {catalog => list of works with that catalog number}
-    let wrap = s => ( <i>&nbsp;&mdash;&nbsp;{s}</i> );
+    let wrap = s => ( <i> &mdash;&nbsp;{s}</i> );
     let dash = s => s !== "" ? wrap(s) : null;
     let nick = w => dash(work_nickname(w, siblings[w.catalog]));
 
