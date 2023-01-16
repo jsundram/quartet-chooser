@@ -158,3 +158,5 @@
     * Composer page (menu on top isn't shown fully, and some signatures cut off)
 * Use shuffle icon for pick random quartet by composer
 * shuffle icon hard to touch on mobile. Expanded touch area
+* fix nitpicky bug on key wrap on composer page (prokofiev 2) with nickname.
+* show mozart quartet group titles
