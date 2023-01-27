@@ -20,13 +20,14 @@
 * Google analytics -- unique visitors and link clicks
 * [SEO](https://www.google.com/search?q=quartet+roulette)
     * submit to [search console](https://search.google.com/search-console?resource_id=sc-domain:quartetroulette.com)
-* create background color for header bar to make hierarchy clearer.
+    * Gatsby [HEAD / SEO stuff ](https://www.gatsbyjs.com/docs/how-to/adding-common-features/adding-seo-component/)
+* create background color for header bar to make hierarchy clearer?
     * todo: what should the width be?
 * Features that require data work:
+    * Bach -- comment on movements of Art of Fugue with ordering in the Klemm/Weymar edition?
+    * YouTube recording links?
     * Random practice -- what measures?
     * Link to IMSLP scores (directly; pick the best-looking ones)
-    * YouTube recording links?
-    * Bach -- comment on movements of Art of Fugue with ordering in the Klemm/Weymar edition?
 
 
 ## Instructions for adding a new composer and their works
