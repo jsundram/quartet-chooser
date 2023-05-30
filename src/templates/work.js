@@ -152,7 +152,7 @@ function getTitle(pageContext){
 
 function getImage(pageContext){
     const work = pageContext.node;
-    return Utils.get_image(work.composer);
+    return "https://quartetroulette.com/" + Utils.get_image(work.composer);
 }
 
 export const Head = ({ location, params, data, pageContext }) => (
@@ -160,7 +160,6 @@ export const Head = ({ location, params, data, pageContext }) => (
         <title>{getTitle(pageContext)}</title>
         <meta property="og:title" content={getTitle(pageContext)} />
         <meta property="og:description" content={getTitle(pageContext)} />
-        <meta property="og:image" content="https://quartetroulette.com/icon.png" />
         <meta property="og:image" content={getImage(pageContext)} />
     </>
 )
