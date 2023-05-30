@@ -11,7 +11,7 @@ import {
 
 function age(completed, birth){
     // https://stackoverflow.com/a/24181701/2683
-    return new Date(new Date(completed) - new Date(birth)).getFullYear() - 1970;
+    return new Date(new Date(completed) - new Date(birth)).getFullYear() - 1969;
 }
 
 export default function Work({ pageContext }) {
