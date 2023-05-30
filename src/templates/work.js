@@ -9,6 +9,10 @@ import {
     playIcon
 } from './work.module.css'
 
+function age(completed, birth){
+    // https://stackoverflow.com/a/24181701/2683
+    return new Date(new Date(completed) - new Date(birth)).getFullYear() - 1970;
+}
 
 export default function Work({ pageContext }) {
     console.log(pageContext);
@@ -22,6 +26,7 @@ export default function Work({ pageContext }) {
     let imslp = w => w.imslp ? w.imslp : w.opus_imslp ? w.opus_imslp : null;
     let composer_url = "/" + work.composer + "/";
     let name = work.composer + ": " + title + " in " + work.key; // TOOD: nick?
+    let aged = age(work.completed, composerInfo.birth);
 
     const mvmts = pageContext.data.movements.filter(m =>
         m.composer === work.composer &&
@@ -105,7 +110,7 @@ export default function Work({ pageContext }) {
             }
 
             <p>
-                Completed in {work.completed}.
+                Completed in {work.completed}, the year he turned {aged}.
                 &nbsp;{Utils.sentence_case(work.notes)}
                 &nbsp;Read more on <a href={work.wikipedia}>wikipedia</a>.
             </p>
