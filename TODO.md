@@ -1,7 +1,9 @@
 ## TODO
-* [Pending] fix preview on site, shows up as "Home<!-- -->" on iMessage. 
-    * first attempted to change title for main to just show the site title. didn't work
-    * now using gatsby Head API and og: tags ... will deploy and find out.
+* Update og: images on work and composer pages. iMessage doesn't like SVGs so ignores them.
+    * need to either transcode manually or use Image plugin from gatsby ...
+* Update layout to be iPad friendly
+* Show composer's age when pieces were written programmatically.
+* Make quartet composer viz mobile friendly?
 * shuffle icon on composer page groups of works has a weird gray oval around it on mobile chrome (but not mobile safari)
     * using `-webkit-tap-highlight-color: rgba(0,0,0,0)` doesn't fix this
 * random work and random composer interstitial page has flashy rendering. (get rid of interstitial?)
@@ -158,3 +160,6 @@
 * shuffle icon hard to touch on mobile. Expanded touch area
 * fix nitpicky bug on key wrap on composer page (prokofiev 2) with nickname.
 * show mozart quartet group titles
+* [Pending] fix preview on site, shows up as "Home<!-- -->" on iMessage. 
+    * first attempted to change title for main to just show the site title. didn't work
+    * now using gatsby Head API and og: tags ... will deploy and find out.
