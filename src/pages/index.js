@@ -35,4 +35,13 @@ const IndexPage = () => {
     )
 }
 
+export const Head = ({ location, params, data, pageContext }) => (
+  <>
+    <title>Quartet Roulette</title>
+    <meta property="og:title" content="Quartet Roulette" />
+    <meta property="og:description" content="Quartet Roulette is a project by some of The Haydn Enthusiasts to help break indecision about what to play next by codifying a purposely small list of standard repertoire and helping people by adding a 'random' button for a suggestion of what to play next." />
+    <meta property="og:image" content="https://quartetroulette.com/icon.png" />
+  </>
+)
+
 export default IndexPage

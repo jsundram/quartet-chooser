@@ -9,6 +9,7 @@ import {
     playIcon
 } from './work.module.css'
 
+
 export default function Work({ pageContext }) {
     console.log(pageContext);
     const work = pageContext.node;
@@ -139,5 +140,27 @@ export default function Work({ pageContext }) {
             </p>
         </Layout>
     )
-
 }
+
+function getTitle(pageContext){
+    const work = pageContext.node;
+    const title = Utils.get_work_title(work);
+
+    let name = work.composer + ": " + title + " in " + work.key;
+    return name +  " | Quartet Roulette";
+}
+
+function getImage(pageContext){
+    const work = pageContext.node;
+    return Utils.get_image(work.composer);
+}
+
+export const Head = ({ location, params, data, pageContext }) => (
+    <>
+        <title>{getTitle(pageContext)}</title>
+        <meta property="og:title" content={getTitle(pageContext)} />
+        <meta property="og:description" content={getTitle(pageContext)} />
+        <meta property="og:image" content="https://quartetroulette.com/icon.png" />
+        <meta property="og:image" content={getImage(pageContext)} />
+    </>
+)

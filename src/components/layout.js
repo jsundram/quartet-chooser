@@ -22,9 +22,12 @@ const Layout = ({ pageTitle, children }) => {
           }
   }`);
 
+  let title = pageTitle ? (pageTitle + " | ") : "";
+  title += data.site.siteMetadata.title;
+
   return (
     <main className={container}>
-      {pageTitle ? <title>{pageTitle} | {data.site.siteMetadata.title}</title> : <title>{data.site.siteMetadata.title}</title>}
+      <title>{title}</title>
 
       <Link className={siteTitle} to="/">{data.site.siteMetadata.title}</Link>
       &nbsp;&nbsp;<img src="/icon.png" alt="site icon" className={siteIcon}/>

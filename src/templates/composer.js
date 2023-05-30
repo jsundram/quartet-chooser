@@ -23,6 +23,7 @@ import {
     button
 } from '../components/layout.module.css'
 
+
 export default function Composer({ pageContext }) {
     console.log(pageContext);
 
@@ -101,3 +102,22 @@ export default function Composer({ pageContext }) {
         </Layout>
     )
 }
+
+function getTitle(pageContext){
+    let composer = pageContext.node;
+    return composer.full_name + " | Quartet Roulette";
+}
+
+function getImage(pageContext){
+    let composer = pageContext.node;
+    return get_portrait(composer.name);
+}
+
+export const Head = ({ location, params, data, pageContext }) => (
+    <>
+        <title>{getTitle(pageContext)}</title>
+        <meta property="og:title" content={getTitle(pageContext)} />
+        <meta property="og:description" content={getTitle(pageContext)} />
+        <meta property="og:image" content={getImage(pageContext)} />
+    </>
+)

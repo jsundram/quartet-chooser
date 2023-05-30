@@ -1,10 +1,10 @@
 ## TODO
+* [Pending] fix preview on site, shows up as "Home<!-- -->" on iMessage. 
+    * first attempted to change title for main to just show the site title. didn't work
+    * now using gatsby Head API and og: tags ... will deploy and find out.
 * shuffle icon on composer page groups of works has a weird gray oval around it on mobile chrome (but not mobile safari)
     * using `-webkit-tap-highlight-color: rgba(0,0,0,0)` doesn't fix this
 * random work and random composer interstitial page has flashy rendering. (get rid of interstitial?)
-* FB/IG/messenger share sheet looks weird (need some og: tags?)
-    * https://www.gatsbyjs.com/docs/reference/built-in-components/gatsby-head/ can help?
-    * https://www.gatsbyjs.com/docs/how-to/adding-common-features/adding-seo-component/
 * Add Playlist / Album links to composer pages
 * Timelines
     * Make a timeline visualization of all the quartets / composers
@@ -120,9 +120,6 @@
 * Link to daily composers for each birth/death date
 * Add work total to About Page 
 * Style site icon to be smaller on mobile.
-* fix preview on site, shows up as "Home<!-- -->" on iMessage. 
-    * attempted to change title for main to just show the site title, we shall see.
-    * may need to play around with [opengraph meta tags](https://stackoverflow.com/questions/50161794/using-gatsby-js-how-do-i-add-a-route-specific-ogimage-meta-tag)
 * Add attribution for site icon from https://www.flaticon.com/free-icon/roulette_1254318
 * Create a rep submission form for people to suggest quartets to add and link it from About page
 * Add link to the Haydn Dashboard http://viz.runningwithdata.com/haydn-dashboard/ 
