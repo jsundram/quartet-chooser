@@ -23,6 +23,8 @@ from fastcache import lru_cache
 # shitty code re-use better than no reuse? Not from a github perspective...
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../chamber_music_played/")
 import sheet_utils
+# you'll probably want to run `pip3 install -r ../chamber_music_played/requirements.txt`
+# to get this to work.
 
 SHEET_ID = '1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4'
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".sheet_cache")
