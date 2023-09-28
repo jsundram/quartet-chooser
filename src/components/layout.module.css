@@ -37,8 +37,8 @@ Can use coolors.co to generate a 5th color that fits into the palette:
     display: inline-block;
     position: relative;
     z-index: 1;
-    padding: 1em  1em  1em  1em; /*top right bottom left*/
-    margin: -1em -1em -1em -1em;
+    padding: 0em  1em  0em  1em; /*top right bottom left*/
+    margin:  0em -1em  0em -1em;
 }
 
 a {
