@@ -36,7 +36,7 @@ export default function Composer({ pageContext }) {
 
     let day = function(s){
         let d = new Date(s);
-        return "https://dailycomposersmain.gatsbyjs.io/" + (d.getMonth() + 1) + "-" + d.getDate();
+        return "https://daily-composers.netlify.app/" + (d.getMonth() + 1) + "-" + d.getDate();
     }
     let title = "See composers born on this day!";
 
