@@ -15,7 +15,7 @@
     "clean": "gatsby clean"
   },
   "dependencies": {
-    "gatsby": "^4.19.2",
+    "gatsby": "^4.25.7",
     "gatsby-plugin-google-analytics": "latest",
     "gatsby-plugin-manifest": "^4.19.0",
     "gatsby-plugin-sitemap": "^5.22.0",
