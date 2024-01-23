@@ -1,0 +1,14 @@
+# from this directory via `pipreqs .`
+fastcache==1.1.0
+spotipy==2.23.0
+svgpathtools==1.6.1
+
+# from ../chamber_music_played/requirements.txt
+apiclient
+attrdict
+dateparser
+fastcache
+httplib2
+oauth2client
+pydrive
+uritemplate
