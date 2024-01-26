@@ -7,7 +7,7 @@ svgpathtools==1.6.1
 apiclient
 attrdict
 dateparser
-fastcache
+# fastcache # already specified above
 httplib2
 oauth2client
 pydrive
