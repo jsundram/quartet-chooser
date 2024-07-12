@@ -1,4 +1,8 @@
 ## TODO
+* Boccherini -- handle opus numbers better 
+    * (on /Boccherini lists Opus 2 / G Numbers)
+    * create slugs for e.g. boccherini-opus-2-1 as well as by G number
+    * create redirects for wrong peters opus numbers?
 * Update og: images on work and composer pages. iMessage doesn't like SVGs so ignores them.
     * need to either transcode manually or use Image plugin from gatsby ...
 * Update layout to be iPad friendly
