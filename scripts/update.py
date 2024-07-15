@@ -21,8 +21,12 @@ from datetime import timedelta
 from fastcache import lru_cache
 
 # shitty code re-use better than no reuse? Not from a github perspective...
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../chamber_music_played/")
+cwd = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(cwd + "/../chamber_music_played/")
+# sys.path.append(cwd + "/../chamber_music_played/googleapiclient/")
 import sheet_utils
+# JRS 7/12/24 - this currently barfs with a googleapiclient error ... not sure how to fix yet
+
 # you'll probably want to run `pip3 install -r ../chamber_music_played/requirements.txt`
 # to get this to work.
 
