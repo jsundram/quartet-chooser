@@ -20,15 +20,9 @@ import time
 from datetime import timedelta
 from fastcache import lru_cache
 
-# shitty code re-use better than no reuse? Not from a github perspective...
-cwd = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(cwd + "/../chamber_music_played/")
-# sys.path.append(cwd + "/../chamber_music_played/googleapiclient/")
+# sheet_utils was developed for my `chamber_music_played` project and copied here.
 import sheet_utils
-# JRS 7/12/24 - this currently barfs with a googleapiclient error ... not sure how to fix yet
 
-# you'll probably want to run `pip3 install -r ../chamber_music_played/requirements.txt`
-# to get this to work.
 
 SHEET_ID = '1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4'
 CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".sheet_cache")
@@ -60,6 +54,7 @@ def get_sheet_contents(name, cache_days=0):
 
     if values is None:
         values = sheet_utils.get_values(SHEET_ID, name)
+        os.makedirs(CACHE_DIR, exist_ok=True)
         with open(filename, "w") as f:
             json.dump(values, f, indent=4)
 
@@ -86,7 +81,7 @@ def main(cache_days):
         data[key] = [dict(zip(fields[key], pad(row, n))) for row in values[1:]]
         print("got %d records for sheet '%s'" % (len(data[key]), sheet_name))
 
-    filename = os.path.join("./src/data/data.json")
+    filename = os.path.join("../src/data/data.json")
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
 
