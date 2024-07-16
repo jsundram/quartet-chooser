@@ -3,3 +3,5 @@ node_modules/
 public
 .DS_Store
 .sheet_cache/
+__pycache__/
+*.pyc
