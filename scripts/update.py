@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "google-auth",
+#   "google-auth-httplib2",
+#   "google-auth-oauthlib",
+#   "httplib2",
+#   "six",
+#   "uritemplate",
+# ]
+# ///
 """
 The purpose of this script is to pull tabs from the Standard Rep spreadsheet:
 https://docs.google.com/spreadsheets/d/1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4/
@@ -18,7 +29,6 @@ import sys
 import time
 
 from datetime import timedelta
-from fastcache import lru_cache
 
 # sheet_utils was developed for my `chamber_music_played` project and copied here.
 import sheet_utils
@@ -39,7 +49,6 @@ def pad(r, n):
 
 def get_sheet_contents(name, cache_days=0):
     """ Hits the google sheets API if cache_days=0 or no cached data found."""
-    path = os.path.dirname(os.path.abspath(__file__))
     filename = os.path.join(CACHE_DIR, SHEET_ID + " - " + name + ".json")
     values = None
     if os.path.exists(filename):
@@ -81,7 +90,7 @@ def main(cache_days):
         data[key] = [dict(zip(fields[key], pad(row, n))) for row in values[1:]]
         print("got %d records for sheet '%s'" % (len(data[key]), sheet_name))
 
-    filename = os.path.join("../src/data/data.json")
+    filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../src/data/data.json")
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
 

@@ -1,14 +1,11 @@
-# from this directory via `pipreqs .`
-fastcache==1.1.0
+# runtime deps for update.py (also declared inline via PEP 723 for `uv run`)
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+httplib2
+six
+uritemplate
+
+# used by other scripts in this directory
 spotipy==2.23.0
 svgpathtools==1.6.1
-
-# from ../chamber_music_played/requirements.txt
-apiclient
-attrdict
-dateparser
-# fastcache # already specified above
-httplib2
-oauth2client
-pydrive
-uritemplate
