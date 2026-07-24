@@ -15,7 +15,8 @@
     "start": "gatsby develop",
     "build": "gatsby build",
     "serve": "gatsby serve",
-    "clean": "gatsby clean"
+    "clean": "gatsby clean",
+    "test": "node --test \"test/*.test.mjs\""
   },
   "dependencies": {
     "gatsby": "^4.19.2",
