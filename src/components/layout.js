@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { Link } from 'gatsby'
-import { useStaticQuery, graphql } from 'gatsby'
+import { SITE_TITLE } from '../lib/site'
 
 import {
   button,
@@ -13,31 +12,22 @@ import {
 } from './layout.module.css'
 
 const Layout = ({ pageTitle, children }) => {
-  const data = useStaticQuery(graphql`
-      query {
-          site {
-            siteMetadata {
-              title
-            }
-          }
-  }`);
-
   let title = pageTitle ? (pageTitle + " | ") : "";
-  title += data.site.siteMetadata.title;
+  title += SITE_TITLE;
 
   return (
     <main className={container}>
       <title>{title}</title>
 
-      <Link className={siteTitle} to="/">{data.site.siteMetadata.title}</Link>
+      <a className={siteTitle} href="/">{SITE_TITLE}</a>
       &nbsp;&nbsp;<img src="/icon.png" alt="site icon" className={siteIcon}/>
 
       <nav>
         <ul className={navLinks}>
-          <li className={navLinkItem}><Link to="/" className={navLinkText}>Home</Link></li>
-          <li className={navLinkItem}><Link to="/random" className={[navLinkText, button].join(" ")} title="Random Quartet">Quartet 🔀</Link></li>
-          <li className={navLinkItem}><Link to="/random-composer" className={[navLinkText, button].join(" ")} title="Random Composer">Composer 🔀</Link></li>
-          <li className={navLinkItem}><Link to="/about" className={navLinkText}>About</Link></li>
+          <li className={navLinkItem}><a href="/" className={navLinkText}>Home</a></li>
+          <li className={navLinkItem}><a href="/random" className={[navLinkText, button].join(" ")} title="Random Quartet">Quartet 🔀</a></li>
+          <li className={navLinkItem}><a href="/random-composer" className={[navLinkText, button].join(" ")} title="Random Composer">Composer 🔀</a></li>
+          <li className={navLinkItem}><a href="/about" className={navLinkText}>About</a></li>
         </ul>
       </nav>
 

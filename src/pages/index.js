@@ -1,5 +1,4 @@
 import * as React from "react"
-import { Link } from 'gatsby'
 import { COMPOSERS, get_portrait, get_signature } from  "../lib/utils"
 
 import Layout from '../components/layout'
@@ -18,7 +17,7 @@ const IndexPage = () => {
             <div className={wrapper}>
             {
                 COMPOSERS.map(composer => (
-                    <Link to={"/" + composer + "/"} key={composer} className={composer_box}>
+                    <a href={"/" + composer + "/"} key={composer} className={composer_box}>
                         <img
                             alt={composer}
                             src={get_portrait(composer)}
@@ -27,7 +26,7 @@ const IndexPage = () => {
                         />
 
                         <img src={get_signature(composer)} alt={composer} className={signature} />
-                    </Link>
+                    </a>
                 ))
             }
             </div>

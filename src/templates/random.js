@@ -1,6 +1,5 @@
 // Step 1: Import your component
 import * as React from 'react'
-import { Link } from 'gatsby'
 import {get_work_title, slugify, choose_one} from  "../lib/utils"
 
 import Layout from '../components/layout'
@@ -18,7 +17,7 @@ const RandomPage = ( {pageContext} ) => {
     return (
           <Layout pageTitle="Random Quartet">
             <h1>Random Quartet</h1>
-            <p>Redirecting to a random quartet: <Link to={random}>{work.composer}:&nbsp;{get_work_title(work)}</Link> &hellip;</p>
+            <p>Redirecting to a random quartet: <a href={random}>{work.composer}:&nbsp;{get_work_title(work)}</a> &hellip;</p>
           </Layout>
       )
 }
