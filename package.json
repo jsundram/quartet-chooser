@@ -5,7 +5,7 @@
   "description": "Quartet Chooser",
   "author": "Jason Sundram",
   "engines": {
-    "node": ">=18 <21"
+    "node": ">=18"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
