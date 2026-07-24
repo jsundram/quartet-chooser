@@ -25,8 +25,6 @@ import {
 
 
 export default function Composer({ pageContext }) {
-    console.log(pageContext);
-
     let composer = pageContext.node;
     const works = pageContext.data.filter(w => w.composer === composer.name);
     const siblings = groupby(works, w => w.catalog); // {catalog => list of works with that catalog number}

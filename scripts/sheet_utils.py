@@ -30,8 +30,9 @@ def get_credentials():
         return credentials
 
     cred_file = 'sheets.googleapis.com-python-quickstart.json'
-    # system_path = os.path.expanduser('~/.credentials/')  # fails for crontab
-    system_path = '/Users/jsundram/.credentials'
+    # Credential directory is configurable via env var (defaults to ~/.credentials).
+    # Avoids hardcoding a developer-specific absolute path.
+    system_path = os.environ.get("QR_CREDENTIALS_DIR", os.path.expanduser("~/.credentials"))
     local_path = os.getcwd()
 
     for path in [system_path, local_path]:

@@ -6,10 +6,8 @@ import { choose_one } from  "../lib/utils"
 import Layout from '../components/layout'
 
 const RandomPage = ( {pageContext} ) => {
-    console.log(pageContext.node);
     const composers = pageContext.node.composers;
     let composer = choose_one(composers)
-    console.log(composer)
     let random = "/" + composer.name + "/";
     const isBrowser = typeof window !== `undefined`;
 

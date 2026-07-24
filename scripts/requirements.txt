@@ -1,14 +1,17 @@
-# from this directory via `pipreqs .`
+# Python deps for the offline data-pipeline (scripts/update.py).
+# Pinned for reproducible installs.
+
 fastcache==1.1.0
 spotipy==2.23.0
 svgpathtools==1.6.1
 
-# from ../chamber_music_played/requirements.txt
-apiclient
-attrdict
-dateparser
-# fastcache # already specified above
-httplib2
-oauth2client
-pydrive
-uritemplate
+# Google Sheets access (used by sheet_utils.py).
+# NOTE: oauth2client is deprecated by Google; candidate for replacement with
+# google-auth / google-auth-oauthlib in a future pass.
+apiclient==1.0.4
+attrdict==2.0.1
+dateparser==1.2.0
+httplib2==0.22.0
+oauth2client==4.1.3
+pydrive==1.3.1
+uritemplate==4.1.1
