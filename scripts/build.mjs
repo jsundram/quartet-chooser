@@ -113,6 +113,10 @@ async function build(){
     const pages = render_pages();
     for (const page of pages){
         const dir = path.join(dist, ...page.path.split('/').filter(Boolean));
+        // page paths come from data.json names/catalogs; never write outside dist/
+        if (!(dir + path.sep).startsWith(dist + path.sep)){
+            throw new Error(`page path escapes dist/: ${page.path}`);
+        }
         await mkdir(dir, { recursive: true });
         const html = page_html({ ...page, scripts: SCRIPTS[page.component] }, css);
         await writeFile(path.join(dir, 'index.html'), html);
