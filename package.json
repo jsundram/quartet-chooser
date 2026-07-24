@@ -4,31 +4,17 @@
   "private": true,
   "description": "Quartet Chooser",
   "author": "Jason Sundram",
-  "keywords": [
-    "gatsby"
-  ],
   "engines": {
     "node": ">=18 <21"
   },
   "scripts": {
-    "develop": "gatsby develop",
-    "start": "gatsby develop",
-    "build": "gatsby build",
-    "serve": "gatsby serve",
-    "clean": "gatsby clean",
+    "build": "node scripts/build.mjs",
+    "serve": "npx serve dist",
     "test": "node --test \"test/*.test.mjs\""
   },
   "dependencies": {
-    "gatsby": "^4.19.2",
-    "gatsby-plugin-manifest": "^4.19.0",
-    "gatsby-plugin-sitemap": "^5.22.0",
-    "gatsby-source-filesystem": "^4.19.0",
-    "gatsby-transformer-json": "^4.19.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
-  },
-  "overrides": {
-    "got": "^11.8.5"
   },
   "devDependencies": {
     "esbuild": "^0.28.1"

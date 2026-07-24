@@ -1,0 +1,5 @@
+# Build settings live in the repo so a deploy is atomic with its commit
+# (previously configured in the Netlify UI as `gatsby build` / `public`).
+[build]
+  command = "npm run build"
+  publish = "dist"
