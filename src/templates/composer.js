@@ -1,5 +1,4 @@
 import * as React from "react"
-import { Link } from 'gatsby'
 import {
     choose_one,
     get_portrait,
@@ -56,7 +55,7 @@ export default function Composer({ pageContext }) {
             </p>
             {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
             { works.length > 1 ?
-                (<p>Pick a <Link className={button} to={slugify(choose_one(works, false))}>random quartet 🔀</Link></p>) :
+                (<p>Pick a <a className={button} href={slugify(choose_one(works, false))}>random quartet 🔀</a></p>) :
                 null
             }
 
@@ -78,12 +77,12 @@ export default function Composer({ pageContext }) {
                         return (
                             <li key={grouping}>
                                 <i>{group_name(group)}&nbsp;</i>
-                                <Link className={button} to={slugify(choose_one(group, false))}>🔀</Link>
+                                <a className={button} href={slugify(choose_one(group, false))}>🔀</a>
                                 <ul>
                                 {
                                     group.map(work => (
                                         <li key={get_work_title(work)}>
-                                                <Link key={get_work_title(work)} to={slugify(work)}>{get_work_title(work)}</Link>
+                                                <a key={get_work_title(work)} href={slugify(work)}>{get_work_title(work)}</a>
                                                 &nbsp;in {work.key}
                                                 {nick(work)}
                                         </li>

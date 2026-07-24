@@ -1,25 +1,14 @@
 // Step 1: Import your component
 import * as React from 'react'
-import { useStaticQuery, graphql } from 'gatsby'
 import { COMPOSERS } from  "../lib/utils"
+import data from "../data/data.json"
 
 import Layout from '../components/layout'
 
 
 // Step 2: Define your component
 const AboutPage = () => {
-    const result = useStaticQuery(graphql`
-        query {
-            dataJson(parent: {}) {
-                greats {
-                  title
-                  composer
-                  catalog
-                }
-            }
-        }`
-    );
-    let work_count = result.dataJson.greats.length;
+    let work_count = data.greats.length;
 
     return (
         <Layout pageTitle="About">
