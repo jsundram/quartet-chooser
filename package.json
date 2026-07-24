@@ -18,11 +18,11 @@
     "clean": "gatsby clean"
   },
   "dependencies": {
-    "gatsby": "^4.19.2",
-    "gatsby-plugin-manifest": "^4.19.0",
-    "gatsby-plugin-sitemap": "^5.22.0",
-    "gatsby-source-filesystem": "^4.19.0",
-    "gatsby-transformer-json": "^4.19.0",
+    "gatsby": "^5.16.1",
+    "gatsby-plugin-manifest": "^5.16.0",
+    "gatsby-plugin-sitemap": "^6.16.0",
+    "gatsby-source-filesystem": "^5.16.0",
+    "gatsby-transformer-json": "^5.16.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
