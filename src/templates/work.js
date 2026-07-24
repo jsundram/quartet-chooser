@@ -15,7 +15,6 @@ function age(completed, birth){
 }
 
 export default function Work({ pageContext }) {
-    console.log(pageContext);
     const work = pageContext.node;
     const title = Utils.get_work_title(work);
     const composerInfo = pageContext.data.composers.find(c => c.name === work.composer);

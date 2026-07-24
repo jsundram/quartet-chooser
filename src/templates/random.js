@@ -6,10 +6,8 @@ import {get_work_title, slugify, choose_one} from  "../lib/utils"
 import Layout from '../components/layout'
 
 const RandomPage = ( {pageContext} ) => {
-    console.log(pageContext.node);
     const works = pageContext.node.greats;
     let work = choose_one(works)
-    console.log(work)
     let random = slugify(work);
     const isBrowser = typeof window !== `undefined`;
 

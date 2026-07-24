@@ -21,8 +21,7 @@
         * https://observablehq.com/@aias/patient-timeline
         * https://observablehq.com/@agware/timeline-in-office (linked visualizations with brushing)
         * https://user-images.githubusercontent.com/230541/130283717-71d42637-89e4-4794-82e6-9a8570bb527d.png from [here](https://github.com/observablehq/plot/blob/main/CHANGELOG.md)
-* fix [security problem with got](https://github.com/jsundram/quartet-chooser/security/dependabot/1) via upgrading ... somehow? 
-* Google analytics -- unique visitors and link clicks
+* Analytics -- add privacy-friendly / self-hosted event logging (unique visitors + link clicks), in the style of jsundram/AKM. (Google Analytics has been removed; this is a separate future pass.)
 * [SEO](https://www.google.com/search?q=quartet+roulette)
     * submit to [search console](https://search.google.com/search-console?resource_id=sc-domain:quartetroulette.com)
     * Gatsby [HEAD / SEO stuff ](https://www.gatsbyjs.com/docs/how-to/adding-common-features/adding-seo-component/)
@@ -47,6 +46,9 @@
 
 
 ## Done
+* Fix security problem with `got` (SSRF, nested got@9.6.0) via npm `overrides` forcing got>=11.8.5
+* Enable Dependabot (was misconfigured with empty package-ecosystem): npm + pip + github-actions
+* Remove Google Analytics entirely (dead gatsby-plugin-google-analytics; new analytics is a separate pass)
 * Hide random quartet button on composer page if only 1 quartet
 * hide opus nickname header if it doesn't apply
 * reformat work details.
