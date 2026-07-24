@@ -12,7 +12,7 @@ Can use coolors.co to generate a 5th color that fits into the palette:
 # these are nice greens: 51CB20, 6BAA75
 */
 
-.nav-links {
+.navLinks {
     display: flex;
     list-style: none;
     padding-left: 0;
@@ -22,12 +22,12 @@ Can use coolors.co to generate a 5th color that fits into the palette:
     /*width: fit-content;*/
 }
 
-.nav-link-item {
+.navLinkItem {
     /*padding-left: 2rem;*/
     padding-right: 2rem;
 }
 
-.nav-link-text {
+.navLinkText {
     color: #b82327;
     white-space: nowrap;
 }
@@ -56,14 +56,14 @@ a {
       padding: 96;
     }
 
-    .site-title {
+    .siteTitle {
       font-size: 3rem;
       color:#5dcbf5;
       font-weight: 700;
       text-decoration: none;
     }
 
-    .site-icon {
+    .siteIcon {
         height: 35px;
     }
 }
@@ -79,7 +79,7 @@ a {
       padding: 96;
     }
 
-    .site-title {
+    .siteTitle {
       font-size: 2rem;
       color:#5dcbf5;
       font-weight: 700;
@@ -87,7 +87,7 @@ a {
       text-decoration: none;
     }
 
-    .site-icon {
+    .siteIcon {
         height: 25px;
     }
 }
@@ -102,7 +102,7 @@ a {
       padding: 5;
     }
 
-    .site-title {
+    .siteTitle {
       font-size: 2rem;
       color:#5dcbf5;
       font-weight: 700;
@@ -110,7 +110,7 @@ a {
       text-decoration: none;
     }
 
-    .site-icon {
+    .siteIcon {
         height: 25px;
     }
 }
