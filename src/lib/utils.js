@@ -222,6 +222,7 @@ const HIDDEN = {"Boccherini": true};
 
 export {
     COMPOSERS,
+    HIDDEN,
     choose_one,
     get_image,
     get_portrait,

@@ -28,5 +28,8 @@
   },
   "overrides": {
     "got": "^11.8.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
   }
 }
