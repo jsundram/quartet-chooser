@@ -5,7 +5,7 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import { get_data, get_pages } from '../src/lib/routes'
-import { HIDDEN, slugify } from '../src/lib/utils'
+import { HIDDEN, composer_url, slugify } from '../src/lib/utils'
 import { SITE_URL } from '../src/lib/site'
 
 import { PathContext } from '../src/components/path-context'
@@ -52,7 +52,7 @@ function random_targets(){
     const d = get_data();
     return {
         'random': d.greats.filter(w => !HIDDEN[w.composer]).map(slugify),
-        'random-composer': d.composers.map(c => '/' + c.name.toLowerCase() + '/'),
+        'random-composer': d.composers.map(c => composer_url(c.name)),
     };
 }
 

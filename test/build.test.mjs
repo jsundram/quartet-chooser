@@ -3,7 +3,7 @@
 // Run with: npm test (builds dist/ first, then node --test).
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { before, describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
@@ -177,11 +177,15 @@ describe('client scripts', () => {
 });
 
 describe('link integrity', () => {
+    // exact-case set membership, not existsSync: existsSync is
+    // case-insensitive on macOS, so a /Haydn/ reference would pass
+    // locally and 404 on any case-sensitive host
+    let files;
+    before(() => {
+        files = new Set(walk(dist).map(p => path.relative(dist, p).split(path.sep).join('/')));
+    });
+
     test('every internal href/src on every page resolves', () => {
-        // exact-case set membership, not existsSync: existsSync is
-        // case-insensitive on macOS, so a /Haydn/ reference would pass
-        // locally and 404 on any case-sensitive host
-        const files = new Set(walk(dist).map(p => path.relative(dist, p).split(path.sep).join('/')));
         const missing = new Set();
         for (const route of routes_in(dist)){
             const html = read(route);
@@ -204,8 +208,8 @@ describe('link integrity', () => {
     test('static assets copied through', () => {
         for (const f of ['icon.png', 'play.png', 'favicon-32x32.png', 'manifest.webmanifest',
                          'Haydn.svg', 'Haydn-Signature.svg', 'Haydn-Original.svg',
-                         path.join('icons', 'icon-512x512.png')]){
-            assert.ok(existsSync(path.join(dist, f)), f);
+                         'icons/icon-512x512.png']){
+            assert.ok(files.has(f), f);
         }
     });
 });

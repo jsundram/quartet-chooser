@@ -21,7 +21,7 @@ export default function Work({ pageContext }) {
     let nickname = Utils.work_nickname(work, siblings);
     let nick = nickname ? ( <i>&nbsp;&mdash;&nbsp;{nickname}</i> ) : null;
     let imslp = w => w.imslp ? w.imslp : w.opus_imslp ? w.opus_imslp : null;
-    let composer_url = "/" + work.composer.toLowerCase() + "/";
+    let composer_url = Utils.composer_url(work.composer);
     let name = work.composer + ": " + title + " in " + work.key; // TOOD: nick?
     let aged = age(work.completed, composerInfo.birth);
 

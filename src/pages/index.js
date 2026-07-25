@@ -1,5 +1,5 @@
 import * as React from "react"
-import { COMPOSERS, get_portrait, get_signature } from  "../lib/utils"
+import { COMPOSERS, composer_url, get_portrait, get_signature } from  "../lib/utils"
 
 import Layout from '../components/layout'
 
@@ -17,7 +17,7 @@ const IndexPage = () => {
             <div className={wrapper}>
             {
                 COMPOSERS.map(composer => (
-                    <a href={"/" + composer.toLowerCase() + "/"} key={composer} className={composer_box}>
+                    <a href={composer_url(composer)} key={composer} className={composer_box}>
                         <img
                             alt={composer}
                             src={get_portrait(composer)}

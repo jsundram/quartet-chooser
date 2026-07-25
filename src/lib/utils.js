@@ -197,6 +197,10 @@ function slugify(w){
     return  '/' + w.composer.toLowerCase()  + '-' + work_fn(w) + '/';
 }
 
+function composer_url(name){
+    return '/' + name.toLowerCase() + '/';
+}
+
 function grouper(composer) {
     // returns the function that does the grouping over works
     return DISPATCHER[composer]['group_work'];
@@ -216,6 +220,7 @@ export {
     COMPOSERS,
     HIDDEN,
     choose_one,
+    composer_url,
     get_image,
     get_portrait,
     get_signature,
