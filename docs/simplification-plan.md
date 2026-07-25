@@ -77,8 +77,10 @@ closed by deleting the tree rather than by patching anything. The criticals were
 `webpack`, `loader-utils`, `@babel/traverse`, `form-data`, and `parse-url`. The other 2 were
 `spotipy` in `scripts/requirements.txt` — unrelated to the site, fixed by a version bump.
 
-A side effect worth noting: this also obsoleted a decade's backlog of Dependabot PRs, since each one
-proposed bumping a package that no longer exists.
+A side effect: it obsoleted the standing backlog of Dependabot PRs, some open since 2022, since each
+proposed bumping a package that no longer exists. All ten were closed on 2026-07-25, along with two
+human-authored PRs (#9, #14) whose content had already landed by other routes. Open PRs and open
+alerts are both now zero.
 
 ---
 
@@ -116,9 +118,15 @@ Worth keeping, because the same mistakes are available in Phases 2 and 3.
   but wasteful (build is 435ms; the whole deploy request is ~20s). Remove it, then **Clear cache and
   deploy** to flush the Gatsby-era `node_modules` and `.cache` out of Netlify's cache store.
 - Netlify's **UI build settings** (build command, publish directory, env vars, build plugins) still
-  exist outside the repo. They are superseded by `netlify.toml` for command and publish dir, but a
-  git-revert rollback falls back to them, so they should keep reading `gatsby build` / `public`
-  until Netlify is decommissioned.
+  exist outside the repo. `netlify.toml` supersedes the command and publish directory for normal
+  builds — but a git-revert rollback *deletes* `netlify.toml`, so that path falls back to the UI and
+  only works if the UI still reads `gatsby build` / `public`.
+
+  **Unverified as of 2026-07-25**, and post-merge deploy logs can no longer tell you: every
+  production build now reports `build.command from netlify.toml`. To check, open a **pre-merge**
+  production deploy's log and look for `$ gatsby build`, or read the settings form at
+  `Project configuration → Build & deploy`. Until that is confirmed, prefer the rollback that needs
+  no rebuild and no build config at all: **Publish deploy** on the last Gatsby production deploy.
 
 ---
 
