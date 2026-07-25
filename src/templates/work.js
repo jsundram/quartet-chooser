@@ -4,9 +4,7 @@ import * as Utils from "../lib/utils"
 import Layout from '../components/layout'
 
 import {
-    tableMobile,
     tableBig,
-    playIcon
 } from './work.module.css'
 
 function age(completed, birth){
@@ -43,23 +41,16 @@ export default function Work({ pageContext }) {
         return "table"; // return "numerals";
     }
 
+    // desktop rendering; /js/work.js swaps in the mobile play links and
+    // table layout on touch devices
     let player = function (m){
-        // let url = "https://open.spotify.com/embed?uri=" + m.spotify;
-        if (Utils.is_mobile()) {
-            return (<a
-                href={m.spotify} className={playIcon}>
-                    <img src="/play.png" alt="play" className={playIcon}/>
-                </a>)
-        }
-        else {
-            return (<iframe
-                src={m.spotify.replace("/track/", "/embed/track/")}
-                title={m.title}
-                width="100%" height="80" frameBorder="0" allowFullScreen=""
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy" >
-            </iframe>);
-        }
+        return (<iframe
+            src={m.spotify.replace("/track/", "/embed/track/")}
+            title={m.title}
+            width="100%" height="80" frameBorder="0" allowFullScreen=""
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy" >
+        </iframe>);
     }
 
     const items = mvmts.map(m => (
@@ -71,7 +62,7 @@ export default function Work({ pageContext }) {
 
     // mvmt #, mvmt title, link
     const mvmt_table = (
-        <table className={Utils.is_mobile() ? tableMobile : tableBig}>
+        <table className={tableBig}>
             <thead>
                 <tr>
                     <th>#</th>
