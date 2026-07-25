@@ -1,5 +1,7 @@
 # Simplifying Quartet Roulette — build & deployment
 
+> **Status (2026-07-25):** Phase 1 done and live. Phase 1.5 next. Phases 2–3 not started.
+
 ## Goal
 
 Short-term: **remove the security surface by dropping every non-vital dependency.** End state:
@@ -59,6 +61,24 @@ Independent decisions, changed **one at a time**, each reversible:
 Achieved. The cutover deploy log reads `added 2 packages, removed 1337 packages, and changed 3
 packages in 4s`; `npm audit` reports 0 vulnerabilities and the `got` SSRF override is gone with the
 transitive tree that needed it.
+
+The plan predicted "effectively all of the current CVEs disappear, because they were all Gatsby's,
+not React's." Measured after the cutover — **144 Dependabot alerts fixed, 0 open**:
+
+| severity | count |
+|---|---|
+| critical | 7 |
+| high | 73 |
+| medium | 49 |
+| low | 15 |
+
+142 of the 144 were npm alerts in `package-lock.json`, every one a Gatsby transitive dependency,
+closed by deleting the tree rather than by patching anything. The criticals were `shell-quote`,
+`webpack`, `loader-utils`, `@babel/traverse`, `form-data`, and `parse-url`. The other 2 were
+`spotipy` in `scripts/requirements.txt` — unrelated to the site, fixed by a version bump.
+
+A side effect worth noting: this also obsoleted a decade's backlog of Dependabot PRs, since each one
+proposed bumping a package that no longer exists.
 
 ---
 
