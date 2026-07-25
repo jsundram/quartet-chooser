@@ -155,6 +155,37 @@ describe('composer 🔀 shuffle links', () => {
     });
 });
 
+describe('client scripts', () => {
+    const work_js = () => readFileSync(path.join(dist, 'js', 'work.js'), 'utf8');
+
+    test('every Spotify embed src round-trips through work.js\'s reversal', () => {
+        // work.js turns iframe src into a play link via
+        // src.replace('/embed/track/', '/track/'); both halves must hold
+        assert.ok(work_js().includes('"/embed/track/"'));
+        assert.ok(work_js().includes('"/track/"'));
+        let embeds = 0;
+        for (const route of routes_in(dist)){
+            for (const [, src] of read(route).matchAll(/<iframe[^>]*\bsrc="([^"]*)"/g)){
+                // ~70 movements (mostly Boccherini) have no spotify link in
+                // data.json and render src="" — pre-existing, matches prod
+                if (src === '') continue;
+                assert.match(src, /^https:\/\/open\.spotify\.com\/embed\/track\//, `${route}: ${src}`);
+                embeds++;
+            }
+        }
+        assert.ok(embeds >= 800, `found ${embeds} embeds`); // ~846 linked movements
+    });
+
+    test('work.js uses the hashed class names from the page CSS', () => {
+        const html = read('/haydn-opus-76-3/');
+        for (const suffix of ['tableMobile', 'playIcon']){
+            const m = work_js().match(new RegExp(`"([\\w-]*${suffix})"`));
+            assert.ok(m, `work.js references a ${suffix} class`);
+            assert.ok(html.includes('.' + m[1] + '{'), `${m[1]} exists in the inlined CSS`);
+        }
+    });
+});
+
 describe('link integrity', () => {
     test('every internal href/src on every page resolves', () => {
         const missing = new Set();
