@@ -80,7 +80,8 @@ async function build(){
         format: 'esm',
         packages: 'external', // react/react-dom resolve from node_modules
         loader: { '.js': 'jsx' },
-        target: 'node22', // matches engines/.nvmrc
+        target: 'node22', // the engines floor, not .nvmrc: this must run
+                          // on the oldest Node we claim to support
         outdir: ssr,
         outExtension: { '.js': '.mjs' },
     });

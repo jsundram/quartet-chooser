@@ -139,6 +139,12 @@ re-measured afterward and is unchanged.
   the pin lives in `Build & deploy → Dependency management` (Node.js 18.x, now EOL). Set to 22.x to
   match `.nvmrc`/`netlify.toml`. The toml's `NODE_VERSION = "22"` had been overriding it; keep that
   line as the in-repo statement of record.
+  - **Superseded 2026-07-25** (#33): now **24** in all three places (`.nvmrc`, `netlify.toml`, the
+    UI). 22 was never a decision against 24 — it was picked as "current LTS" when unpinning EOL
+    Node 18, and 24 has been Active LTS since Oct 2025. Also a correction to the sentence above:
+    the #33 build log reads `Attempting Node.js version '24' from .nvmrc`, so Netlify resolved
+    `.nvmrc`, not `NODE_VERSION`. Since both agreed, that deploy can't actually establish which
+    wins — treat the precedence claim above as unproven, not established.
 - **Post processing**: **Legacy Prerendering was enabled** (a founding-era leftover; SPA-oriented,
   deprecated by Netlify, useless for static HTML) — disabled. **Pretty URLs was enabled** —
   disabled, and this turned out to be **the source of the lowercase 301s** (see the corrected
