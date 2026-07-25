@@ -11,5 +11,6 @@ The code behind https://quartetroulette.com. See more at [https://quartetroulett
 * `npm run build` — render the site to `dist/` (React + esbuild static site generator, `scripts/build.mjs`)
 * `npm run serve` — preview `dist/` locally
 * `npm test` — build and verify output (routes, sitemap, links)
+* `npm run test:update` — regenerate `test/fixtures/` after intentionally changing the route set (new composer/work); review the diff
 
 Deploys via Netlify on push to `main` (see `netlify.toml`).
