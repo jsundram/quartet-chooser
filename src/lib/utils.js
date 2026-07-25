@@ -1,13 +1,5 @@
 export const name = 'utils';
 
-function choose_one(a, hidden=true){
-    // For an array a, return a random element ...
-    // as long as it wasn't composed by a HIDDEN composer!
-    let b = hidden ? a.filter(i => !HIDDEN[i.composer]) : a;
-    const ix = Math.floor(Math.random() * b.length);
-    return b[ix];
-}
-
 function groupby(x, key){
     // https://stackoverflow.com/questions/14446511/
     // disabling lint for my copy pasta ...
@@ -219,7 +211,6 @@ const HIDDEN = {"Boccherini": true};
 export {
     COMPOSERS,
     HIDDEN,
-    choose_one,
     composer_url,
     get_image,
     get_portrait,

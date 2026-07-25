@@ -1,6 +1,5 @@
 import * as React from "react"
 import {
-    choose_one,
     get_portrait,
     get_signature,
     get_work_title,
@@ -32,10 +31,11 @@ export default function Composer({ pageContext }) {
     let dash = s => s !== "" ? wrap(s) : null;
     let nick = w => dash(work_nickname(w, siblings[w.catalog]));
 
-    // 🔀 links: the static href is a valid build-time choice (the no-JS
-    // fallback); /js/shuffle.js re-randomizes from data-shuffle on each view.
+    // 🔀 links: /js/shuffle.js sets href from data-shuffle on every view and
+    // on bfcache restore, so the static href is only a placeholder. Fixed,
+    // not random, so the build stays reproducible.
     let shuffle = list => ({
-        href: slugify(choose_one(list, false)),
+        href: slugify(list[0]),
         'data-shuffle': list.map(slugify).join(' '),
     });
 

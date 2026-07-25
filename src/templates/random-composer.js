@@ -1,14 +1,15 @@
 // Step 1: Import your component
 import * as React from 'react'
-import { choose_one, composer_url } from  "../lib/utils"
+import { composer_url } from  "../lib/utils"
 
 import Layout from '../components/layout'
 
 const RandomPage = ( {pageContext} ) => {
-    // the actual redirect happens in /js/random-composer.js; this static
-    // page is the no-JS fallback with a valid build-time choice
+    // /js/random-composer.js does the redirect and picks afresh on every
+    // visit; this static link is only what shows in the instant before that.
+    // Fixed, not random, so the build stays reproducible.
     const composers = pageContext.node.composers;
-    let composer = choose_one(composers)
+    let composer = composers[0]
     let random = composer_url(composer.name);
 
     return (
