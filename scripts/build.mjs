@@ -10,7 +10,13 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const dist = path.join(root, 'dist');
-const ssr = path.join(root, '.cache', 'ssg'); // .cache/ is gitignored
+const cache = path.join(root, '.cache'); // gitignored; may hold stale Gatsby output
+const ssr = path.join(cache, 'ssg');
+
+// what ships to browsers (client JS + CSS); explicit so syntax lowering and
+// CSS prefixing (e.g. -webkit-sticky for Safari <= 12) are a choice, not an
+// accident of esbuild's defaults
+const BROWSER_TARGET = ['chrome80', 'edge80', 'firefox75', 'safari12'];
 
 function xml_escape(s){
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -22,12 +28,7 @@ function script_json(value){
     return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
-const ICON_SIZES = [48, 72, 96, 144, 192, 256, 384, 512];
-
-function page_html({ head, body, scripts }, css){
-    const icons = ICON_SIZES.map(s =>
-        `<link rel="apple-touch-icon" sizes="${s}x${s}" href="/icons/icon-${s}x${s}.png"/>`
-    ).join('');
+function page_html({ head, body, scripts }, css, icons){
     return '<!DOCTYPE html><html lang="en"><head>'
         + '<meta charset="utf-8"/>'
         + '<meta http-equiv="x-ua-compatible" content="ie=edge"/>'
@@ -62,7 +63,14 @@ function sitemap_xml(site_url, paths){
 
 async function build(){
     await rm(dist, { recursive: true, force: true });
-    await rm(ssr, { recursive: true, force: true });
+    await rm(cache, { recursive: true, force: true });
+
+    // apple-touch-icon links, derived from the manifest so there is one
+    // source of truth for the icon set
+    const manifest = JSON.parse(await readFile(path.join(root, 'static', 'manifest.webmanifest'), 'utf8'));
+    const icons = manifest.icons.map(i =>
+        `<link rel="apple-touch-icon" sizes="${i.sizes}" href="${i.src}"/>`
+    ).join('');
 
     // 1. Bundle the SSR entry (JSX + CSS modules + data.json) for Node.
     await esbuild.build({
@@ -72,6 +80,7 @@ async function build(){
         format: 'esm',
         packages: 'external', // react/react-dom resolve from node_modules
         loader: { '.js': 'jsx' },
+        target: 'node22', // matches engines/.nvmrc
         outdir: ssr,
         outExtension: { '.js': '.mjs' },
     });
@@ -82,7 +91,11 @@ async function build(){
     // 2. The bundle's CSS output (all modules' styles) gets inlined into
     // every page, as Gatsby did.
     const raw_css = await readFile(path.join(ssr, 'render.css'), 'utf8');
-    const css = (await esbuild.transform(raw_css, { loader: 'css', minify: true })).code.trim();
+    const css = (await esbuild.transform(raw_css, {
+        loader: 'css',
+        minify: true,
+        target: BROWSER_TARGET,
+    })).code.trim();
 
     // 3. Client scripts: the touch-device player swap for work pages, the
     // 🔀-link re-randomizer for composer pages, and the random-redirect
@@ -94,6 +107,7 @@ async function build(){
         ],
         bundle: true,
         minify: true,
+        target: BROWSER_TARGET,
         define: {
             TABLE_MOBILE: script_json(CLASS_NAMES.tableMobile),
             PLAY_ICON: script_json(CLASS_NAMES.playIcon),
@@ -101,6 +115,7 @@ async function build(){
         outdir: path.join(dist, 'js'),
     });
 
+    await mkdir(path.join(dist, 'js'), { recursive: true }); // not just an esbuild side effect
     const targets = random_targets();
     for (const [name, slugs] of Object.entries(targets)){
         const js = `var t=${script_json(slugs)};location.replace(t[Math.floor(Math.random()*t.length)]);\n`;
@@ -123,7 +138,7 @@ async function build(){
             throw new Error(`page path escapes dist/: ${page.path}`);
         }
         await mkdir(dir, { recursive: true });
-        const html = page_html({ ...page, scripts: SCRIPTS[page.component] }, css);
+        const html = page_html({ ...page, scripts: SCRIPTS[page.component] }, css, icons);
         await writeFile(path.join(dir, 'index.html'), html);
         if (page.path === '/404/'){
             await writeFile(path.join(dist, '404.html'), html); // Netlify's custom 404
