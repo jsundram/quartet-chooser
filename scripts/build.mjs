@@ -84,17 +84,21 @@ async function build(){
     const raw_css = await readFile(path.join(ssr, 'render.css'), 'utf8');
     const css = (await esbuild.transform(raw_css, { loader: 'css', minify: true })).code.trim();
 
-    // 3. Client scripts: the touch-device player swap for work pages, and
-    // the random-redirect scripts with their target lists baked in.
+    // 3. Client scripts: the touch-device player swap for work pages, the
+    // 🔀-link re-randomizer for composer pages, and the random-redirect
+    // scripts with their target lists baked in.
     await esbuild.build({
-        entryPoints: [path.join(root, 'src', 'client', 'work.js')],
+        entryPoints: [
+            path.join(root, 'src', 'client', 'work.js'),
+            path.join(root, 'src', 'client', 'shuffle.js'),
+        ],
         bundle: true,
         minify: true,
         define: {
             TABLE_MOBILE: script_json(CLASS_NAMES.tableMobile),
             PLAY_ICON: script_json(CLASS_NAMES.playIcon),
         },
-        outfile: path.join(dist, 'js', 'work.js'),
+        outdir: path.join(dist, 'js'),
     });
 
     const targets = random_targets();
@@ -104,6 +108,7 @@ async function build(){
     }
 
     const SCRIPTS = {
+        'composer': '<script src="/js/shuffle.js"></script>',
         'work': '<script src="/js/work.js"></script>',
         'random': '<script src="/js/random.js"></script>',
         'random-composer': '<script src="/js/random-composer.js"></script>',

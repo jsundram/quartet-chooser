@@ -31,6 +31,13 @@ export default function Composer({ pageContext }) {
     let dash = s => s !== "" ? wrap(s) : null;
     let nick = w => dash(work_nickname(w, siblings[w.catalog]));
 
+    // 🔀 links: the static href is a valid build-time choice (the no-JS
+    // fallback); /js/shuffle.js re-randomizes from data-shuffle on each view.
+    let shuffle = list => ({
+        href: slugify(choose_one(list, false)),
+        'data-shuffle': list.map(slugify).join(' '),
+    });
+
     let day = function(s){
         let d = new Date(s);
         return "https://daily-composers.netlify.app/" + (d.getMonth() + 1) + "-" + d.getDate();
@@ -55,7 +62,7 @@ export default function Composer({ pageContext }) {
             </p>
             {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
             { works.length > 1 ?
-                (<p>Pick a <a className={button} href={slugify(choose_one(works, false))}>random quartet 🔀</a></p>) :
+                (<p>Pick a <a className={button} {...shuffle(works)}>random quartet 🔀</a></p>) :
                 null
             }
 
@@ -77,7 +84,7 @@ export default function Composer({ pageContext }) {
                         return (
                             <li key={grouping}>
                                 <i>{group_name(group)}&nbsp;</i>
-                                <a className={button} href={slugify(choose_one(group, false))}>🔀</a>
+                                <a className={button} {...shuffle(group)}>🔀</a>
                                 <ul>
                                 {
                                     group.map(work => (
