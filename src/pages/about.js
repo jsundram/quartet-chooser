@@ -11,7 +11,7 @@ const AboutPage = () => {
     let work_count = data.greats.length;
 
     return (
-        <Layout pageTitle="About">
+        <Layout>
             <h2>About</h2>
             <p>
                 Quartet Roulette is a project by some of <a href="http://www.haydnenthusiasts.org/about.html">The Haydn Enthusiasts</a> to help break the "what should we play" indecision by codifying a purposely small list of "standard" rep and helping people by adding a "random" button to figure out what to play next.
@@ -47,6 +47,10 @@ const AboutPage = () => {
         </Layout>
     )
 }
+
+export const Head = () => (
+    <title>About | Quartet Roulette</title>
+)
 
 // Step 3: Export your component
 export default AboutPage

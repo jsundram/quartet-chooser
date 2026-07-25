@@ -81,6 +81,16 @@ describe('page content', () => {
         }
     });
 
+    test('exactly one <title>, in <head>, on every page', () => {
+        // Layout used to render a <title> into <body> (issue #32): duplicated
+        // on pages with a Head export, the only title on pages without one
+        for (const route of routes_in(dist)){
+            const html = read(route);
+            assert.equal((html.match(/<title>/g) || []).length, 1, route + ' has one title');
+            assert.ok(html.indexOf('<title>') < html.indexOf('</head>'), route + ' title is in head');
+        }
+    });
+
     test('every page inlines the stylesheet and links the manifest', () => {
         for (const route of ['/', '/haydn/', '/haydn-opus-76-3/', '/about/', '/404/']){
             const html = read(route);

@@ -9,7 +9,7 @@ import Layout from '../components/layout'
 // /Haydn/ once we are on a case-sensitive host -- and one click should fix it.
 const NotFoundPage = () => {
   return (
-    <Layout pageTitle="Not found">
+    <Layout>
       <h1>Page not found</h1>
       <p>
         Sorry{" "}
@@ -31,5 +31,9 @@ const NotFoundPage = () => {
     </Layout>
   )
 }
+
+export const Head = () => (
+  <title>Not found | Quartet Roulette</title>
+)
 
 export default NotFoundPage

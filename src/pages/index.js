@@ -14,7 +14,7 @@ import {
 // markup
 const IndexPage = () => {
     return (
-        <Layout pageTitle="">
+        <Layout>
             <div className={wrapper}>
             {
                 COMPOSERS.map(composer => (

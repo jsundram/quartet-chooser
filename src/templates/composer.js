@@ -46,7 +46,7 @@ export default function Composer({ pageContext }) {
     let title = "See composers born on this day!";
 
     return (
-        <Layout pageTitle={composer.full_name}>
+        <Layout>
             <h1><a href={composer.wikipedia}>
                 <img src={get_signature(composer.name)} alt={composer.full_name} className={signature} />
             </a></h1>

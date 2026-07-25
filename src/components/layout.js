@@ -19,10 +19,7 @@ import {
 // /random-composer stay real entry-point URLs.
 const SHUFFLE = random_targets();
 
-const Layout = ({ pageTitle, children }) => {
-  let title = pageTitle ? (pageTitle + " | ") : "";
-  title += SITE_TITLE;
-
+const Layout = ({ children }) => {
   // aria-current="page" on the link matching the rendered page,
   // as gatsby-link used to do
   const path = React.useContext(PathContext);
@@ -30,8 +27,6 @@ const Layout = ({ pageTitle, children }) => {
 
   return (
     <main className={container}>
-      <title>{title}</title>
-
       <a className={siteTitle} href="/" aria-current={current('/')}>{SITE_TITLE}</a>
       &nbsp;&nbsp;<img src="/icon.png" alt="site icon" className={siteIcon}/>
 
