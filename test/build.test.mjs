@@ -115,6 +115,38 @@ describe('random redirects', () => {
     });
 });
 
+describe('composer 🔀 shuffle links', () => {
+    const composer_routes = fixtures('routes.json').filter(r => /^\/[A-Z]/.test(r));
+    const shuffles = html => [...html.matchAll(/data-shuffle="([^"]*)"/g)].map(m => m[1].split(' '));
+
+    test('every multi-work composer page has shuffle links and the script', () => {
+        for (const route of composer_routes){
+            const html = read(route);
+            const lists = shuffles(html);
+            if (lists.length > 0){
+                assert.ok(html.includes('<script src="/js/shuffle.js">'), route + ' loads shuffle.js');
+            }
+        }
+        // spot-check: Haydn groups by opus, Bach has a single work
+        assert.ok(shuffles(read('/Haydn/')).length > 1);
+        assert.equal(shuffles(read('/Bach/')).length, 0);
+    });
+
+    test('every shuffle target is a real same-composer route', () => {
+        const routes = new Set(fixtures('routes.json'));
+        for (const route of composer_routes){
+            const composer = route.replaceAll('/', '').toLowerCase();
+            for (const list of shuffles(read(route))){
+                assert.ok(list.length > 1, route + ' shuffle list has choices');
+                for (const slug of list){
+                    assert.ok(routes.has(slug), `${route}: ${slug} is a route`);
+                    assert.ok(slug.startsWith('/' + composer + '-'), `${route}: ${slug} same composer`);
+                }
+            }
+        }
+    });
+});
+
 describe('link integrity', () => {
     test('every internal href/src on every page resolves', () => {
         const missing = new Set();
