@@ -132,13 +132,17 @@ async function build(){
     // 4. Render every page.
     const pages = render_pages();
     for (const page of pages){
+        let scripts = SCRIPTS[page.component];
+        if (page.component === 'composer' && !page.body.includes('data-shuffle')){
+            scripts = undefined; // single-work composers have no 🔀 to re-randomize
+        }
         const dir = path.join(dist, ...page.path.split('/').filter(Boolean));
         // page paths come from data.json names/catalogs; never write outside dist/
         if (!(dir + path.sep).startsWith(dist + path.sep)){
             throw new Error(`page path escapes dist/: ${page.path}`);
         }
         await mkdir(dir, { recursive: true });
-        const html = page_html({ ...page, scripts: SCRIPTS[page.component] }, css, icons);
+        const html = page_html({ ...page, scripts }, css, icons);
         await writeFile(path.join(dir, 'index.html'), html);
         if (page.path === '/404/'){
             await writeFile(path.join(dist, '404.html'), html); // Netlify's custom 404
