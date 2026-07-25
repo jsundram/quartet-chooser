@@ -2,7 +2,7 @@
 # Docs: https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 version: 2
 updates:
-  # JavaScript / Gatsby app (package.json at repo root)
+  # JavaScript (package.json at repo root; react + esbuild SSG)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:

@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 
 import { get_data, get_pages } from '../src/lib/routes'
 import { HIDDEN, slugify } from '../src/lib/utils'
-import { SITE_TITLE, SITE_URL } from '../src/lib/site'
+import { SITE_URL } from '../src/lib/site'
 
 import { PathContext } from '../src/components/path-context'
 
@@ -60,4 +60,4 @@ function random_targets(){
 // that swaps Spotify embeds for play links on touch devices needs them.
 const CLASS_NAMES = { tableMobile, playIcon };
 
-export { CLASS_NAMES, SITE_TITLE, SITE_URL, random_targets, render_pages };
+export { CLASS_NAMES, SITE_URL, random_targets, render_pages };
