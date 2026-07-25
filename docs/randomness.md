@@ -54,27 +54,17 @@ The redirect pages stay, thin: no rendered link, script inlined, redirect fired 
 
 ## Status
 
-Holds today: 1, 2, 4. `choose_one()` is gone — it rolled dice at build time to fill a slot that
-`shuffle.js` overwrites on every view, which is what made every deploy report changed pages.
+All six principles hold.
 
-Still open:
-
-- **Principle 3** — nav 🔀 bounces through a redirect page while composer 🔀 randomizes in place.
-- **Principle 5** — a nav 🔀 click costs two extra round-trips: `/random/` is 4,943 bytes, and it
-  then fetches `/js/random.js` (3,249 bytes) *serially* before it can decide where to go. That
-  script has exactly one consumer, so the external file buys no cache reuse — it is pure latency.
-- **Redirect-page weight** — `/random/` inlines the entire site stylesheet for a page that renders
-  nothing and lives ~50 ms.
-
-## Implementation notes for the open items
-
-Two things the nav change drags along, neither obvious from the diff it will produce:
-
-- **`shuffle.js` currently loads only on composer pages** (the `SCRIPTS` map in `scripts/build.mjs`).
-  The nav lives in the layout, so putting `data-shuffle` on nav links means the script has to load
-  everywhere.
-- **That breaks `test/build.test.mjs`**, which asserts a page loads `shuffle.js` *iff* it has
-  shuffle links. Once every page has a nav shuffle link the invariant collapses to "every page,"
-  so the test needs rewriting rather than re-running — and the useful assertion it was making
-  (composer pages with no multi-work group must not load the script) needs somewhere else to live,
-  or it is silently lost.
+- `choose_one()` is gone — it rolled dice at build time to fill a slot that `shuffle.js`
+  overwrites on every view, which is what made every deploy report changed pages.
+- The nav 🔀 links carry `data-shuffle` and `shuffle.js` loads on every page, so a nav 🔀 click
+  is one direct navigation (was 4,943 bytes of `/random/` plus a *serial* 3,249-byte
+  `/js/random.js` fetch before the redirect could even be decided).
+- The redirect pages are emitted directly by `scripts/build.mjs`, not rendered from React
+  templates: no layout, no stylesheet, redirect script inlined so it fires during parse. They
+  remain only as entry points for typed and bookmarked URLs — in-site clicks never reach them,
+  and they are not in the sitemap (principle 6 asks for a URL, not an indexed blank page).
+- The old test invariant — a page loads `shuffle.js` *iff* it has shuffle links — collapsed to
+  "every page" and was rewritten; its useful half survives as "a single-work composer page has
+  no 🔀 beyond the nav pair."

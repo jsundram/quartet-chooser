@@ -86,7 +86,7 @@ async function build(){
         outExtension: { '.js': '.mjs' },
     });
 
-    const { CLASS_NAMES, SITE_URL, random_targets, render_pages } =
+    const { CLASS_NAMES, SITE_TITLE, SITE_URL, random_targets, render_pages } =
         await import(pathToFileURL(path.join(ssr, 'render.mjs')));
 
     // 2. The bundle's CSS output (all modules' styles) gets inlined into
@@ -98,9 +98,8 @@ async function build(){
         target: BROWSER_TARGET,
     })).code.trim();
 
-    // 3. Client scripts: the touch-device player swap for work pages, the
-    // 🔀-link re-randomizer for composer pages, and the random-redirect
-    // scripts with their target lists baked in.
+    // 3. Client scripts: the touch-device player swap for work pages and
+    // the 🔀-link randomizer, which every page loads for its nav links.
     await esbuild.build({
         entryPoints: [
             path.join(root, 'src', 'client', 'work.js'),
@@ -116,26 +115,31 @@ async function build(){
         outdir: path.join(dist, 'js'),
     });
 
-    await mkdir(path.join(dist, 'js'), { recursive: true }); // not just an esbuild side effect
+    // 4. The redirect pages, kept as entry points for typed and bookmarked
+    // URLs; in-site 🔀 clicks never come here. Thin on purpose: no layout,
+    // no stylesheet, script inlined so the redirect fires during parse.
     const targets = random_targets();
-    for (const [name, slugs] of Object.entries(targets)){
-        const js = `var t=${script_json(slugs)};location.replace(t[Math.floor(Math.random()*t.length)]);\n`;
-        await writeFile(path.join(dist, 'js', `${name}.js`), js);
+    const redirects = [
+        { path: '/random', title: 'Random Quartet', slugs: targets['random'] },
+        { path: '/random-composer', title: 'Random Composer', slugs: targets['random-composer'] },
+    ];
+    for (const r of redirects){
+        const html = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>'
+            + `<title>${r.title} | ${SITE_TITLE}</title>`
+            + `<script>var t=${script_json(r.slugs)};location.replace(t[Math.floor(Math.random()*t.length)]);</script>`
+            + '</head><body></body></html>';
+        const dir = path.join(dist, ...r.path.split('/').filter(Boolean));
+        await mkdir(dir, { recursive: true });
+        await writeFile(path.join(dir, 'index.html'), html);
     }
 
-    const SCRIPTS = {
-        'composer': '<script src="/js/shuffle.js"></script>',
-        'work': '<script src="/js/work.js"></script>',
-        'random': '<script src="/js/random.js"></script>',
-        'random-composer': '<script src="/js/random-composer.js"></script>',
-    };
-
-    // 4. Render every page.
+    // 5. Render every page. The nav's 🔀 links put data-shuffle on every
+    // page, so every page loads shuffle.js.
     const pages = render_pages();
     for (const page of pages){
-        let scripts = SCRIPTS[page.component];
-        if (page.component === 'composer' && !page.body.includes('data-shuffle')){
-            scripts = undefined; // single-work composers have no 🔀 to re-randomize
+        let scripts = '<script src="/js/shuffle.js"></script>';
+        if (page.component === 'work'){
+            scripts += '<script src="/js/work.js"></script>';
         }
         const dir = path.join(dist, ...page.path.split('/').filter(Boolean));
         // page paths come from data.json names/catalogs; never write outside dist/
@@ -150,21 +154,23 @@ async function build(){
         }
     }
 
-    // 5. Sitemap: every page except /404/, at the same URL as gatsby-plugin-sitemap.
+    // 6. Sitemap: every rendered page except /404/, at the same URL as
+    // gatsby-plugin-sitemap. The redirect pages are deliberately absent —
+    // they exist to be typed and bookmarked, not to be indexed as blanks.
     const sitemap = sitemap_xml(SITE_URL, pages.map(p => p.path).filter(p => p !== '/404/'));
     await mkdir(path.join(dist, 'sitemap'), { recursive: true });
     for (const [name, xml] of Object.entries(sitemap)){
         await writeFile(path.join(dist, 'sitemap', name), xml);
     }
 
-    // 6. Static assets, copied through as-is.
+    // 7. Static assets, copied through as-is.
     await cp(path.join(root, 'static'), dist, {
         recursive: true,
         filter: src => path.basename(src) !== '.DS_Store',
     });
 
     await rm(ssr, { recursive: true, force: true });
-    console.log(`built ${pages.length} pages to dist/`);
+    console.log(`built ${pages.length + redirects.length} pages to dist/`);
 }
 
 await build();

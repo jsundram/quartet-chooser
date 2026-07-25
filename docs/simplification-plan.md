@@ -110,7 +110,8 @@ Worth keeping, because the same mistakes are available in Phases 2 and 3.
   behaviors, not one: the random-page redirects (the plan anticipated this), the touch-device
   Spotify-embed swap, and re-randomizing the composer pages' 🔀 links on each view. Missing the
   third shipped a real regression — 56 links across 14 pages that returned the same "random"
-  quartet until the next deploy. Now `/js/random*.js`, `/js/work.js`, `/js/shuffle.js`.
+  quartet until the next deploy. Shipped as `/js/random*.js`, `/js/work.js`, `/js/shuffle.js`
+  (the redirect scripts have since been inlined into their pages — see `randomness.md`).
 - **"Verify parity: diff `dist/` against `public/`, click through a few pages" was insufficient.**
   It is exactly the method that misses the frozen-🔀 bug: the static HTML is shaped identically
   whether the href is re-randomized on load or frozen forever, and clicking the link *works* — it

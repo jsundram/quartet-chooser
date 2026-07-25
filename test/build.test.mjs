@@ -65,7 +65,6 @@ describe('page content', () => {
     test('active nav link carries aria-current', () => {
         const count = html => (html.match(/aria-current="page"/g) || []).length;
         assert.equal(count(read('/')), 2, 'home: site title + Home nav');
-        assert.equal(count(read('/random/')), 1, 'random: Quartet nav');
         assert.equal(count(read('/about/')), 1, 'about: About nav');
         assert.equal(count(read('/haydn/')), 0, 'composer pages: none');
         assert.equal(count(read('/404/')), 0, '404: no nav item matches');
@@ -83,7 +82,7 @@ describe('page content', () => {
     });
 
     test('every page inlines the stylesheet and links the manifest', () => {
-        for (const route of ['/', '/haydn/', '/about/', '/random/', '/404/']){
+        for (const route of ['/', '/haydn/', '/haydn-opus-76-3/', '/about/', '/404/']){
             const html = read(route);
             assert.match(html, /<style>.*navLinks/s, route + ' has inlined CSS');
             assert.ok(html.includes('rel="manifest"'), route + ' links manifest');
@@ -91,57 +90,78 @@ describe('page content', () => {
     });
 });
 
-describe('random redirects', () => {
-    const targets = name => {
-        const js = readFileSync(path.join(dist, 'js', name), 'utf8');
-        return JSON.parse(js.slice(js.indexOf('['), js.indexOf(']') + 1));
+describe('random redirect pages', () => {
+    const REDIRECTS = ['/random/', '/random-composer/'];
+    const targets = route => {
+        const m = read(route).match(/<script>var t=(\[[^\]]*\]);location\.replace/);
+        assert.ok(m, route + ' inlines the redirect script');
+        return JSON.parse(m[1]);
     };
 
-    test('random pages load their redirect scripts', () => {
-        assert.ok(read('/random/').includes('<script src="/js/random.js">'));
-        assert.ok(read('/random-composer/').includes('<script src="/js/random-composer.js">'));
+    test('thin shells: inline redirect, no stylesheet, no external requests', () => {
+        // these pages render nothing and live for one script statement, so
+        // they must not inline the site CSS or fetch a script before they
+        // can decide where to go
+        for (const route of REDIRECTS){
+            const html = read(route);
+            targets(route); // asserts the inline script is present
+            assert.ok(!html.includes('<style>'), route + ' has no stylesheet');
+            assert.ok(!/(?:href|src)="/.test(html), route + ' triggers no other request');
+        }
     });
 
     test('all redirect targets are real routes', () => {
         const routes = new Set(fixtures('routes.json'));
-        for (const name of ['random.js', 'random-composer.js']){
-            const t = targets(name);
+        for (const route of REDIRECTS){
+            const t = targets(route);
             assert.ok(t.length > 0);
-            for (const slug of t) assert.ok(routes.has(slug), `${name}: ${slug}`);
+            for (const slug of t) assert.ok(routes.has(slug), `${route}: ${slug}`);
         }
     });
 
     test('HIDDEN composers excluded from random quartets, not random composers', () => {
-        assert.ok(!targets('random.js').some(s => s.startsWith('/boccherini-')));
-        assert.ok(targets('random-composer.js').includes('/boccherini/'));
+        assert.ok(!targets('/random/').some(s => s.startsWith('/boccherini-')));
+        assert.ok(targets('/random-composer/').includes('/boccherini/'));
     });
 });
 
-describe('composer 🔀 shuffle links', () => {
+describe('🔀 shuffle links', () => {
     // composer routes are no longer distinguishable by case, so derive them
     // from the same data the route generator uses; read() throws if one is
     // missing from dist/, so drift from the real route set still fails
     const data = JSON.parse(readFileSync(path.join(root, 'src', 'data', 'data.json'), 'utf8'));
     const composer_routes = data.composers.map(c => '/' + c.name.toLowerCase() + '/');
     const shuffles = html => [...html.matchAll(/data-shuffle="([^"]*)"/g)].map(m => m[1].split(' '));
+    // the nav renders first, so on every page lists[0] is the Quartet 🔀
+    // candidates and lists[1] the Composer 🔀 candidates
+    const nav_lists = () => shuffles(read('/')).slice(0, 2);
 
-    test('every multi-work composer page has shuffle links and the script', () => {
-        for (const route of composer_routes){
+    test('every page carries the nav shuffle lists and loads shuffle.js', () => {
+        const nav = nav_lists();
+        for (const route of routes_in(dist)){
+            if (route === '/random/' || route === '/random-composer/') continue;
             const html = read(route);
-            const lists = shuffles(html);
-            assert.equal(html.includes('<script src="/js/shuffle.js">'), lists.length > 0,
-                route + ' loads shuffle.js iff it has shuffle links');
+            assert.deepEqual(shuffles(html).slice(0, 2), nav, route + ' has the nav 🔀 lists');
+            assert.ok(html.includes('<script src="/js/shuffle.js">'), route + ' loads shuffle.js');
         }
-        // spot-check: Haydn groups by opus, Bach has a single work
-        assert.ok(shuffles(read('/haydn/')).length > 1);
-        assert.equal(shuffles(read('/bach/')).length, 0);
     });
 
-    test('every shuffle target is a real same-composer route', () => {
+    test('nav shuffle targets are real routes; HIDDEN quartets excluded, composers not', () => {
+        const routes = new Set(fixtures('routes.json'));
+        const [quartets, composers] = nav_lists();
+        for (const slug of [...quartets, ...composers]){
+            assert.ok(routes.has(slug), slug + ' is a route');
+        }
+        assert.ok(!quartets.some(s => s.startsWith('/boccherini-')));
+        assert.ok(composers.includes('/boccherini/'));
+        assert.equal(composers.length, data.composers.length, 'every composer reachable');
+    });
+
+    test('composer-page group 🔀 targets are real same-composer routes', () => {
         const routes = new Set(fixtures('routes.json'));
         for (const route of composer_routes){
             const composer = route.replaceAll('/', '');
-            for (const list of shuffles(read(route))){
+            for (const list of shuffles(read(route)).slice(2)){ // beyond the nav pair
                 // deliberate tripwire: composer.js only emits a 🔀 when there
                 // is a real choice (works.length > 1 / group.length > 1), so a
                 // one-option list means the template and this suite drifted —
@@ -154,6 +174,10 @@ describe('composer 🔀 shuffle links', () => {
                 }
             }
         }
+        // spot-check: Haydn groups by opus; Bach's single work gets no 🔀
+        // beyond the nav pair
+        assert.ok(shuffles(read('/haydn/')).length > 3);
+        assert.equal(shuffles(read('/bach/')).length, 2);
     });
 });
 
