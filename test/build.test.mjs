@@ -3,33 +3,15 @@
 // Run with: npm test (builds dist/ first, then node --test).
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { before, describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { routes_in } from './routes.mjs'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const dist = path.join(root, 'dist');
 const fixtures = p => JSON.parse(readFileSync(path.join(root, 'test', 'fixtures', p), 'utf8'));
-
-function walk(dir, out = []){
-    for (const name of readdirSync(dir)){
-        const p = path.join(dir, name);
-        if (statSync(p).isDirectory()) walk(p, out);
-        else out.push(p);
-    }
-    return out;
-}
-
-function routes_in(dir){
-    return walk(dir)
-        .filter(p => path.basename(p) === 'index.html')
-        .map(p => {
-            const rel = path.relative(dir, path.dirname(p));
-            return rel === '' ? '/' : '/' + rel.split(path.sep).join('/') + '/';
-        })
-        .sort();
-}
 
 const read = route => readFileSync(path.join(dist, ...route.split('/').filter(Boolean), 'index.html'), 'utf8');
 
@@ -131,9 +113,8 @@ describe('composer 🔀 shuffle links', () => {
         for (const route of composer_routes){
             const html = read(route);
             const lists = shuffles(html);
-            if (lists.length > 0){
-                assert.ok(html.includes('<script src="/js/shuffle.js">'), route + ' loads shuffle.js');
-            }
+            assert.equal(html.includes('<script src="/js/shuffle.js">'), lists.length > 0,
+                route + ' loads shuffle.js iff it has shuffle links');
         }
         // spot-check: Haydn groups by opus, Bach has a single work
         assert.ok(shuffles(read('/Haydn/')).length > 1);
@@ -145,6 +126,11 @@ describe('composer 🔀 shuffle links', () => {
         for (const route of composer_routes){
             const composer = route.replaceAll('/', '').toLowerCase();
             for (const list of shuffles(read(route))){
+                // deliberate tripwire: composer.js only emits a 🔀 when there
+                // is a real choice (works.length > 1 / group.length > 1), so a
+                // one-option list means the template and this suite drifted —
+                // a single-work group must render as a plain item, not a
+                // pointless shuffle button
                 assert.ok(list.length > 1, route + ' shuffle list has choices');
                 for (const slug of list){
                     assert.ok(routes.has(slug), `${route}: ${slug} is a route`);
