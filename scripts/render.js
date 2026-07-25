@@ -8,6 +8,8 @@ import { get_data, get_pages } from '../src/lib/routes'
 import { HIDDEN, slugify } from '../src/lib/utils'
 import { SITE_TITLE, SITE_URL } from '../src/lib/site'
 
+import { PathContext } from '../src/components/path-context'
+
 import IndexPage, { Head as IndexHead } from '../src/pages/index'
 import AboutPage from '../src/pages/about'
 import NotFoundPage from '../src/pages/404'
@@ -35,7 +37,9 @@ function render_pages(){
             path,
             component,
             head: Head ? renderToStaticMarkup(React.createElement(Head, { pageContext: context })) : '',
-            body: renderToStaticMarkup(React.createElement(Page, { pageContext: context })),
+            body: renderToStaticMarkup(
+                React.createElement(PathContext.Provider, { value: path },
+                    React.createElement(Page, { pageContext: context }))),
         };
     });
 }

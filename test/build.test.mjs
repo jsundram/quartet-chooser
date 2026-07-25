@@ -80,6 +80,14 @@ describe('page content', () => {
         assert.ok(html.includes('<script src="/js/work.js">'));
     });
 
+    test('active nav link carries aria-current', () => {
+        const count = html => (html.match(/aria-current="page"/g) || []).length;
+        assert.equal(count(read('/')), 2, 'home: site title + Home nav');
+        assert.equal(count(read('/random/')), 1, 'random: Quartet nav');
+        assert.equal(count(read('/about/')), 1, 'about: About nav');
+        assert.equal(count(read('/Haydn/')), 0, 'composer pages: none');
+    });
+
     test('every page inlines the stylesheet and links the manifest', () => {
         for (const route of ['/', '/Haydn/', '/about/', '/random/']){
             const html = read(route);
