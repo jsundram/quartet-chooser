@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { before, describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { routes_in } from './routes.mjs'
+import { routes_in, walk } from './routes.mjs'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const dist = path.join(root, 'dist');
@@ -43,13 +43,13 @@ describe('page content', () => {
         const html = read('/');
         assert.match(html, /<title>Quartet Roulette<\/title>/);
         assert.match(html, /property="og:image" content="https:\/\/quartetroulette\.com\/icon\.png"/);
-        for (const c of ['Haydn', 'Beethoven', 'Bartok']){
+        for (const c of ['haydn', 'beethoven', 'bartok']){
             assert.ok(html.includes(`href="/${c}/"`), `home links to /${c}/`);
         }
     });
 
     test('composer page: title, portrait, work links', () => {
-        const html = read('/Haydn/');
+        const html = read('/haydn/');
         assert.match(html, /<title>Joseph Haydn \| Quartet Roulette<\/title>/);
         assert.ok(html.includes('src="/Haydn.svg"'));
         assert.ok(html.includes('href="/haydn-opus-76-3/"'));
@@ -67,11 +67,11 @@ describe('page content', () => {
         assert.equal(count(read('/')), 2, 'home: site title + Home nav');
         assert.equal(count(read('/random/')), 1, 'random: Quartet nav');
         assert.equal(count(read('/about/')), 1, 'about: About nav');
-        assert.equal(count(read('/Haydn/')), 0, 'composer pages: none');
+        assert.equal(count(read('/haydn/')), 0, 'composer pages: none');
     });
 
     test('every page inlines the stylesheet and links the manifest', () => {
-        for (const route of ['/', '/Haydn/', '/about/', '/random/']){
+        for (const route of ['/', '/haydn/', '/about/', '/random/']){
             const html = read(route);
             assert.match(html, /<style>.*navLinks/s, route + ' has inlined CSS');
             assert.ok(html.includes('rel="manifest"'), route + ' links manifest');
@@ -101,12 +101,16 @@ describe('random redirects', () => {
 
     test('HIDDEN composers excluded from random quartets, not random composers', () => {
         assert.ok(!targets('random.js').some(s => s.startsWith('/boccherini-')));
-        assert.ok(targets('random-composer.js').includes('/Boccherini/'));
+        assert.ok(targets('random-composer.js').includes('/boccherini/'));
     });
 });
 
 describe('composer 🔀 shuffle links', () => {
-    const composer_routes = fixtures('routes.json').filter(r => /^\/[A-Z]/.test(r));
+    // composer routes are no longer distinguishable by case, so derive them
+    // from the same data the route generator uses; read() throws if one is
+    // missing from dist/, so drift from the real route set still fails
+    const data = JSON.parse(readFileSync(path.join(root, 'src', 'data', 'data.json'), 'utf8'));
+    const composer_routes = data.composers.map(c => '/' + c.name.toLowerCase() + '/');
     const shuffles = html => [...html.matchAll(/data-shuffle="([^"]*)"/g)].map(m => m[1].split(' '));
 
     test('every multi-work composer page has shuffle links and the script', () => {
@@ -117,14 +121,14 @@ describe('composer 🔀 shuffle links', () => {
                 route + ' loads shuffle.js iff it has shuffle links');
         }
         // spot-check: Haydn groups by opus, Bach has a single work
-        assert.ok(shuffles(read('/Haydn/')).length > 1);
-        assert.equal(shuffles(read('/Bach/')).length, 0);
+        assert.ok(shuffles(read('/haydn/')).length > 1);
+        assert.equal(shuffles(read('/bach/')).length, 0);
     });
 
     test('every shuffle target is a real same-composer route', () => {
         const routes = new Set(fixtures('routes.json'));
         for (const route of composer_routes){
-            const composer = route.replaceAll('/', '').toLowerCase();
+            const composer = route.replaceAll('/', '');
             for (const list of shuffles(read(route))){
                 // deliberate tripwire: composer.js only emits a 🔀 when there
                 // is a real choice (works.length > 1 / group.length > 1), so a
@@ -174,16 +178,22 @@ describe('client scripts', () => {
 
 describe('link integrity', () => {
     test('every internal href/src on every page resolves', () => {
+        // exact-case set membership, not existsSync: existsSync is
+        // case-insensitive on macOS, so a /Haydn/ reference would pass
+        // locally and 404 on any case-sensitive host
+        const files = new Set(walk(dist).map(p => path.relative(dist, p).split(path.sep).join('/')));
         const missing = new Set();
         for (const route of routes_in(dist)){
             const html = read(route);
             for (const [, url] of html.matchAll(/(?:href|src)="(\/[^"]*)"/g)){
                 const target = decodeURIComponent(url.split(/[?#]/)[0]);
-                const file = target.endsWith('/')
-                    ? path.join(dist, ...target.split('/').filter(Boolean), 'index.html')
-                    : path.join(dist, ...target.split('/').filter(Boolean));
-                // extensionless paths like /random serve /random/index.html
-                if (!existsSync(file) && !existsSync(path.join(file, 'index.html'))){
+                const rel = target.split('/').filter(Boolean).join('/');
+                // trailing slash serves index.html; extensionless paths
+                // like /random serve either /random or /random/index.html
+                const candidates = target.endsWith('/')
+                    ? [rel === '' ? 'index.html' : rel + '/index.html']
+                    : [rel, rel + '/index.html'];
+                if (!candidates.some(c => files.has(c))){
                     missing.add(`${route} -> ${url}`);
                 }
             }

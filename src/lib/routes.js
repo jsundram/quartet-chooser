@@ -40,7 +40,7 @@ function get_pages(){
     ];
 
     d.composers.forEach(c => pages.push({
-        path: '/' + c.name + '/',
+        path: '/' + c.name.toLowerCase() + '/',
         component: 'composer',
         context: { node: c, data: d.greats },
     }));

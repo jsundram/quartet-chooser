@@ -52,7 +52,7 @@ function random_targets(){
     const d = get_data();
     return {
         'random': d.greats.filter(w => !HIDDEN[w.composer]).map(slugify),
-        'random-composer': d.composers.map(c => '/' + c.name + '/'),
+        'random-composer': d.composers.map(c => '/' + c.name.toLowerCase() + '/'),
     };
 }
 

@@ -17,7 +17,7 @@ const IndexPage = () => {
             <div className={wrapper}>
             {
                 COMPOSERS.map(composer => (
-                    <a href={"/" + composer + "/"} key={composer} className={composer_box}>
+                    <a href={"/" + composer.toLowerCase() + "/"} key={composer} className={composer_box}>
                         <img
                             alt={composer}
                             src={get_portrait(composer)}

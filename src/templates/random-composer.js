@@ -9,7 +9,7 @@ const RandomPage = ( {pageContext} ) => {
     // page is the no-JS fallback with a valid build-time choice
     const composers = pageContext.node.composers;
     let composer = choose_one(composers)
-    let random = "/" + composer.name + "/";
+    let random = "/" + composer.name.toLowerCase() + "/";
 
     return (
         <Layout pageTitle="Random Composer">
