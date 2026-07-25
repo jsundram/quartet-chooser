@@ -1,6 +1,7 @@
 // Step 1: Import your component
 import * as React from 'react'
 import { COMPOSERS } from  "../lib/utils"
+import { SITE_TITLE } from "../lib/site"
 import data from "../data/data.json"
 
 import Layout from '../components/layout'
@@ -49,7 +50,7 @@ const AboutPage = () => {
 }
 
 export const Head = () => (
-    <title>About | Quartet Roulette</title>
+    <title>{"About | " + SITE_TITLE}</title>
 )
 
 // Step 3: Export your component

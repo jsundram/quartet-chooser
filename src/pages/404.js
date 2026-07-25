@@ -1,5 +1,6 @@
 import * as React from "react"
 import { COMPOSERS, composer_url } from "../lib/utils"
+import { SITE_TITLE } from "../lib/site"
 
 import Layout from '../components/layout'
 
@@ -33,7 +34,7 @@ const NotFoundPage = () => {
 }
 
 export const Head = () => (
-  <title>Not found | Quartet Roulette</title>
+  <title>{"Not found | " + SITE_TITLE}</title>
 )
 
 export default NotFoundPage

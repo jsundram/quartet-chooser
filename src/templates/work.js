@@ -1,6 +1,6 @@
 import * as React from "react"
 import * as Utils from "../lib/utils"
-import { SITE_URL } from "../lib/site"
+import { SITE_TITLE, SITE_URL } from "../lib/site"
 
 import Layout from '../components/layout'
 
@@ -142,7 +142,7 @@ function getTitle(pageContext){
     const title = Utils.get_work_title(work);
 
     let name = work.composer + ": " + title + " in " + work.key;
-    return name +  " | Quartet Roulette";
+    return name + " | " + SITE_TITLE;
 }
 
 function getImage(pageContext){

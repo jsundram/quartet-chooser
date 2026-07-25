@@ -9,7 +9,7 @@ import {
     slugify,
     work_nickname,
 } from  "../lib/utils"
-import { SITE_URL } from "../lib/site"
+import { SITE_TITLE, SITE_URL } from "../lib/site"
 
 import Layout from '../components/layout'
 
@@ -110,7 +110,7 @@ export default function Composer({ pageContext }) {
 
 function getTitle(pageContext){
     let composer = pageContext.node;
-    return composer.full_name + " | Quartet Roulette";
+    return composer.full_name + " | " + SITE_TITLE;
 }
 
 function getImage(pageContext){
