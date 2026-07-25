@@ -65,3 +65,16 @@ Still open:
   script has exactly one consumer, so the external file buys no cache reuse — it is pure latency.
 - **Redirect-page weight** — `/random/` inlines the entire site stylesheet for a page that renders
   nothing and lives ~50 ms.
+
+## Implementation notes for the open items
+
+Two things the nav change drags along, neither obvious from the diff it will produce:
+
+- **`shuffle.js` currently loads only on composer pages** (the `SCRIPTS` map in `scripts/build.mjs`).
+  The nav lives in the layout, so putting `data-shuffle` on nav links means the script has to load
+  everywhere.
+- **That breaks `test/build.test.mjs`**, which asserts a page loads `shuffle.js` *iff* it has
+  shuffle links. Once every page has a nav shuffle link the invariant collapses to "every page,"
+  so the test needs rewriting rather than re-running — and the useful assertion it was making
+  (composer pages with no multi-work group must not load the script) needs somewhere else to live,
+  or it is silently lost.
