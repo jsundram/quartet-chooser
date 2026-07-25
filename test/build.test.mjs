@@ -148,6 +148,15 @@ describe('composer 🔀 shuffle links', () => {
 describe('client scripts', () => {
     const work_js = () => readFileSync(path.join(dist, 'js', 'work.js'), 'utf8');
 
+    test('shuffle.js re-randomizes on a bfcache restore', () => {
+        // a back-navigation restores the DOM with the href shuffle.js already
+        // mutated and does not re-run scripts, so the pageshow handler is the
+        // only thing keeping the 🔀 off the quartet you just visited
+        const shuffle_js = readFileSync(path.join(dist, 'js', 'shuffle.js'), 'utf8');
+        assert.match(shuffle_js, /pageshow/, 'listens for pageshow');
+        assert.match(shuffle_js, /persisted/, 'distinguishes a bfcache restore from a load');
+    });
+
     test('every Spotify embed src round-trips through work.js\'s reversal', () => {
         // work.js turns iframe src into a play link via
         // src.replace('/embed/track/', '/track/'); both halves must hold
