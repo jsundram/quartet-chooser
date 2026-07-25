@@ -19,7 +19,7 @@ const AboutPage = () => {
             </p>
 
             <p>
-                If you're interested in keeping a log of what you play, this site doesn't (yet?) support that functionality. You can follow <a href="https://gist.io/@jsundram/703c2b4f51c6bc7c1613280e30a7d0cc">the instructions I posted here</a> to create a chamber music log of your own, the same way I do.
+                If you're interested in keeping a log of what you play, you can follow <a href="https://log.quartetroulette.com/howto.html">the instructions I posted here</a> to create a chamber music log of your own, and then view it at <a href="https://log.quartetroulette.com/">log.quartetroulette.com</a>.
             </p>
 
             <p>
