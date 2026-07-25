@@ -5,6 +5,7 @@
   publish = "dist"
 
 [build.environment]
-  # explicit so a stale NODE_VERSION in the Netlify UI (pinned 18 in the
-  # Gatsby era) can't override .nvmrc
+  # explicit, in-repo statement of the build's Node version; the Netlify UI
+  # (Build & deploy → Dependency management) is set to match. Bump both
+  # together with .nvmrc.
   NODE_VERSION = "22"

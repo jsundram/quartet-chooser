@@ -19,19 +19,25 @@ or server redirects)". Two corrections, the second one load-bearing:
 
 1. There **is** a `netlify.toml` now (added in Phase 1, on purpose, so the build command ships with
    the commit that needs it instead of living in the Netlify UI).
-2. Netlify resolves **HTML paths case-insensitively and 301s to lowercase**, and nothing in the
-   repo asks it to. Measured against production:
+2. Netlify resolves **HTML paths case-insensitively**, and nothing in the repo asks it to. This
+   turned out to be two separable layers (discovered in the 2026-07-25 cleanup sweep): core Netlify
+   routing serves any case variant `200` with no redirect — the same leniency assets always got —
+   and the **Pretty URLs** post-processing feature added a canonicalizing **301 to lowercase** on
+   top. Pretty URLs is now disabled (post-processing toggles take effect only on the *next*
+   deploy, which briefly disguised this). Measured against production:
 
-   | request | Netlify |
-   |---|---|
-   | `/haydn/` | `200` |
-   | `/Haydn/`, `/HAYDN/` | `301` → `/haydn/` |
-   | `/About/` | `301` → `/about/` |
-   | `/Haydn.svg`, `/haydn.svg` | `200` both, no redirect |
+   | request | with Pretty URLs (pre-2026-07-25) | now (Pretty URLs off) |
+   |---|---|---|
+   | `/haydn/` | `200` | `200` |
+   | `/Haydn/`, `/HAYDN/` | `301` → `/haydn/` | `200`, no redirect |
+   | `/About/` | `301` → `/about/` | `200`, no redirect |
+   | `/Haydn.svg`, `/haydn.svg` | `200` both, no redirect | `200` both, no redirect |
 
-   The build emits `/Haydn/` and the sitemap advertises `/Haydn/`, so **every real-world reference
-   is the lowercase form** — that is what crawlers followed the 301 to and what anyone copying from
-   their address bar got. GitHub Pages is case-sensitive and would `404` on `/haydn/`.
+   Until Phase 1.5, the build emitted `/Haydn/` and the sitemap advertised `/Haydn/`, yet **every
+   real-world reference is the lowercase form** — that is what crawlers followed the 301 to and what
+   anyone copying from their address bar got. GitHub Pages is case-sensitive and, against that
+   mixed-case output, would have `404`'d the lowercase form everyone actually uses — the gap Phase
+   1.5 closed.
 
 So "both hosts serve byte-identical static files" is true of the **files** and false of the **URL
 resolution**. Phase 1.5 below closes that gap before the host changes.
@@ -109,24 +115,41 @@ Worth keeping, because the same mistakes are available in Phases 2 and 3.
 - **The build command moved into the repo** (`netlify.toml`) rather than the Netlify UI as step 3
   said, so the deploy switches atomically with its commit.
 
-### Left behind, to clean up
+### Left behind, to clean up — **DONE 2026-07-25** (Netlify-UI sweep, no repo changes)
 
-- The **Essential Gatsby** build plugin (`@netlify/plugin-gatsby`) is installed via the Netlify UI,
-  so no repo change removes it. It still loads on every build, restores and re-saves a Gatsby cache
-  that `scripts/build.mjs` deletes, and asks for a `gatsby-config.js` that no longer exists. It
-  injects no redirects, headers, or functions, and images are served untransformed — so it is inert
-  but wasteful (build is 435ms; the whole deploy request is ~20s). Remove it, then **Clear cache and
-  deploy** to flush the Gatsby-era `node_modules` and `.cache` out of Netlify's cache store.
-- Netlify's **UI build settings** (build command, publish directory, env vars, build plugins) still
-  exist outside the repo. `netlify.toml` supersedes the command and publish directory for normal
-  builds — but a git-revert rollback *deletes* `netlify.toml`, so that path falls back to the UI and
-  only works if the UI still reads `gatsby build` / `public`.
+All items resolved by reading and editing the Netlify UI directly; the case matrix below was
+re-measured afterward and is unchanged.
 
-  **Unverified as of 2026-07-25**, and post-merge deploy logs can no longer tell you: every
-  production build now reports `build.command from netlify.toml`. To check, open a **pre-merge**
-  production deploy's log and look for `$ gatsby build`, or read the settings form at
-  `Project configuration → Build & deploy`. Until that is confirmed, prefer the rollback that needs
-  no rebuild and no build config at all: **Publish deploy** on the last Gatsby production deploy.
+- **Essential Gatsby plugin**: surfaced in the UI as the project's "Runtime: Gatsby" — removed,
+  followed by a no-cache rebuild ("Retry without cache with latest branch commit", the same action
+  as "Clear cache and deploy") to flush the Gatsby-era `node_modules` and `.cache` from Netlify's
+  cache store. This was Phase 2 step 4; pulled forward since nothing about it depends on Pages.
+- **UI build settings, verified at last**: the build command already read `npm run build` (the
+  `gatsby build` fear was moot), but the publish directory still read `public` — which made the
+  toml-less fallback *worse* than stale: a git-revert rollback would have run the esbuild build and
+  published a nonexistent `public/`. Set to `dist`; the UI now mirrors `netlify.toml`.
+- **The stale Node 18 pin was real, just not an env var**: the Environment variables page is empty;
+  the pin lives in `Build & deploy → Dependency management` (Node.js 18.x, now EOL). Set to 22.x to
+  match `.nvmrc`/`netlify.toml`. The toml's `NODE_VERSION = "22"` had been overriding it; keep that
+  line as the in-repo statement of record.
+- **Post processing**: **Legacy Prerendering was enabled** (a founding-era leftover; SPA-oriented,
+  deprecated by Netlify, useless for static HTML) — disabled. **Pretty URLs was enabled** —
+  disabled, and this turned out to be **the source of the lowercase 301s** (see the corrected
+  two-layer table at the top of this doc). Snippet injection: none configured.
+- **A measurement trap worth recording**: post-processing toggles take effect only on the **next
+  deploy**. The case matrix re-measured *between* the toggle and the cache-clear rebuild still
+  showed the 301s, which briefly "confirmed" the (wrong, forum-sourced) theory that they were
+  un-disableable core routing. Only the fresh deploy revealed the truth: core routing serves any
+  case `200` with no redirect; Pretty URLs added the 301. Moral: on Netlify, verify a settings
+  change *after* the next deploy, not after the toggle.
+- **Net effect on case handling**: mixed-case HTML URLs now serve `200` without redirecting —
+  Netlify no longer canonicalizes to lowercase. Nothing real links to mixed case (crawlers indexed
+  the lowercase targets years ago) and the pages carry no `<link rel="canonical">`, so this is a
+  theoretical duplicate-content window that closes at the Phase 3 cutover, when Pages starts
+  `404`ing mixed case. Accepted rather than re-enabling Pretty URLs: serving `dist/` bytes
+  untouched is worth more to this migration than a canonicalizing redirect no one follows. If that
+  trade ever feels wrong, the host-neutral fix is emitting `<link rel="canonical">` tags from the
+  SSG, not a Netlify feature.
 
 ---
 
@@ -232,8 +255,8 @@ revert can break a URL.
      attached in Phase 3.
 3. Confirm the Action builds and publishes green, and spot-check that a composer page, a work page,
    and the portraits all load — this is the first host that will not paper over a case mismatch.
-4. Remove the Essential Gatsby plugin from Netlify and **Clear cache and deploy**, confirming
-   Netlify still serves the site correctly with no plugins loaded.
+4. ~~Remove the Essential Gatsby plugin from Netlify and **Clear cache and deploy**~~ — done
+   2026-07-25, ahead of schedule, as part of the Phase 1 cleanup sweep (see above).
 
 **Atomicity / rollback:** Netlify still serves quartetroulette.com the entire time. A broken Action
 cannot affect the live site.
