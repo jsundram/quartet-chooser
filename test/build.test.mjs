@@ -68,10 +68,22 @@ describe('page content', () => {
         assert.equal(count(read('/random/')), 1, 'random: Quartet nav');
         assert.equal(count(read('/about/')), 1, 'about: About nav');
         assert.equal(count(read('/haydn/')), 0, 'composer pages: none');
+        assert.equal(count(read('/404/')), 0, '404: no nav item matches');
+    });
+
+    test('404 carries the nav and a link to every composer', () => {
+        // the 404 is the only page a lost visitor is guaranteed to see, and
+        // on a case-sensitive host it is where a stale /Haydn/ link lands
+        const html = read('/404/');
+        assert.ok(html.includes('href="/random-composer"'), '404 has the nav');
+        const data = JSON.parse(readFileSync(path.join(root, 'src', 'data', 'data.json'), 'utf8'));
+        for (const c of data.composers){
+            assert.ok(html.includes(`href="${'/' + c.name.toLowerCase() + '/'}"`), `404 links to ${c.name}`);
+        }
     });
 
     test('every page inlines the stylesheet and links the manifest', () => {
-        for (const route of ['/', '/haydn/', '/about/', '/random/']){
+        for (const route of ['/', '/haydn/', '/about/', '/random/', '/404/']){
             const html = read(route);
             assert.match(html, /<style>.*navLinks/s, route + ' has inlined CSS');
             assert.ok(html.includes('rel="manifest"'), route + ' links manifest');

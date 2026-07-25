@@ -1,52 +1,34 @@
 import * as React from "react"
+import { COMPOSERS, composer_url } from "../lib/utils"
 
-// styles
-const pageStyles = {
-  color: "#232129",
-  padding: "96px",
-  fontFamily: "-apple-system, Roboto, sans-serif, serif",
-}
-const headingStyles = {
-  marginTop: 0,
-  marginBottom: 64,
-  maxWidth: 320,
-}
+import Layout from '../components/layout'
 
-const paragraphStyles = {
-  marginBottom: 48,
-}
-const codeStyles = {
-  color: "#8A6534",
-  padding: 4,
-  backgroundColor: "#FFF4DB",
-  fontSize: "1.25rem",
-  borderRadius: 4,
-}
-
-// markup
+// The 404 is the only page a lost visitor is guaranteed to see, so it carries
+// the site nav (via Layout) and the composer list: the likeliest way to get
+// here is a URL that is nearly right -- a typo, a stale link, or a mis-cased
+// /Haydn/ once we are on a case-sensitive host -- and one click should fix it.
 const NotFoundPage = () => {
   return (
-    <main style={pageStyles}>
-      <title>Not found</title>
-      <h1 style={headingStyles}>Page not found</h1>
-      <p style={paragraphStyles}>
+    <Layout pageTitle="Not found">
+      <h1>Page not found</h1>
+      <p>
         Sorry{" "}
         <span role="img" aria-label="Pensive emoji">
           😔
         </span>{" "}
         we couldn’t find what you were looking for.
-        <br />
-        {process.env.NODE_ENV === "development" ? (
-          <>
-            <br />
-            Try creating a page in <code style={codeStyles}>src/pages/</code>.
-            <br />
-          </>
-        ) : null}
-        <br />
-        <a href="/">Go home</a>.
       </p>
-    </main>
+      <p>
+        Try a composer:{" "}
+        {COMPOSERS.map((composer, i) => (
+          <React.Fragment key={composer}>
+            {i > 0 ? ", " : ""}
+            <a href={composer_url(composer)}>{composer}</a>
+          </React.Fragment>
+        ))}
+        .
+      </p>
+    </Layout>
   )
 }
 
