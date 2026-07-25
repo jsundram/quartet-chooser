@@ -114,7 +114,7 @@ function getTitle(pageContext){
 
 function getImage(pageContext){
     let composer = pageContext.node;
-    return "https://quartetroulette.com/" + get_portrait(composer.name);
+    return "https://quartetroulette.com" + get_portrait(composer.name);
 }
 
 export const Head = ({ location, params, data, pageContext }) => (
