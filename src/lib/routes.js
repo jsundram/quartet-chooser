@@ -1,7 +1,7 @@
 // The site's page manifest: which pages exist, at what paths, with what
 // context. This is the port of gatsby-node.js's createPages.
 import data from '../data/data.json'
-import { slugify } from './utils'
+import { composer_url, slugify } from './utils'
 
 function underscore_keys(obj){
     // data.json composer entries have keys like "full name"; gatsby-transformer-json
@@ -40,7 +40,7 @@ function get_pages(){
     ];
 
     d.composers.forEach(c => pages.push({
-        path: '/' + c.name + '/',
+        path: composer_url(c.name),
         component: 'composer',
         context: { node: c, data: d.greats },
     }));

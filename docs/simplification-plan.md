@@ -182,6 +182,19 @@ it is 18 tiny files if you want belt-and-braces. If you do emit them, add a
 **Rollback:** revert the commit. Netlify serves both cases regardless, so neither the change nor its
 revert can break a URL.
 
+**What step 1's list got wrong (found during implementation, 2026-07-25):**
+
+- `src/templates/composer.js` has **no composer hrefs** — its links are work slugs (already
+  lowercase via `slugify`) and external URLs. Nothing to change there.
+- The list **missed a fifth site**: the no-JS fallback link in `src/templates/random-composer.js`
+  (`"/" + composer.name + "/"`). Same species as Phase 1's frozen-🔀 bug — a build-time fallback
+  invisible to route/sitemap diffing. It was caught not by the fixture diff (exactly 18+18, as
+  predicted) but by a case-*exact* sweep of every `href`/`src` in `dist/`.
+- That sweep is now permanent: the link-integrity test replaced `existsSync` with exact-case set
+  membership over a `dist/` file walk, so a case mismatch now fails on macOS too, not just in CI.
+- The composer-page discriminator in `test/build.test.mjs` (step 3) is now derived from
+  `data.json`'s composer list rather than a route-shape regex.
+
 ---
 
 ## Phase 2 — Move hosting Netlify → GitHub Pages (domain still on Netlify)
