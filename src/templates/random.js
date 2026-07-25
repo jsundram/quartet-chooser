@@ -1,14 +1,16 @@
 // Step 1: Import your component
 import * as React from 'react'
-import {get_work_title, slugify, choose_one} from  "../lib/utils"
+import {get_work_title, slugify, HIDDEN} from  "../lib/utils"
 
 import Layout from '../components/layout'
 
 const RandomPage = ( {pageContext} ) => {
-    // the actual redirect happens in /js/random.js; this static page is
-    // the no-JS fallback with a valid build-time choice
+    // /js/random.js does the redirect and picks afresh on every visit; this
+    // static link is only what shows in the instant before that. It is a
+    // fixed placeholder, not a random one, so the build stays reproducible.
+    // (HIDDEN filter matches random_targets() in scripts/render.js.)
     const works = pageContext.node.greats;
-    let work = choose_one(works)
+    let work = works.find(w => !HIDDEN[w.composer])
     let random = slugify(work);
 
     return (
