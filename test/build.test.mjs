@@ -214,6 +214,22 @@ describe('link integrity', () => {
         assert.deepEqual([...missing], []);
     });
 
+    test('every og:image URL is the site URL plus a real file', () => {
+        // og:image lives in content=, which the href/src test above never
+        // sees — the //Haydn.svg double slash shipped that way
+        const site = 'https://quartetroulette.com/';
+        let found = 0;
+        for (const route of routes_in(dist)){
+            for (const [, url] of read(route).matchAll(/property="og:image" content="([^"]*)"/g)){
+                assert.ok(url.startsWith(site) && files.has(url.slice(site.length)),
+                    `${route}: ${url}`);
+                found++;
+            }
+        }
+        // home + 18 composers + every work page carry one
+        assert.ok(found >= 200, `found ${found} og:image tags`);
+    });
+
     test('static assets copied through', () => {
         for (const f of ['icon.png', 'play.png', 'favicon-32x32.png', 'manifest.webmanifest',
                          'Haydn.svg', 'Haydn-Signature.svg', 'Haydn-Original.svg',

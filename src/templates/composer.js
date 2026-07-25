@@ -10,6 +10,7 @@ import {
     slugify,
     work_nickname,
 } from  "../lib/utils"
+import { SITE_URL } from "../lib/site"
 
 import Layout from '../components/layout'
 
@@ -114,7 +115,7 @@ function getTitle(pageContext){
 
 function getImage(pageContext){
     let composer = pageContext.node;
-    return "https://quartetroulette.com" + get_portrait(composer.name);
+    return SITE_URL + get_portrait(composer.name);
 }
 
 export const Head = ({ location, params, data, pageContext }) => (
