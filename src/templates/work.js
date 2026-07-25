@@ -1,5 +1,6 @@
 import * as React from "react"
 import * as Utils from "../lib/utils"
+import { SITE_URL } from "../lib/site"
 
 import Layout from '../components/layout'
 
@@ -147,7 +148,7 @@ function getTitle(pageContext){
 
 function getImage(pageContext){
     const work = pageContext.node;
-    return "https://quartetroulette.com/" + Utils.get_image(work.composer);
+    return SITE_URL + Utils.get_image(work.composer);
 }
 
 export const Head = ({ location, params, data, pageContext }) => (
