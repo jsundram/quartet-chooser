@@ -5,14 +5,11 @@ import { choose_one } from  "../lib/utils"
 import Layout from '../components/layout'
 
 const RandomPage = ( {pageContext} ) => {
+    // the actual redirect happens in /js/random-composer.js; this static
+    // page is the no-JS fallback with a valid build-time choice
     const composers = pageContext.node.composers;
     let composer = choose_one(composers)
     let random = "/" + composer.name + "/";
-    const isBrowser = typeof window !== `undefined`;
-
-    if (isBrowser){
-        window.location.replace(random);
-    }
 
     return (
         <Layout pageTitle="Random Composer">

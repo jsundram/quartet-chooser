@@ -5,14 +5,11 @@ import {get_work_title, slugify, choose_one} from  "../lib/utils"
 import Layout from '../components/layout'
 
 const RandomPage = ( {pageContext} ) => {
+    // the actual redirect happens in /js/random.js; this static page is
+    // the no-JS fallback with a valid build-time choice
     const works = pageContext.node.greats;
     let work = choose_one(works)
     let random = slugify(work);
-    const isBrowser = typeof window !== `undefined`;
-
-    if (isBrowser){
-        window.location.replace(random);
-    }
 
     return (
           <Layout pageTitle="Random Quartet">

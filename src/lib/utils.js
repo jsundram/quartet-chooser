@@ -31,14 +31,6 @@ function to_roman(num) {
 }
 
 
-function is_mobile() {
-    let mobile = false;
-    if (typeof window !== `undefined`){ // check if is browser
-        mobile = ('ontouchstart' in window || navigator.maxtouchpoints);
-    }
-    return mobile;
-}
-
 function sentence_case(s){
     s = s.trim();
     return s.charAt(0).toUpperCase() +
@@ -231,7 +223,6 @@ export {
     group_name,
     groupby,
     grouper,
-    is_mobile,
     to_roman,
     sentence_case,
     slugify,
