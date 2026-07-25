@@ -8,4 +8,4 @@ uritemplate
 
 # used by other scripts in this directory
 spotipy==2.26.0
-svgpathtools==1.6.1
+svgpathtools==1.7.2
