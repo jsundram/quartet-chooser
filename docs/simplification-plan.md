@@ -1,6 +1,13 @@
 # Simplifying Quartet Roulette — build & deployment
 
-> **Status (2026-07-25):** Phases 1 and 1.5 done and live. Phase 2 next. Phase 3 not started.
+> **Status (2026-07-25):** Phases 1 and 1.5 done and live; Netlify UI cleanup sweep done (including
+> Phase 2's step 4, pulled forward). **Phases 2–3 deliberately paused** in favor of feature work:
+> the security goal is already achieved (0 CVEs, 2 deps), Netlify's PR deploy previews are worth
+> keeping day-to-day, and the remaining win is consolidation, not urgency. Resume whenever; what's
+> left of Phase 2 is small — `deploy.yml`, enable Pages, smoke-test the `*.github.io` URL — and the
+> Netlify side is already a clean mirror of the repo, so nothing rots while paused. One standing
+> caveat while on Netlify: mixed-case HTML URLs serve `200` without canonicalizing (Pretty URLs is
+> off), and post-processing toggles only take effect on the next deploy.
 
 ## Goal
 
