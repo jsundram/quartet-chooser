@@ -1,6 +1,6 @@
 # Simplifying Quartet Roulette — build & deployment
 
-> **Status (2026-07-25):** Phase 1 done and live. Phase 1.5 next. Phases 2–3 not started.
+> **Status (2026-07-25):** Phases 1 and 1.5 done and live. Phase 2 next. Phase 3 not started.
 
 ## Goal
 
@@ -130,7 +130,13 @@ Worth keeping, because the same mistakes are available in Phases 2 and 3.
 
 ---
 
-## Phase 1.5 — Lowercase the composer URLs (still on Netlify) — **NEXT**
+## Phase 1.5 — Lowercase the composer URLs (still on Netlify) — **DONE 2026-07-25**
+
+Shipped in #28, verified in production: `/haydn/` direct `200`, `/Haydn/` and `/HAYDN/` `301` →
+`/haydn/`, sitemap all-lowercase, `/Haydn.svg` unchanged. Follow-ups from review landed the same
+day: #30 (🔀 links re-shuffle on a bfcache restore — verified in real Chrome, 6/6 restores
+re-randomized vs 0/6 before) and #29 (og:image double slash; the URLs are now built from
+`SITE_URL` and guarded by a test, since link-integrity only inspects `href`/`src`, not `content=`).
 
 **Reasoning:** this is the case-sensitivity fix, and it belongs here rather than in Phase 2 or 3
 for three reasons:
@@ -169,15 +175,30 @@ for three reasons:
 (`/Haydn.svg`), so they are already correct-case. But note Netlify serves assets case-insensitively
 *without* redirecting — a leniency Pages will not provide — so correct case matters from Phase 2 on.
 
-**The CI job is the guard for this.** `npm test`'s link-integrity check uses `existsSync`, which is
+**The test suite is the guard for this.** Link-integrity originally used `existsSync`, which is
 case-*insensitive* on macOS (verified: `existsSync('static/haydn.svg')` is `true` although the file
-is `Haydn.svg`) and case-*sensitive* on the `ubuntu-latest` runner. So a case mismatch passes
-locally and fails in CI. Trust CI, not a local run, for anything case-related.
+is `Haydn.svg`) and case-*sensitive* on the `ubuntu-latest` runner — so a case mismatch passed
+locally and failed only in CI. #28 replaced it with exact-case set membership over a `dist/` file
+walk, so a local `npm test` now catches case drift too.
 
-**Optional:** emitting `/Haydn/` redirect stubs is not necessary — Netlify has been 301ing every
-mixed-case reference to lowercase for years, so external links already use the lowercase form — but
-it is 18 tiny files if you want belt-and-braces. If you do emit them, add a
-`<link rel="canonical">` (the site currently has none) so the duplicate is unambiguous.
+**Redirect stubs are not an option — do not try.** Emitting `/Haydn/` alongside `/haydn/` cannot be
+built on macOS: APFS is case-insensitive, so `dist/Haydn/` resolves to the *same directory* as
+`dist/haydn/` and the stub silently overwrites the real composer page (verified 2026-07-25 — no
+error from `mkdir`, no warning). A local build would emit 18 self-redirecting stubs where the real
+pages belong while `ubuntu-latest` emitted the correct 36 directories: precisely the macOS/Linux
+divergence the paragraph above exists to prevent.
+
+**The 404 page covers the case instead (#31).** Netlify serves `dist/404.html` as its custom 404
+today and GitHub Pages uses a root `404.html` by the same convention, so one file serves both hosts.
+It now carries the site nav and a link to every composer, so a stale `/Haydn/` landing there after
+the cutover is one click from where it was headed — and the same page helps typos, renamed works
+and any other bad URL, so its value does not depend on how many uppercase links exist.
+
+That number is unmeasurable here — no analytics, no Search Console — which is also the case against
+a silent case-fixing redirect: it could never show it was earning its keep. Nothing indexed is
+uppercase regardless (Netlify has 301'd mixed case for years, so Google indexed the lowercase
+target), so what the 404 actually catches is hand-typed paths and anything that scraped the
+pre-#28 sitemap without following redirects.
 
 **Rollback:** revert the commit. Netlify serves both cases regardless, so neither the change nor its
 revert can break a URL.
@@ -266,7 +287,8 @@ Pages** instead of GitHub Pages (edge certs are instant) — same workflow, diff
 ## Sequencing summary
 
 1. ~~**esbuild + SSG, deployed via Netlify**~~ — done 2026-07-25 (#24).
-2. **Lowercase the 18 composer URLs, still on Netlify** — closes the case-sensitivity gap while the
+2. ~~**Lowercase the 18 composer URLs, still on Netlify**~~ — done 2026-07-25 (#28, plus #29/#30
+   from review); closes the case-sensitivity gap while the
    host still forgives it.
 3. **GitHub Actions → Pages at the temporary URL** — prove the host; live site unaffected. Drop the
    Netlify Gatsby plugin.
