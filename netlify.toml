@@ -8,4 +8,4 @@
   # explicit, in-repo statement of the build's Node version; the Netlify UI
   # (Build & deploy → Dependency management) is set to match. Bump both
   # together with .nvmrc.
-  NODE_VERSION = "22"
+  NODE_VERSION = "24"
