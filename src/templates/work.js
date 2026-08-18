@@ -45,7 +45,7 @@ export default function Work({ pageContext }) {
     // table layout on touch devices
     let player = function (m){
         return (<iframe
-            src={m.spotify.replace("/track/", "/embed/track/")}
+            src={m.spotify ? m.spotify.replace("/track/", "/embed/track/") : null}
             title={m.title}
             width="100%" height="80" frameBorder="0" allowFullScreen=""
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"

@@ -210,10 +210,9 @@ describe('client scripts', () => {
         assert.ok(work_js().includes('"/track/"'));
         let embeds = 0;
         for (const route of routes_in(dist)){
+            // ~70 movements (mostly Boccherini) have no spotify link in
+            // data.json and render an iframe with no src attribute
             for (const [, src] of read(route).matchAll(/<iframe[^>]*\bsrc="([^"]*)"/g)){
-                // ~70 movements (mostly Boccherini) have no spotify link in
-                // data.json and render src="" — pre-existing, matches prod
-                if (src === '') continue;
                 assert.match(src, /^https:\/\/open\.spotify\.com\/embed\/track\//, `${route}: ${src}`);
                 embeds++;
             }
