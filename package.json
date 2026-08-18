@@ -13,7 +13,7 @@
     "test:update": "node scripts/build.mjs && node scripts/update-fixtures.mjs"
   },
   "dependencies": {
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }
