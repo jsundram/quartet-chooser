@@ -31,7 +31,9 @@ function render_pages(){
         return {
             path,
             component,
-            head: renderToStaticMarkup(React.createElement(Head, { pageContext: context })),
+            // Head needs the path too: og:url has to be this page's own
+            // absolute URL, and only the route generator knows it.
+            head: renderToStaticMarkup(React.createElement(Head, { path, pageContext: context })),
             body: renderToStaticMarkup(
                 React.createElement(PathContext.Provider, { value: path },
                     React.createElement(Page, { pageContext: context }))),

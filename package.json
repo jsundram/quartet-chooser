@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "og": "node scripts/make-og.mjs",
     "serve": "npx serve dist",
     "test": "node --test \"test/*.test.mjs\"",
     "test:update": "node scripts/build.mjs && node scripts/update-fixtures.mjs"

@@ -42,7 +42,7 @@ describe('page content', () => {
     test('home page: composer grid and og tags', () => {
         const html = read('/');
         assert.match(html, /<title>Quartet Roulette<\/title>/);
-        assert.match(html, /property="og:image" content="https:\/\/quartetroulette\.com\/icon\.png"/);
+        assert.match(html, /property="og:image" content="https:\/\/quartetroulette\.com\/og\/og\.png"/);
         for (const c of ['haydn', 'beethoven', 'bartok']){
             assert.ok(html.includes(`href="/${c}/"`), `home links to /${c}/`);
         }
@@ -97,6 +97,135 @@ describe('page content', () => {
             assert.match(html, /<style>.*navLinks/s, route + ' has inlined CSS');
             assert.ok(html.includes('rel="manifest"'), route + ' links manifest');
         }
+    });
+});
+
+describe('share / link previews (pwa.md Phase 1)', () => {
+    // The two /random* pages are deliberately excluded everywhere below: they
+    // are one-statement redirect shells that must not trigger a single extra
+    // request, they are not in the sitemap, and nothing links to them as a
+    // destination. Every *other* route is a page someone can paste into a chat.
+    const shareable = () => routes_in(dist).filter(r => !r.startsWith('/random'));
+
+    const tag = (html, re) => {
+        const m = html.match(re);
+        return m && m[1];
+    };
+    const meta = (html, name) =>
+        tag(html, new RegExp(`<meta name="${name}" content="([^"]*)"`));
+    const og = (html, prop) =>
+        tag(html, new RegExp(`<meta property="og:${prop}" content="([^"]*)"`));
+    const title_of = html => tag(html, /<title>([^<]*)<\/title>/);
+    // React escapes ' and & in attributes; compare against decoded text
+    const unescape = s => s.replace(/&#x27;/g, "'").replace(/&quot;/g, '"')
+                           .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+    const SITE = 'https://quartetroulette.com';
+    const MAX_BYTES = 250_000; // keep in sync with scripts/build.mjs + make-og.mjs
+
+    test('every shareable page carries the whole tag set', () => {
+        // half a tag set is the failure mode that actually happens: /about/ and
+        // /404/ shipped with nothing but a <title> until this phase
+        for (const route of shareable()){
+            const html = read(route);
+            assert.ok(title_of(html), route + ' has a title');
+            for (const name of ['description', 'twitter:card', 'twitter:title',
+                                'twitter:description', 'twitter:image']){
+                assert.ok(meta(html, name), `${route} has meta[name=${name}]`);
+            }
+            for (const prop of ['type', 'site_name', 'title', 'description', 'url',
+                                'image', 'image:width', 'image:height', 'image:alt']){
+                assert.ok(og(html, prop), `${route} has og:${prop}`);
+            }
+            assert.equal(meta(html, 'twitter:card'), 'summary_large_image', route);
+        }
+    });
+
+    test('og:url is the page\'s own absolute URL', () => {
+        for (const route of shareable()){
+            assert.equal(og(read(route), 'url'), SITE + route, route);
+        }
+    });
+
+    test('descriptions are prose, not the title again', () => {
+        // an og:description that repeats the title is what work pages used to
+        // ship, and it tells a reader in iMessage nothing they cannot see
+        for (const route of shareable()){
+            const html = read(route);
+            const description = unescape(meta(html, 'description'));
+            const title = unescape(title_of(html));
+            assert.notEqual(description, title, route);
+            assert.notEqual(description, title.replace(' | Quartet Roulette', ''), route);
+            assert.ok(description.length >= 60, `${route}: description too thin`);
+            assert.ok(description.split(' ').length >= 10, `${route}: not a sentence`);
+        }
+    });
+
+    test('og and twitter tags agree with the document title', () => {
+        for (const route of shareable()){
+            const html = read(route);
+            assert.equal(meta(html, 'twitter:title'), og(html, 'title'), route);
+            assert.equal(meta(html, 'twitter:description'), og(html, 'description'), route);
+            assert.equal(meta(html, 'twitter:image'), og(html, 'image'), route);
+            // og:title drops the " | Quartet Roulette" suffix that og:site_name
+            // already carries, so the two differ by exactly that
+            const title = unescape(title_of(html));
+            const bare = unescape(og(html, 'title'));
+            assert.ok(title === bare || title === bare + ' | Quartet Roulette',
+                `${route}: <title> "${title}" vs og:title "${bare}"`);
+        }
+    });
+
+    test('every og:image is an absolute https PNG that exists, 1200x630, under 250 KB', () => {
+        // the whole point of the phase: iMessage ignores SVG and ignores
+        // relative URLs, and silently skips an image over ~300 KB
+        const seen = new Map();
+        for (const route of shareable()){
+            const html = read(route);
+            const url = og(html, 'image');
+            assert.ok(url.startsWith(SITE + '/og/') && url.endsWith('.png'),
+                `${route}: og:image is ${url}`);
+            assert.equal(og(html, 'image:width'), '1200', route);
+            assert.equal(og(html, 'image:height'), '630', route);
+            assert.ok(og(html, 'image:alt').length > 10, route + ' has real alt text');
+            seen.set(url, (seen.get(url) || 0) + 1);
+        }
+
+        for (const url of seen.keys()){
+            const file = path.join(dist, ...url.slice(SITE.length).split('/').filter(Boolean));
+            const png = readFileSync(file);
+            assert.equal(png.subarray(1, 4).toString(), 'PNG', url + ' is a real PNG');
+            // IHDR is the first chunk: width and height are big-endian at 16/20
+            assert.equal(png.readUInt32BE(16), 1200, url + ' width');
+            assert.equal(png.readUInt32BE(20), 630, url + ' height');
+            assert.ok(png.length <= MAX_BYTES,
+                `${url} is ${png.length} bytes (> ${MAX_BYTES}): scrapers will skip it`);
+        }
+        // one site card plus one per composer, and every one of them used
+        assert.equal(seen.size, 19, 'cards in use');
+    });
+
+    test('spot-check: index, about, 404, a composer and a work', () => {
+        const expected = {
+            '/': { title: 'Quartet Roulette', card: '/og/og.png' },
+            '/about/': { title: 'About', card: '/og/og.png' },
+            '/404/': { title: 'Not found', card: '/og/og.png' },
+            '/haydn/': { title: 'Joseph Haydn', card: '/og/og-haydn.png' },
+            '/haydn-opus-76-3/': {
+                title: 'Haydn: Quartet Opus 76#3 in C major',
+                card: '/og/og-haydn.png',
+            },
+        };
+        for (const [route, want] of Object.entries(expected)){
+            const html = read(route);
+            assert.equal(unescape(og(html, 'title')), want.title, route);
+            assert.equal(og(html, 'image'), SITE + want.card, route);
+        }
+        // a work page's description says what the work is, not what it is called
+        const work = unescape(meta(read('/haydn-opus-76-3/'), 'description'));
+        assert.match(work, /Joseph Haydn/);
+        assert.match(work, /1797/);
+        assert.match(work, /4 movements/);
     });
 });
 

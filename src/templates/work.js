@@ -1,12 +1,23 @@
 import * as React from "react"
 import * as Utils from "../lib/utils"
-import { SITE_TITLE, SITE_URL } from "../lib/site"
-
 import Layout from '../components/layout'
+import Meta from '../components/meta'
 
 import {
     tableBig,
 } from './work.module.css'
+
+// the work's movements in playing order. Both the page and its share-card
+// description need this list, and they must not drift: a description that
+// promises four movements next to a page showing three is worse than no
+// description.
+function movements_of(data, work){
+    return data.movements.filter(m =>
+        m.composer === work.composer &&
+        m.catalog === work.catalog &&
+        m.work_number === work.work_number
+    ).sort((x, y) => x.movement_number - y.movement_number);
+}
 
 function age(completed, birth){
     // https://stackoverflow.com/a/24181701/2683
@@ -25,11 +36,7 @@ export default function Work({ pageContext }) {
     let composer_url = Utils.composer_url(work.composer);
     let aged = age(work.completed, composerInfo.birth);
 
-    const mvmts = pageContext.data.movements.filter(m =>
-        m.composer === work.composer &&
-        m.catalog === work.catalog &&
-        m.work_number === work.work_number
-    ).sort((x, y) => x.movement_number - y.movement_number);
+    const mvmts = movements_of(pageContext.data, work);
 
     let style = function(composer, work){
         if (composer.name === "Bach"){
@@ -137,24 +144,42 @@ export default function Work({ pageContext }) {
     )
 }
 
+// "Haydn: Quartet Opus 76#3 in C major" -- the same name the page's <h1> uses,
+// so a shared link and the page it opens agree.
 function getTitle(pageContext){
     const work = pageContext.node;
-    const title = Utils.get_work_title(work);
-
-    let name = work.composer + ": " + title + " in " + work.key;
-    return name + " | " + SITE_TITLE;
+    return work.composer + ": " + Utils.get_work_title(work) + " in " + work.key;
 }
 
-function getImage(pageContext){
+function composer_of(pageContext){
+    return pageContext.data.composers.find(c => c.name === pageContext.node.composer);
+}
+
+function getDescription(pageContext){
     const work = pageContext.node;
-    return SITE_URL + Utils.get_image(work.composer);
+    const composerInfo = composer_of(pageContext);
+    const siblings = pageContext.data.greats.filter(w =>
+        w.catalog === work.catalog && w.composer === work.composer);
+    // work_nickname falls back to the work's own title (Bach's "Art of Fugue"),
+    // which get_work_title already used -- saying it twice reads like a bug
+    const nickname = Utils.work_nickname(work, siblings);
+    const title = Utils.get_work_title(work);
+    const named = (nickname && !title.includes(nickname)) ? ` — “${nickname}” — ` : " ";
+    const n = movements_of(pageContext.data, work).length;
+    const movements = n === 1
+        ? "a single movement, with its key and a recording."
+        : `${n} movements, with their titles, keys and recordings.`;
+
+    return `${title} in ${work.key}${named}by ${composerInfo.full_name}, `
+        + `completed in ${work.completed}: ${movements}`;
 }
 
-export const Head = ({ location, params, data, pageContext }) => (
-    <>
-        <title>{getTitle(pageContext)}</title>
-        <meta property="og:title" content={getTitle(pageContext)} />
-        <meta property="og:description" content={getTitle(pageContext)} />
-        <meta property="og:image" content={getImage(pageContext)} />
-    </>
+export const Head = ({ path, pageContext }) => (
+    <Meta
+        title={getTitle(pageContext)}
+        description={getDescription(pageContext)}
+        path={path}
+        image={Utils.get_card(pageContext.node.composer)}
+        image_alt={Utils.get_card_alt(composer_of(pageContext).full_name)}
+    />
 )

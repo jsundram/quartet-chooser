@@ -53,6 +53,19 @@ function get_signature(composer_name) {
     return "/" + composer_name + "-Signature.svg";
 }
 
+// The composer's share card: a raster of the portrait + signature above,
+// composed by scripts/make-og.mjs. Work pages use their composer's card too --
+// the portrait is what identifies the page at preview size, and the alternative
+// is 256 near-identical cards. The SVGs above are for the page, this is for
+// scrapers: they ignore SVG.
+function get_card(composer_name) {
+    return "/og/og-" + composer_name.toLowerCase() + ".png";
+}
+
+function get_card_alt(full_name) {
+    return "Illustrated portrait and signature of " + full_name;
+}
+
 let title_catalog = w => 'Quartet ' + w.catalog + (w.work_number ? '#' + w.work_number : '');
 let title_number = w => 'Quartet #' + w.title;
 let title_number_catalog = w => 'Quartet #' + w.title + ', ' + w.catalog;
@@ -212,6 +225,8 @@ export {
     COMPOSERS,
     HIDDEN,
     composer_url,
+    get_card,
+    get_card_alt,
     get_image,
     get_portrait,
     get_signature,

@@ -1,8 +1,10 @@
 import * as React from "react"
 import { COMPOSERS, composer_url, get_portrait, get_signature } from  "../lib/utils"
-import { SITE_TITLE, SITE_URL } from "../lib/site"
+import { OG_SITE_CARD, OG_SITE_CARD_ALT, SITE_TITLE } from "../lib/site"
+import data from "../data/data.json"
 
 import Layout from '../components/layout'
+import Meta from '../components/meta'
 
 import {
     image,
@@ -35,13 +37,20 @@ const IndexPage = () => {
     )
 }
 
-export const Head = ({ location, params, data, pageContext }) => (
-  <>
-    <title>{SITE_TITLE}</title>
-    <meta property="og:title" content={SITE_TITLE} />
-    <meta property="og:description" content="Quartet Roulette is a project by some of The Haydn Enthusiasts to help break indecision about what to play next by codifying a purposely small list of standard repertoire and helping people by adding a 'random' button for a suggestion of what to play next." />
-    <meta property="og:image" content={SITE_URL + "/icon.png"} />
-  </>
+// counted, not hard-coded: quartets get added, and a description that quietly
+// goes stale is worse than one that never mentioned a number
+const DESCRIPTION = `${data.greats.length} string quartets by ${COMPOSERS.length} composers: `
+    + `a purposely small standard-repertoire list, with movements, keys and recordings — and a `
+    + `shuffle button for when nobody can decide.`;
+
+export const Head = ({ path }) => (
+  <Meta
+    title={SITE_TITLE}
+    description={DESCRIPTION}
+    path={path}
+    image={OG_SITE_CARD}
+    image_alt={OG_SITE_CARD_ALT}
+  />
 )
 
 export default IndexPage

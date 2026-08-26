@@ -1,10 +1,11 @@
 // Step 1: Import your component
 import * as React from 'react'
 import { COMPOSERS } from  "../lib/utils"
-import { SITE_TITLE } from "../lib/site"
+import { OG_SITE_CARD, OG_SITE_CARD_ALT } from "../lib/site"
 import data from "../data/data.json"
 
 import Layout from '../components/layout'
+import Meta from '../components/meta'
 
 
 // Step 2: Define your component
@@ -49,8 +50,16 @@ const AboutPage = () => {
     )
 }
 
-export const Head = () => (
-    <title>{"About | " + SITE_TITLE}</title>
+export const Head = ({ path }) => (
+    <Meta
+        title="About"
+        description={`Who made Quartet Roulette and why: ${data.greats.length} `
+            + `standard-repertoire string quartets picked by some of The Haydn Enthusiasts, `
+            + `with portraits by Marusya Chaika.`}
+        path={path}
+        image={OG_SITE_CARD}
+        image_alt={OG_SITE_CARD_ALT}
+    />
 )
 
 // Step 3: Export your component

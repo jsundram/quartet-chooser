@@ -1,8 +1,9 @@
 import * as React from "react"
 import { COMPOSERS, composer_url } from "../lib/utils"
-import { SITE_TITLE } from "../lib/site"
+import { OG_SITE_CARD, OG_SITE_CARD_ALT } from "../lib/site"
 
 import Layout from '../components/layout'
+import Meta from '../components/meta'
 
 // The 404 is the only page a lost visitor is guaranteed to see, so it carries
 // the site nav (via Layout) and the composer list: the likeliest way to get
@@ -33,8 +34,15 @@ const NotFoundPage = () => {
   )
 }
 
-export const Head = () => (
-  <title>{"Not found | " + SITE_TITLE}</title>
+export const Head = ({ path }) => (
+  <Meta
+    title="Not found"
+    description={`That page isn't here. Pick one of the ${COMPOSERS.length} composers and `
+        + `get back to the quartets.`}
+    path={path}
+    image={OG_SITE_CARD}
+    image_alt={OG_SITE_CARD_ALT}
+  />
 )
 
 export default NotFoundPage

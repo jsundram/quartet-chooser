@@ -1,5 +1,7 @@
 import * as React from "react"
 import {
+    get_card,
+    get_card_alt,
     get_portrait,
     get_signature,
     get_work_title,
@@ -9,9 +11,8 @@ import {
     slugify,
     work_nickname,
 } from  "../lib/utils"
-import { SITE_TITLE, SITE_URL } from "../lib/site"
-
 import Layout from '../components/layout'
+import Meta from '../components/meta'
 
 import {
     image,
@@ -108,21 +109,23 @@ export default function Composer({ pageContext }) {
     )
 }
 
-function getTitle(pageContext){
+function getDescription(pageContext){
     let composer = pageContext.node;
-    return composer.full_name + " | " + SITE_TITLE;
+    if (composer.quartets === 1){
+        return `The one ${composer.full_name} work in Quartet Roulette's standard string `
+            + `quartet repertoire, with its key, movements and recordings.`;
+    }
+    return `All ${composer.quartets} ${composer.full_name} quartets in Quartet Roulette's `
+        + `standard repertoire, with their keys, movements and recordings — or roll for a `
+        + `random one.`;
 }
 
-function getImage(pageContext){
-    let composer = pageContext.node;
-    return SITE_URL + get_portrait(composer.name);
-}
-
-export const Head = ({ location, params, data, pageContext }) => (
-    <>
-        <title>{getTitle(pageContext)}</title>
-        <meta property="og:title" content={getTitle(pageContext)} />
-        <meta property="og:description" content={getTitle(pageContext)} />
-        <meta property="og:image" content={getImage(pageContext)} />
-    </>
+export const Head = ({ path, pageContext }) => (
+    <Meta
+        title={pageContext.node.full_name}
+        description={getDescription(pageContext)}
+        path={path}
+        image={get_card(pageContext.node.name)}
+        image_alt={get_card_alt(pageContext.node.full_name)}
+    />
 )
