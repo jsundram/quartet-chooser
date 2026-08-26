@@ -1,10 +1,14 @@
 ## TODO
+* PWA workstream (share cards, manifest, install metas, analytics, offline?) -- see [pwa.md](pwa.md), which drives/audits that work until Jason removes it
 * Boccherini -- handle opus numbers better 
     * (on /Boccherini lists Opus 2 / G Numbers)
     * create slugs for e.g. boccherini-opus-2-1 as well as by G number
     * create redirects for wrong peters opus numbers?
 * Update og: images on work and composer pages. iMessage doesn't like SVGs so ignores them.
-    * need to either transcode manually or use Image plugin from gatsby ...
+    * now tracked as [pwa.md](pwa.md) Phase 1 (build-time raster share cards)
+    * code landed 2026-08-26 in `cfc3777`: 1200x630 PNG cards in `static/og/` (`npm run og`), full og:/twitter:
+      tag set on every page. **Still open until a real iMessage paste confirms it** -- see
+      pwa.md Phase 1 "Verify".
 * Update layout to be iPad friendly
 * Make quartet composer viz mobile friendly?
 * shuffle icon on composer page groups of works has a weird gray oval around it on mobile chrome (but not mobile safari)
@@ -21,7 +25,7 @@
         * https://observablehq.com/@aias/patient-timeline
         * https://observablehq.com/@agware/timeline-in-office (linked visualizations with brushing)
         * https://user-images.githubusercontent.com/230541/130283717-71d42637-89e4-4794-82e6-9a8570bb527d.png from [here](https://github.com/observablehq/plot/blob/main/CHANGELOG.md)
-* Analytics -- add privacy-friendly / self-hosted event logging (unique visitors + link clicks), in the style of jsundram/AKM. (Google Analytics has been removed; this is a separate future pass.)
+* Analytics -- decided 2026-08-20: hosted GoatCounter (cookie-free, supports link-click events), see [pwa.md](pwa.md) Phase 4. Supersedes the earlier self-hosted/AKM-style idea; revisit only if GoatCounter proves inadequate.
 * [SEO](https://www.google.com/search?q=quartet+roulette)
     * submit to [search console](https://search.google.com/search-console?resource_id=sc-domain:quartetroulette.com)
     * Gatsby [HEAD / SEO stuff ](https://www.gatsbyjs.com/docs/how-to/adding-common-features/adding-seo-component/)
