@@ -89,10 +89,29 @@ Acceptance criteria:
 - ✅ `og:image` URLs are absolute `https://quartetroulette.com/...` PNGs, 1200×630, < 250 KB.
   → asserted per route, reading the real IHDR dimensions and byte size out of `dist/`.
 
-Verify: **not done — needs a deploy. Phase 1 is not closed until both pass.**
-1. [opengraph.xyz](https://www.opengraph.xyz/) against the deployed URL — fast multi-platform read.
-2. **Paste a work URL, a composer URL, and the home URL into a real iMessage thread** — the only
+Verify: **not closed — step 2 still needs a production deploy.**
+1. ⚠️ [opengraph.xyz](https://www.opengraph.xyz/) against the deployed URL — fast multi-platform read.
+   → Run 2026-08-26 against deploy-preview-38. Tags all present and correct. Two findings:
+   - **"og:image … Failed to fetch: Not Found" on a deploy preview is expected, not a bug.**
+     `og:image` is absolute and built from `SITE_URL`, so a scraper fetches
+     `quartetroulette.com/og/og.png` no matter which host served the page — and that 404s until
+     the cards reach production. The cards themselves serve 200 on the preview host. **This check
+     cannot validate the image from a preview URL**; re-run it against production after merge.
+     (Fixable by deriving `SITE_URL` from Netlify's `DEPLOY_PRIME_URL` outside the production
+     context — deliberately not done: a mis-set env var would ship preview URLs into production's
+     og tags, which is a worse failure than an unverifiable preview.)
+   - Descriptions ran long (167/141/131 chars). Tightened: every site-wide page is now ≤ 125 and
+     the median page is 106. ~30 work pages still exceed 125 because their nicknames are long
+     ("Thou shalt not trill / Twinkletoes / Brandenberg") — that is real content, and the work's
+     identity comes first, so truncation eats the "N movements" tail. `test/build.test.mjs`
+     holds the line at ≤ 200 everywhere and ≤ 125 for `/`, `/about/` and `/404/`.
+   - Not acted on: "Page title is short (16 characters)" for the home page. `<title>Quartet
+     Roulette</title>` is the site's name and pwa.md lists real per-page titles as baseline-done;
+     padding it for SERP width is an SEO question (TODO.md's SEO section), not a preview one.
+2. ❌ **Paste a work URL, a composer URL, and the home URL into a real iMessage thread** — the only
    ground truth. (This closes TODO.md's "iMessage" item; check it off there when done.)
+   → Note: previews are cached per URL, so re-paste the real `quartetroulette.com` URLs a day or
+   so after the merge lands, not just the preview ones.
 
 ## Phase 2 — Manifest + install metas
 

@@ -112,12 +112,11 @@ export default function Composer({ pageContext }) {
 function getDescription(pageContext){
     let composer = pageContext.node;
     if (composer.quartets === 1){
-        return `The one ${composer.full_name} work in Quartet Roulette's standard string `
-            + `quartet repertoire, with its key, movements and recordings.`;
+        return `The single ${composer.full_name} work in the standard string quartet `
+            + `repertoire, with its key and its movements.`;
     }
-    return `All ${composer.quartets} ${composer.full_name} quartets in Quartet Roulette's `
-        + `standard repertoire, with their keys, movements and recordings — or roll for a `
-        + `random one.`;
+    return `Every ${composer.full_name} quartet in the standard repertoire — all `
+        + `${composer.quartets}, with keys and nicknames, or roll for a random one.`;
 }
 
 export const Head = ({ path, pageContext }) => (

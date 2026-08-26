@@ -158,6 +158,16 @@ describe('share / link previews (pwa.md Phase 1)', () => {
             assert.notEqual(description, title.replace(' | Quartet Roulette', ''), route);
             assert.ok(description.length >= 60, `${route}: description too thin`);
             assert.ok(description.split(' ').length >= 10, `${route}: not a sentence`);
+            // mobile social previews cut around 125 characters and Google
+            // around 155. Work pages can run past 125 when the nickname is
+            // long ("Thou shalt not trill / Twinkletoes / Brandenberg") --
+            // that is real content, and the identity comes first, so what
+            // truncation eats is the "N movements" tail. The pages with no
+            // such excuse get held to the tighter bound.
+            assert.ok(description.length <= 200, `${route}: ${description.length} chars`);
+            if (['/', '/about/', '/404/'].includes(route)){
+                assert.ok(description.length <= 125, `${route}: ${description.length} chars`);
+            }
         }
     });
 

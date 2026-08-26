@@ -54,8 +54,7 @@ export const Head = ({ path }) => (
     <Meta
         title="About"
         description={`Who made Quartet Roulette and why: ${data.greats.length} `
-            + `standard-repertoire string quartets picked by some of The Haydn Enthusiasts, `
-            + `with portraits by Marusya Chaika.`}
+            + `standard-repertoire string quartets, picked by some of The Haydn Enthusiasts.`}
         path={path}
         image={OG_SITE_CARD}
         image_alt={OG_SITE_CARD_ALT}

@@ -40,8 +40,7 @@ const IndexPage = () => {
 // counted, not hard-coded: quartets get added, and a description that quietly
 // goes stale is worse than one that never mentioned a number
 const DESCRIPTION = `${data.greats.length} string quartets by ${COMPOSERS.length} composers: `
-    + `a purposely small standard-repertoire list, with movements, keys and recordings — and a `
-    + `shuffle button for when nobody can decide.`;
+    + `a purposely small standard-repertoire list, with recordings and a shuffle button.`;
 
 export const Head = ({ path }) => (
   <Meta

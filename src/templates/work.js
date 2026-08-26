@@ -168,7 +168,7 @@ function getDescription(pageContext){
     const n = movements_of(pageContext.data, work).length;
     const movements = n === 1
         ? "a single movement, with its key and a recording."
-        : `${n} movements, with their titles, keys and recordings.`;
+        : `${n} movements, with keys and recordings.`;
 
     return `${title} in ${work.key}${named}by ${composerInfo.full_name}, `
         + `completed in ${work.completed}: ${movements}`;
