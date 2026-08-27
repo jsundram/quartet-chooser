@@ -90,22 +90,57 @@ const PHASES = [
         after: () => icons(),
     },
     {
-        n: 'Phase 3', title: 'Mobile polish &amp; accessibility floor', chip: 'idle', status: 'Up next',
-        blurb: `Small CSS and head items, batched. The build work is mine; these two are yours, and
-                they are the ones that actually catch things.`,
+        n: 'Phase 3', title: 'Mobile polish &amp; accessibility floor', chip: 'shipped', status: 'Built &middot; unmerged',
+        blurb: `Built in <span class="path">8cd7315</span> on
+                <span class="path">pwa-phase-3-mobile-a11y</span>, not merged yet. The head and CSS
+                half was small; the sweep found three real defects. Everything left needs a device,
+                a keyboard, or your opinion.`,
         tasks: [
-            { id: 'p3-voiceover', label: 'VoiceOver skim of one work page' },
-            { id: 'p3-keyboard', label: 'Keyboard-only navigation of the home page' },
+            { id: 'p3-voiceover', label: '<b>VoiceOver skim of one work page</b>',
+              note: `<a href="https://quartetroulette.com/haydn-opus-76-3/">/haydn-opus-76-3/</a>.
+                     Three things changed and are worth listening for: the rotor should now offer
+                     <b>banner &rarr; navigation &rarr; main</b> as separate landmarks (everything
+                     used to be one <span class="path">&lt;main&gt;</span>), the heading should be
+                     the work&rsquo;s own title, and on a touch device each play link should name
+                     <b>its own movement</b> rather than saying &ldquo;play&rdquo; twenty times.` },
+            { id: 'p3-keyboard', label: '<b>Keyboard-only navigation of the home page</b>',
+              note: `Tab through the wordmark, the four nav links and the 18 composer tiles. Nothing
+                     ever removed the browser&rsquo;s focus ring, so every stop should show one &mdash;
+                     this is checking that claim, not a fix.` },
+            { id: 'p3-landscape', label: 'On a notched phone, <b>in landscape</b> and installed: nothing under the notch or the home indicator',
+              note: `<span class="path">viewport-fit=cover</span> now lets the page paint into that
+                     area and <span class="path">env(safe-area-inset-*)</span> pads it back out.
+                     Landscape is where a mistake shows, because the notch eats a whole edge.` },
+            { id: 'p3-dates', label: 'Opinion wanted: the composer-page <b>dates</b> are links, and on a phone nothing says so',
+              note: `They go to daily-composers, and the only thing that ever explained that was a
+                     hover tooltip &mdash; which does not exist on touch. A screen reader now hears
+                     it. A visible hint under every composer&rsquo;s dates would fix it for everyone,
+                     but that is a design change, so I left it. Tap one on a phone and see whether it
+                     feels like a trap.` },
         ],
         more: {
-            summary: 'What I would be building first',
+            summary: 'What landed',
             tasks: [
-                { id: 'p3-viewport', label: '<span class="path">viewport-fit=cover</span> on the viewport meta' },
-                { id: 'p3-safearea', label: '<span class="path">env(safe-area-inset-*)</span> padding for notch and home indicator' },
-                { id: 'p3-colorscheme', label: '<span class="path">meta[name=color-scheme]</span>, value <span class="path">light</span> until Phase 6 lands' },
-                { id: 'p3-motion', label: '<span class="path">prefers-reduced-motion</span> neutralising non-essential transitions' },
-                { id: 'p3-sweep', label: 'A11y sweep: real buttons and links, <span class="path">aria-label</span> on the icon-only shuffle, visible focus, image alt text, one h1 per page' },
-                { id: 'p3-hover', label: 'Check for hover-only UI and add tap fallbacks' },
+                { done: true, label: '<span class="path">viewport-fit=cover</span> on the viewport meta' },
+                { done: true, label: '<span class="path">env(safe-area-inset-*)</span> padding for notch and home indicator',
+                  note: `All four sides. Also removed three <span class="path">padding: 96</span> /
+                         <span class="path">padding: 5</span> declarations from the same rule: unitless,
+                         so invalid, so no browser ever applied them &mdash; but a later &ldquo;fix&rdquo;
+                         to <span class="path">96px</span> would have quietly clobbered the insets.` },
+                { done: true, label: '<span class="path">meta[name=color-scheme]</span>, value <span class="path">light</span> until Phase 6 lands' },
+                { done: true, label: '<span class="path">prefers-reduced-motion</span> neutralising non-essential transitions',
+                  note: `Nothing on the site transitions or animates today, so this is a guard for
+                         whoever adds the first one rather than a fix.` },
+                { done: true, label: 'A11y sweep: real buttons and links, <span class="path">aria-label</span> on the icon-only shuffle, visible focus, image alt text, one h1 per page',
+                  note: `Three real finds: the wordmark, nav and page all lived in one
+                         <span class="path">&lt;main&gt;</span>; the home page had no
+                         <span class="path">&lt;h1&gt;</span> at all and About opened at
+                         <span class="path">&lt;h2&gt;</span>; and a home-page tile announced itself
+                         as &ldquo;Haydn Haydn&rdquo;, because the portrait and the signature carried
+                         the same alt text.` },
+                { done: true, label: 'Check for hover-only UI and add tap fallbacks',
+                  note: `Only the composer-page dates carried anything a touch user could not get
+                         another way &mdash; that is the open question above.` },
             ],
         },
     },

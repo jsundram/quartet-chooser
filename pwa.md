@@ -28,6 +28,8 @@ This document is the working plan for bringing quartetroulette.com up to the
 
 Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is still outstanding.
 Phase 2 implemented 2026-08-27 in `4e0f14e`; its on-device checks are still outstanding.
+Phase 3 implemented 2026-08-27 in `8cd7315`; its VoiceOver / keyboard / landscape checks are
+still outstanding.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -188,18 +190,80 @@ Verify: **not done — needs devices.**
 
 Small CSS/head items, batched. Touch-target work is already largely done (see TODO.md Done list).
 
+Tasks are all `8cd7315`.
+
+**Found while doing the work:** the site's wordmark, nav and page content all lived inside a single
+`<main>`, and the home page had no `<h1>` at all (`about` started at `<h2>`). `Layout` now emits
+`<header>` (wordmark + nav) beside `<main>` (the page), so a screen reader's landmark rotor has
+something to say and the safe-area padding has real chrome to hang off.
+
 Tasks:
-- [ ] `viewport-fit=cover` on the viewport meta in `page_html()`.
-- [ ] `env(safe-area-inset-*)` padding on the header/body chrome (notch / home indicator).
-- [ ] `meta[name=color-scheme]` (value `light` until Phase 6 ships dark mode).
-- [ ] `@media (prefers-reduced-motion: reduce)` neutralizing non-essential transitions.
-- [ ] Sweep: every tappable element is a real `<button>`/`<a>`; icon-only controls (the shuffle
+- [x] `viewport-fit=cover` on the viewport meta in `page_html()`.
+      → `scripts/build.mjs`. Only half of a pair: without the padding below, `cover` paints the page
+      *under* the notch and the home indicator.
+- [x] `env(safe-area-inset-*)` padding on the header/body chrome (notch / home indicator).
+      → all four sides on `.container` in `src/components/layout.module.css`, so the inset applies to
+      header and body together. Left/right are the ones that matter in landscape, where the notch
+      eats a whole edge. `env()` resolves to 0 on every device without insets, so desktop is
+      untouched. Also deleted three `padding: 96` / `padding: 5` declarations from the same rule's
+      media queries: unitless, therefore invalid, therefore never applied — but a later "fix" to
+      `96px` would have silently clobbered the insets.
+- [x] `meta[name=color-scheme]` (value `light` until Phase 6 ships dark mode).
+      → `page_html()`. Phase 6 flips it to `light dark` in one place.
+- [x] `@media (prefers-reduced-motion: reduce)` neutralizing non-essential transitions.
+      → `layout.module.css`. **Nothing on the site transitions or animates today** — grep for
+      `transition`/`animation` in `src/` came back empty — so this is a guard for whoever adds the
+      first one, not a fix. It cuts durations to 0.01ms rather than to zero, so an animation that
+      signals completion by ending still ends.
+- [x] Sweep: every tappable element is a real `<button>`/`<a>`; icon-only controls (the shuffle
       icon) have `aria-label`; no `outline: none` without a `:focus-visible` replacement;
       meaningful images have `alt` (decorative → `alt=""`); one `<h1>` per page.
-- [ ] Check for hover-only UI; add tap fallbacks if any exists.
+      → Controls: already clean — every control is an `<a>`, and there is no inline handler or
+      click-handler `<div>` anywhere (now asserted, so it stays that way).
+      → Focus: no `outline: none` / `outline: 0` in any stylesheet, so the browser's own focus ring
+      was never removed. Nothing to replace; now asserted.
+      → Names: the per-opus `🔀` on composer pages was an emoji and nothing else — it gets
+      `aria-label`/`title` "Random quartet from Opus 76". The tap-to-play links `src/client/work.js`
+      builds on touch devices said `alt="play"` on every row; they now say `Play <movement>`, taken
+      from the iframe title the row already carries.
+      → `alt`: the wordmark icon in `Layout` (it repeats the wordmark beside it) and the signature on
+      each home-page tile (the portrait in the same link already names the composer) are decorative,
+      `alt=""` — before this, a home-page tile announced "Haydn Haydn". The composer-page portrait
+      reads "Portrait of Joseph Haydn" instead of repeating the `<h1>`.
+      → `<h1>`: home had none and `about` opened at `<h2>`. `about`'s heading is now the `<h1>`; on
+      `/` **and only on `/`** the wordmark is wrapped in one, since every other page brings its own
+      (work title, composer signature, "Page not found") and a second would flatten the outline.
+      `.siteHeading` zeroes the h1's margins and inherits its font size and weight, so nothing moves.
+- [x] Check for hover-only UI; add tap fallbacks if any exists.
+      → Audited every `title=` on the site, since `title` is the only hover-only affordance here (no
+      CSS `:hover` rule exists at all). Three of the four carry nothing a touch user loses: the nav
+      titles repeat the visible link text; the work table's `td title` repeats the cell, which wraps
+      rather than truncating in the mobile layout; Bach's `li title={m.key}` is the work's own key,
+      which the `<h1>` already states.
+      The fourth is real: the composer page's birth/death dates link to daily-composers, and only the
+      tooltip said so. They now carry `aria-label="1732-03-31 — See composers born on this day!"`,
+      which keeps the date and adds the destination.
+      **Residual, deliberate:** a touch user still gets no hint before tapping a date. The link is
+      non-destructive and the destination explains itself on arrival, and the alternative — visible
+      hint text under every composer's dates — is a design change, not an accessibility floor. Flag
+      it on the device pass if it feels wrong in the hand.
 
 Acceptance criteria: each bullet above verifiable by grep or by keyboard-tabbing the deployed site.
-Verify: VoiceOver skim of one work page; keyboard-only navigation of the home page.
+- ✅ `test/build.test.mjs`, describe "mobile + accessibility floor (pwa.md Phase 3)": 8 tests over all
+  277 non-redirect routes — one viewport meta carrying `viewport-fit=cover`, `color-scheme=light`,
+  safe-area padding on all four sides and a surviving `prefers-reduced-motion` block in the inlined
+  CSS, no `outline:none`, exactly one non-empty `<h1>`, one `<main>` with the nav outside it, an
+  `alt` on every `<img>`, an accessible name on every `<a>`, `aria-label` on every icon-only link,
+  and no inline event handlers.
+- ✅ The redirect shells stay bare (Phase 2's test still holds): they get no viewport and no CSS.
+
+Verify: **not done — needs a device and a keyboard.**
+1. VoiceOver skim of one work page (`/haydn-opus-76-3/`): the landmarks should now read header →
+   nav → main, the heading should be the work's title, and each play link should name its movement.
+2. Keyboard-only navigation of the home page: Tab through the wordmark, the four nav links and the
+   18 composer tiles with a visible ring on every stop.
+3. On a notched phone, in **landscape** and installed to the home screen: no text under the notch,
+   nothing under the home indicator.
 
 ## Phase 4 — Analytics: GoatCounter
 
