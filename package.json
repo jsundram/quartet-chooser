@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "icons": "node scripts/make-icons.mjs",
     "og": "node scripts/make-og.mjs",
     "serve": "npx serve dist",
     "test": "node --test \"test/*.test.mjs\"",

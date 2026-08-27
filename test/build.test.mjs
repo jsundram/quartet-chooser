@@ -239,6 +239,121 @@ describe('share / link previews (pwa.md Phase 1)', () => {
     });
 });
 
+describe('install / manifest (pwa.md Phase 2)', () => {
+    const installable = () => routes_in(dist).filter(r => !r.startsWith('/random'));
+    const manifest = () => JSON.parse(readFileSync(path.join(dist, 'manifest.webmanifest'), 'utf8'));
+    const meta = (html, name) => {
+        const m = html.match(new RegExp(`<meta name="${name}" content="([^"]*)"`));
+        return m && m[1];
+    };
+
+    // Enough of a PNG reader to answer the two questions that matter here:
+    // how big is it really, and can any pixel be transparent. Both are in the
+    // header and chunk list, so no decoding is needed.
+    const png = file => {
+        const b = readFileSync(path.join(dist, ...file.split('/').filter(Boolean)));
+        assert.equal(b.subarray(1, 4).toString(), 'PNG', file + ' is a PNG');
+        const chunks = [];
+        for (let off = 8; off < b.length;){
+            const len = b.readUInt32BE(off);
+            const type = b.subarray(off + 4, off + 8).toString();
+            chunks.push(type);
+            if (type === 'IEND') break;
+            off += 12 + len;
+        }
+        const colour_type = b[25];
+        return {
+            width: b.readUInt32BE(16),
+            height: b.readUInt32BE(20),
+            // alpha arrives either as a colour type carrying a channel, or as
+            // a tRNS chunk on a palette image -- pngquant produces the latter
+            transparent: colour_type === 4 || colour_type === 6 || chunks.includes('tRNS'),
+        };
+    };
+
+    test('manifest carries everything an install needs', () => {
+        const m = manifest();
+        assert.equal(m.name, 'Quartet Roulette');
+        assert.equal(m.short_name, 'Quartet 🎲');
+        assert.equal(m.start_url, '/');
+        assert.equal(m.display, 'standalone');
+        assert.equal(m.theme_color, '#5dcbf5');
+        assert.equal(m.background_color, '#f7f7f3');
+        assert.ok(m.description && m.description.length > 40, 'has a real description');
+        // short_name exists for surfaces with no room; Android launchers
+        // truncate past ~12 units, which is the whole reason not to use `name`
+        assert.ok([...m.short_name].length <= 12, `short_name is ${m.short_name.length} units`);
+    });
+
+    test('every icon the manifest advertises exists and is the size it claims', () => {
+        // a manifest pointing at a missing or mis-sized icon fails silently:
+        // the install just picks something else, or nothing
+        for (const icon of manifest().icons){
+            const { width, height } = png(icon.src);
+            assert.equal(`${width}x${height}`, icon.sizes, icon.src);
+            assert.equal(icon.type, 'image/png', icon.src);
+        }
+    });
+
+    test('there is a maskable icon, and it is opaque and full size', () => {
+        const maskable = manifest().icons.filter(i => i.purpose === 'maskable');
+        assert.equal(maskable.length, 1, 'exactly one maskable icon');
+        assert.equal(maskable[0].sizes, '512x512');
+        // a maskable icon is cropped to the launcher's shape, so its padding
+        // has to be filled -- a transparent one defeats the whole purpose
+        assert.equal(png(maskable[0].src).transparent, false, 'maskable icon is opaque');
+    });
+
+    test('the apple-touch-icon is opaque; the ordinary icons are not', () => {
+        // iOS composites an alpha channel in an apple-touch-icon against
+        // BLACK, so a transparent one puts the wheel on a black tile. This is
+        // the regression this whole phase exists to prevent coming back.
+        assert.equal(png('/icons/icon-180x180.png').transparent, false,
+            'apple-touch-icon must be flattened');
+        // the plain manifest icons keep their transparency -- Android and
+        // Chrome composite those onto backgrounds of their own choosing
+        for (const size of [48, 192, 512]){
+            assert.equal(png(`/icons/icon-${size}x${size}.png`).transparent, true,
+                `icon-${size}x${size} keeps its alpha`);
+        }
+    });
+
+    test('every page carries the install metas, from the manifest', () => {
+        const m = manifest();
+        for (const route of installable()){
+            const html = read(route);
+            assert.equal(meta(html, 'theme-color'), m.theme_color, route + ' theme-color');
+            assert.equal(meta(html, 'apple-mobile-web-app-title'), m.name, route + ' ios title');
+            assert.equal(meta(html, 'mobile-web-app-capable'), 'yes', route);
+            // deprecated in favour of the line above, but older iOS reads only this
+            assert.equal(meta(html, 'apple-mobile-web-app-capable'), 'yes', route);
+            assert.ok(html.includes('rel="manifest"'), route + ' links the manifest');
+        }
+    });
+
+    test('exactly one apple-touch-icon link per page, at 180', () => {
+        // it used to emit one per manifest icon -- eight links, and iOS picked
+        // a transparent one
+        for (const route of installable()){
+            const links = [...read(route).matchAll(/<link rel="apple-touch-icon"[^>]*>/g)];
+            assert.equal(links.length, 1, route + ' has one apple-touch-icon');
+            assert.match(links[0][0], /sizes="180x180"/, route);
+            assert.match(links[0][0], /href="\/icons\/icon-180x180\.png"/, route);
+        }
+    });
+
+    test('the redirect shells stay bare', () => {
+        // they exist for one location.replace and must not fetch an icon or a
+        // manifest on the way past
+        for (const route of ['/random/', '/random-composer/']){
+            const html = read(route);
+            assert.ok(!html.includes('apple-touch-icon'), route);
+            assert.ok(!html.includes('manifest'), route);
+            assert.ok(!html.includes('theme-color'), route);
+        }
+    });
+});
+
 describe('random redirect pages', () => {
     const REDIRECTS = ['/random/', '/random-composer/'];
     const targets = route => {

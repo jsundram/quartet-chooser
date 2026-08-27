@@ -1,4 +1,11 @@
 {
+  "name": "Quartet Roulette",
+  "short_name": "Quartet 🎲",
+  "description": "A purposely small list of standard string quartet repertoire, with recordings and a shuffle button for the undecided.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#5dcbf5",
+  "background_color": "#f7f7f3",
   "icons": [
     {
       "src": "/icons/icon-48x48.png",
@@ -21,6 +28,11 @@
       "type": "image/png"
     },
     {
+      "src": "/icons/icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
@@ -39,6 +51,12 @@
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

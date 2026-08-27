@@ -41,6 +41,37 @@ async function check_og_cards(dir){
     return cards.length;
 }
 
+// Everything a browser needs to install the site, derived from the manifest so
+// there is one source of truth for the values -- but repeated as <meta> tags
+// because iOS ignores the manifest entirely.
+//
+// iOS wants exactly ONE apple-touch-icon, at 180x180. This used to emit a link
+// for every icon in the manifest, and every one of those icons had a
+// transparent background -- which iOS composites against *black*, so the home
+// screen showed the wheel on a black tile.
+function app_meta(manifest){
+    const required = ['name', 'short_name', 'start_url', 'display',
+                      'theme_color', 'background_color'];
+    for (const field of required){
+        if (!manifest[field]) throw new Error(`manifest is missing ${field}`);
+    }
+    if (!manifest.icons.some(i => i.purpose === 'maskable')){
+        // without one, Android crops the artwork to its launcher shape and
+        // clips the wheel's rim; see scripts/make-icons.mjs
+        throw new Error('manifest has no maskable icon: run `npm run icons`');
+    }
+    const touch = manifest.icons.find(i => i.sizes === '180x180' && i.purpose !== 'maskable');
+    if (!touch) throw new Error('manifest has no 180x180 icon for apple-touch-icon');
+
+    return `<meta name="theme-color" content="${xml_escape(manifest.theme_color)}"/>`
+        + '<meta name="mobile-web-app-capable" content="yes"/>'
+        // the apple- prefix is deprecated in favour of the line above, but
+        // older iOS still reads only this one
+        + '<meta name="apple-mobile-web-app-capable" content="yes"/>'
+        + `<meta name="apple-mobile-web-app-title" content="${xml_escape(manifest.name)}"/>`
+        + `<link rel="apple-touch-icon" sizes="${touch.sizes}" href="${touch.src}"/>`;
+}
+
 function xml_escape(s){
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
@@ -51,7 +82,7 @@ function script_json(value){
     return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
-function page_html({ head, body, scripts }, css, icons){
+function page_html({ head, body, scripts }, css, app){
     return '<!DOCTYPE html><html lang="en"><head>'
         + '<meta charset="utf-8"/>'
         + '<meta http-equiv="x-ua-compatible" content="ie=edge"/>'
@@ -60,7 +91,7 @@ function page_html({ head, body, scripts }, css, icons){
         + `<style>${css}</style>`
         + '<link rel="icon" href="/favicon-32x32.png" type="image/png"/>'
         + '<link rel="manifest" href="/manifest.webmanifest" crossorigin="anonymous"/>'
-        + icons
+        + app
         + '<link rel="sitemap" type="application/xml" href="/sitemap/sitemap-index.xml"/>'
         + '</head><body>'
         + body
@@ -88,12 +119,10 @@ async function build(){
     await rm(dist, { recursive: true, force: true });
     await rm(cache, { recursive: true, force: true });
 
-    // apple-touch-icon links, derived from the manifest so there is one
-    // source of truth for the icon set
+    // install metadata + the apple-touch-icon link, derived from the manifest
+    // so there is one source of truth for the icon set and the theme colour
     const manifest = JSON.parse(await readFile(path.join(root, 'static', 'manifest.webmanifest'), 'utf8'));
-    const icons = manifest.icons.map(i =>
-        `<link rel="apple-touch-icon" sizes="${i.sizes}" href="${i.src}"/>`
-    ).join('');
+    const app = app_meta(manifest);
 
     // 1. Bundle the SSR entry (JSX + CSS modules + data.json) for Node.
     await esbuild.build({
@@ -170,7 +199,7 @@ async function build(){
             throw new Error(`page path escapes dist/: ${page.path}`);
         }
         await mkdir(dir, { recursive: true });
-        const html = page_html({ ...page, scripts }, css, icons);
+        const html = page_html({ ...page, scripts }, css, app);
         await writeFile(path.join(dir, 'index.html'), html);
         if (page.path === '/404/'){
             await writeFile(path.join(dist, '404.html'), html); // Netlify's custom 404

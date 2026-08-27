@@ -1,0 +1,147 @@
+#!/usr/bin/env node
+// Generates the PWA / home-screen icons into static/icons/ from a single
+// source image. Run after changing that source:
+//
+//     npm run icons
+//
+// static/manifest.webmanifest lists what comes out of here and is the single
+// source of truth for which file plays which role -- scripts/build.mjs reads it
+// to emit the apple-touch-icon link and the install metas. Add a size here and
+// in the manifest together.
+//
+// Source: static/icon.svg if it exists, else static/icon.png. The PNG is the
+// 512x512 original from flaticon (their largest), so every size below is a
+// downscale -- nothing is ever upscaled. Drop an SVG in and it wins
+// automatically, which is the only reason to bother getting one.
+//
+// Three kinds of output, and the differences are not cosmetic:
+//
+//   any       transparent, as the artwork ships. Android and Chrome composite
+//             these onto their own backgrounds.
+//   apple     OPAQUE. iOS renders an alpha channel in an apple-touch-icon as
+//             *black*, so a transparent one shows the wheel on a black tile.
+//             That is what this site shipped before this script existed.
+//   maskable  OPAQUE, artwork inset to the 80% safe zone. Android crops icons
+//             to whatever shape the launcher uses (circle, squircle, rounded
+//             square); art outside that centred 80% circle can be cut off.
+//             The wheel being circular is lucky here -- a circle in a circular
+//             safe zone wastes no space.
+import { execFileSync } from 'node:child_process'
+import { access, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const static_dir = path.join(root, 'static');
+const out_dir = path.join(static_dir, 'icons');
+
+// must match background_color in the manifest: this is what shows through
+// behind a transparent corner or inside a maskable icon's padding
+const BACKGROUND = '#f7f7f3';
+
+// Android's maskable safe zone is a centred circle 80% of the icon's width.
+const SAFE_ZONE = 0.8;
+
+// the sizes the manifest advertises, plus the two special ones
+const ANY_SIZES = [48, 72, 96, 144, 192, 256, 384, 512];
+const APPLE_SIZE = 180;   // the one size iOS actually wants
+const MASKABLE_SIZE = 512;
+
+async function exists(p){
+    try { await access(p); return true; } catch { return false; }
+}
+
+// The source, as markup that can be dropped into a composed SVG at any size.
+// Both branches end up as one vector document rasterized in a single pass, so
+// the SVG and PNG sources go through identical code below.
+async function load_source(){
+    const svg = path.join(static_dir, 'icon.svg');
+    if (await exists(svg)){
+        const src = await readFile(svg, 'utf8');
+        const view_box = src.match(/viewBox="([^"]*)"/);
+        if (!view_box) throw new Error('static/icon.svg has no viewBox');
+        const open = src.indexOf('>', src.indexOf('<svg'));
+        const body = src.slice(open + 1, src.lastIndexOf('</svg>'));
+        return {
+            name: 'static/icon.svg',
+            place: (x, y, w, h) => `<svg x="${x}" y="${y}" width="${w}" height="${h}"`
+                + ` viewBox="${view_box[1]}" preserveAspectRatio="xMidYMid meet">${body}</svg>`,
+        };
+    }
+
+    const png = path.join(static_dir, 'icon.png');
+    if (!await exists(png)) throw new Error('need static/icon.svg or static/icon.png');
+    const uri = `data:image/png;base64,${(await readFile(png)).toString('base64')}`;
+    return {
+        name: 'static/icon.png',
+        place: (x, y, w, h) => `<image x="${x}" y="${y}" width="${w}" height="${h}"`
+            + ` href="${uri}" preserveAspectRatio="xMidYMid meet"/>`,
+    };
+}
+
+function compose(source, size, { opaque, inset }){
+    const art = inset ? Math.round(size * SAFE_ZONE) : size;
+    const offset = (size - art) / 2;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"`
+        + ` viewBox="0 0 ${size} ${size}">`
+        + (opaque ? `<rect width="${size}" height="${size}" fill="${BACKGROUND}"/>` : '')
+        + source.place(offset, offset, art, art)
+        + '</svg>';
+}
+
+async function rasterize(svg, size, file){
+    const tmp = file + '.svg';
+    await writeFile(tmp, svg);
+    try {
+        execFileSync('rsvg-convert', ['-w', String(size), '-h', String(size), tmp, '-o', file]);
+        execFileSync('pngquant', ['--force', '--skip-if-larger', '--speed', '1',
+                                  '--output', file, file]);
+    } finally {
+        await rm(tmp, { force: true });
+    }
+    return (await stat(file)).size;
+}
+
+function require_tools(){
+    for (const tool of ['rsvg-convert', 'pngquant']){
+        try {
+            execFileSync(tool, ['--version'], { stdio: 'ignore' });
+        } catch (e) {
+            if (e.code !== 'ENOENT') continue; // it ran; a nonzero --version is its business
+            throw new Error(`${tool} not found: brew install librsvg pngquant`);
+        }
+    }
+}
+
+async function main(){
+    require_tools();
+    const source = await load_source();
+    await mkdir(out_dir, { recursive: true });
+
+    const jobs = [
+        ...ANY_SIZES.map(s => ({
+            size: s, file: `icon-${s}x${s}.png`, opaque: false, inset: false, kind: 'any',
+        })),
+        {
+            size: APPLE_SIZE, file: `icon-${APPLE_SIZE}x${APPLE_SIZE}.png`,
+            opaque: true, inset: false, kind: 'apple',
+        },
+        {
+            size: MASKABLE_SIZE, file: `icon-${MASKABLE_SIZE}x${MASKABLE_SIZE}-maskable.png`,
+            opaque: true, inset: true, kind: 'maskable',
+        },
+    ];
+
+    let total = 0;
+    for (const job of jobs){
+        const svg = compose(source, job.size, job);
+        const bytes = await rasterize(svg, job.size, path.join(out_dir, job.file));
+        total += bytes;
+        console.log(`  static/icons/${job.file.padEnd(28)} ${job.kind.padEnd(9)}`
+            + `${bytes.toLocaleString().padStart(7)} bytes`);
+    }
+    console.log(`wrote ${jobs.length} icons from ${source.name}`
+        + ` (${total.toLocaleString()} bytes total)`);
+}
+
+await main();

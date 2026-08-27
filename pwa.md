@@ -13,7 +13,8 @@ This document is the working plan for bringing quartetroulette.com up to the
 - **Remove**: this file stays in the repo until Jason decides it's done. Do not delete or fold it
   into TODO.md on your own initiative.
 
-Phase 1 implemented 2026-08-26 in `cfc3777`; its two deployed-URL checks are still outstanding.
+Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is still outstanding.
+Phase 2 implemented 2026-08-27; its on-device checks are still outstanding.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -119,21 +120,56 @@ Verify: **not closed — step 2 still needs a production deploy.**
 Current defects: `static/manifest.webmanifest` is icons-only; no `apple-mobile-web-app-*` metas;
 no `theme-color` meta; no maskable icon; no dedicated 180×180 apple-touch-icon.
 
+**Found while doing the work:** every icon in `static/icons/` was fully transparent, and
+`page_html()` emitted an `apple-touch-icon` link for *all eight* of them. iOS composites an alpha
+channel in an apple-touch-icon against **black**, so the existing home-screen shortcut showed the
+wheel on a black tile. Not in the original defect list; fixed here.
+
 Tasks:
-- [ ] Manifest: add `name: "Quartet Roulette"`, `short_name: "Quartets"` (≤12 chars, confirm
+- [x] Manifest: add `name: "Quartet Roulette"`, `short_name: "Quartets"` (≤12 chars, confirm
       wording with Jason), `start_url: "/"`, `display: "standalone"`, `theme_color`,
       `background_color`.
-- [ ] Add a **maskable** icon (regenerate 512 with safe-zone padding, `purpose: "maskable"`).
-- [ ] Generate a 180×180 icon; keep `scripts/build.mjs`'s manifest-derived `apple-touch-icon`
+      → `short_name` is **"Quartet 🎲"** (10 of 12 units), Jason's call: dice reads as *chance*,
+      which is what "Roulette" means, while 🔀 stays the right mark for the nav's *action*
+      buttons. `theme_color: #5dcbf5` (the site-title cyan), `background_color: #f7f7f3`.
+      Also added a `description` for the install UI.
+- [x] Add a **maskable** icon (regenerate 512 with safe-zone padding, `purpose: "maskable"`).
+      → `icons/icon-512x512-maskable.png`, artwork inset to the 80% safe zone on an opaque
+      `#f7f7f3` ground. Verified by cropping it to a circle and to a squircle: the rim survives
+      both. The wheel being circular means a circular safe zone wastes no space.
+- [x] Generate a 180×180 icon; keep `scripts/build.mjs`'s manifest-derived `apple-touch-icon`
       links working (it already treats the manifest as the single source of truth — preserve that).
-- [ ] Head metas in `page_html()`: `theme-color`, `apple-mobile-web-app-capable`,
+      → `icons/icon-180x180.png`, **flattened** (see above). The manifest stays the source of
+      truth: `app_meta()` now *selects* the 180 from it rather than emitting a link per icon.
+      One link per page instead of eight, which took 83 KB off the site's HTML.
+- [x] Head metas in `page_html()`: `theme-color`, `apple-mobile-web-app-capable`,
       `apple-mobile-web-app-title` (iOS ignores the manifest).
+      → all three, plus `mobile-web-app-capable` (the non-deprecated spelling; older iOS still
+      reads only the `apple-` one). Values come from the manifest, so they cannot drift from it.
 
-Acceptance criteria: manifest validates (Chrome DevTools → Application → Manifest shows no
-warnings, maskable icon renders in the purpose preview); the three metas are in every page's head.
+Also: `scripts/make-icons.mjs` (`npm run icons`) now generates the whole icon set. The previous
+PNGs were Gatsby-plugin output with no generator left in the repo — exactly the orphaned-artifact
+drift this plan warns about. It prefers `static/icon.svg` and falls back to `static/icon.png`
+(flaticon's 512 original, their largest), so nothing is ever upscaled; dropping an SVG in later is
+a no-code swap. Regenerating also halved the icon payload, 252 KB → 128 KB, with no visible
+change (RMSE 0.08% at 512).
 
-Verify: Add to Home Screen on iOS and install on desktop Chrome — correct name and icon, opens
-standalone without browser chrome.
+Acceptance criteria:
+- ⚠️ manifest validates (Chrome DevTools → Application → Manifest shows no warnings, maskable icon
+  renders in the purpose preview)
+  → **needs a browser; not verified.** What *is* verified in `test/build.test.mjs`, describe
+  "install / manifest (pwa.md Phase 2)": every advertised icon exists and its real IHDR dimensions
+  match its declared `sizes`; exactly one maskable icon at 512; the maskable and apple icons carry
+  no alpha (no `tRNS` chunk, no alpha colour type) while the ordinary ones still do; `short_name`
+  fits 12 units. `app_meta()` also fails the build if a required field or the maskable icon is
+  missing.
+- ✅ the three metas are in every page's head
+  → asserted per route, with values compared against the manifest.
+
+Verify: **not done — needs devices.**
+1. Add to Home Screen on iOS — correct name and icon, opens standalone without browser chrome.
+   Specifically worth confirming: the tile should no longer be black behind the wheel.
+2. Install on desktop Chrome, and check DevTools → Application → Manifest for warnings.
 
 ## Phase 3 — Mobile polish + accessibility floor
 
