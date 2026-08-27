@@ -89,7 +89,11 @@ export default function Work({ pageContext }) {
                         <tr key={m.movement_number}>
                             <td>{Utils.to_roman(m.movement_number)}</td>
                             <td title={m.title}>{m.title}</td>
-                            <td>{player(m)}</td>
+                            {/* 29 works (all Boccherini) have no recording
+                                linked. An empty cell under a "Recording"
+                                header reads as broken; a dash reads as an
+                                answer. */}
+                            <td>{player(m) || "—"}</td>
                         </tr>
                     ))
                 }
@@ -171,10 +175,21 @@ function getDescription(pageContext){
     const nickname = Utils.work_nickname(work, siblings);
     const title = Utils.get_work_title(work);
     const named = (nickname && !title.includes(nickname)) ? ` — “${nickname}” — ` : " ";
-    const n = movements_of(pageContext.data, work).length;
+    // Describe what the page actually shows. This used to promise "keys and
+    // recordings" everywhere, and did so twice over: the movement table has no
+    // key column at all (only Bach's bulleted list carries a key, in a hover
+    // title), and 29 works have no recording linked -- which was survivable
+    // while those pages rendered empty iframes, and flatly false once
+    // player() stopped rendering anything for them.
+    const mvmts = movements_of(pageContext.data, work);
+    const n = mvmts.length;
+    const recorded = mvmts.filter(m => m.spotify).length;
     const movements = n === 1
-        ? "a single movement, with its key and a recording."
-        : `${n} movements, with keys and recordings.`;
+        ? (recorded ? "a single movement, with a recording."
+                    : "a single movement; no recording linked yet.")
+        : recorded === n ? `${n} movements, with recordings.`
+        : recorded === 0 ? `${n} movements; no recordings linked yet.`
+        : `${n} movements, ${recorded} of them with recordings.`;
 
     return `${title} in ${work.key}${named}by ${composerInfo.full_name}, `
         + `completed in ${work.completed}: ${movements}`;

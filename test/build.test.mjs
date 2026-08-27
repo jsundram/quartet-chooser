@@ -483,6 +483,13 @@ describe('mobile + accessibility floor (pwa.md Phase 3)', () => {
                 // had just read out.
                 const date = dates[i].inner.replace(/<[^>]*>/g, '');
                 assert.equal(label[1], `${verb} ${date} — see composers born on that day`, route);
+                // and the href has to be the same day the label names: the
+                // label is only honest if daily-composers gets that calendar
+                // day, and pinning the copy alone would not catch a swap
+                const href = dates[i].attrs.match(/href="([^"]*)"/)[1];
+                const d = new Date(date);
+                assert.equal(href, `https://daily-composers.netlify.app/${d.getMonth() + 1}-${d.getDate()}`,
+                    `${route}: ${verb} link points at the day it names`);
                 checked++;
             });
         }

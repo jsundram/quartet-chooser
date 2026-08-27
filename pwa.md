@@ -93,8 +93,14 @@ Tasks (all `cfc3777`):
 - [x] Work-page descriptions say something ("String Quartet in G, Op. 77 No. 1 by Joseph Haydn —
       movements, keys, and recordings"), not the title twice.
       → e.g. `/haydn-opus-76-3/`: "Quartet Opus 76#3 in C major — "Kaiser" — by Joseph Haydn,
-      completed in 1797: 4 movements, with their titles, keys and recordings." Movement counts
-      come from the same `movements_of()` the page body uses, so they can't drift.
+      completed in 1797: 4 movements, with recordings." Movement counts come from the same
+      `movements_of()` the page body uses, so they can't drift.
+      **Corrected during Phase 3 review (`8422876`):** the tail used to read "with keys and
+      recordings" on every page, and neither half held. The movement table has no key column at all
+      (only Bach's bulleted list carries a key, in a hover title), and 29 works have no recording
+      linked — survivable while those pages still rendered empty players, false once they stopped.
+      The tail is now counted, not assumed: "with recordings", "no recordings linked yet", or
+      "N of them with recordings" if a work is ever partly recorded.
 
 Acceptance criteria:
 - ✅ Every generated page in `dist/` has the full tag set above; a spot-check script or test fixture
@@ -226,12 +232,16 @@ Tasks:
       `aria-label`/`title` "Random quartet from Opus 76". The tap-to-play links `src/client/work.js`
       builds on touch devices said `alt="play"` on every row; they now say `Play <movement>`, taken
       from the iframe title the row already carries.
-      → **Found in review (`a4a0ad7`):** naming those links made a pre-existing dead one louder. 70
+      → **Found in review (`a4a0ad7`, `8422876`):** naming those links made a pre-existing dead one louder. 70
       of the 916 movements have no recording (all Boccherini, 29 pages) and rendered an iframe with
       no `src` — an empty 80px box on desktop, and on touch a play link whose `href` resolved to the
       current page, i.e. a button that silently reloads while announcing "Play Allegro". `player()`
       in `src/templates/work.js` now returns nothing for a movement with no `spotify`, which fixes
-      both surfaces, and `work.js` refuses to build a link from a `src`-less iframe.
+      both surfaces, and `work.js` refuses to build a link from a `src`-less iframe. Two follow-ons
+      from the same finding: those pages' Recording cells now hold an em dash rather than nothing,
+      because an empty cell under a "Recording" header reads as broken while a dash reads as an
+      answer; and the page's `meta[name=description]` stopped promising recordings it does not have
+      (see Phase 1's task list, which is where that sentence is specified).
       → `alt`: the wordmark icon in `Layout` (it repeats the wordmark beside it) and the signature on
       each home-page tile (the portrait in the same link already names the composer) are decorative,
       `alt=""` — before this, a home-page tile announced "Haydn Haydn". The composer-page portrait
@@ -265,7 +275,9 @@ Acceptance criteria: each bullet above verifiable by grep or by keyboard-tabbing
   safe-area padding on all four sides and a surviving `prefers-reduced-motion` block in the inlined
   CSS, no `outline:none`, exactly one non-empty `<h1>`, one `<main>` with the nav outside it, an
   `alt` on every `<img>`, an accessible name on every `<a>`, `aria-label` on every icon-only link,
-  no inline event handlers, and a label on both date links built from the date the link shows.
+  no inline event handlers, and a label on both date links built from the date the link shows —
+  which is also asserted to be the day the link's `href` actually goes to, since pinning the copy
+  alone would not catch a swap between the two.
   The embeds test also holds that no iframe ships without a `src`.
 - ✅ The redirect shells stay bare (Phase 2's test still holds): they get no viewport and no CSS.
 
