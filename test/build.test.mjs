@@ -503,6 +503,91 @@ describe('mobile + accessibility floor (pwa.md Phase 3)', () => {
     });
 });
 
+describe('analytics (pwa.md Phase 4)', () => {
+    const pages = () => routes_in(dist).filter(r => !r.startsWith('/random'));
+
+    // The endpoint, the CDN and the event name are constants in
+    // src/lib/site.js, read here as text rather than imported: site.js is an ESM
+    // .js in a package with no "type": "module", so only the esbuild bundles can
+    // import it. Reading it keeps this suite honest about the *real* values --
+    // the site code is `quartet-roulette`, hyphenated, and pwa.md's task list
+    // guessed `quartetroulette`, which would have counted into a site that does
+    // not exist while every page still looked correct.
+    const site_js = readFileSync(path.join(root, 'src', 'lib', 'site.js'), 'utf8');
+    const constant = name => {
+        const m = site_js.match(new RegExp(`export const ${name} = "([^"]*)"`));
+        assert.ok(m, `src/lib/site.js exports ${name}`);
+        return m[1];
+    };
+    const ENDPOINT = constant('GC_ENDPOINT');
+    const SCRIPT = constant('GC_SCRIPT');
+    const EVENT = constant('GC_PLAY_EVENT');
+
+    // the whole element, closing tag included, so "last in the body" can be
+    // asserted against the end of the document
+    const gc_tags = html =>
+        [...html.matchAll(/<script[^>]*\bdata-goatcounter=[^>]*><\/script>/g)].map(m => m[0]);
+
+    test('the endpoint is the site that exists, over https', () => {
+        assert.equal(ENDPOINT, 'https://quartet-roulette.goatcounter.com/count');
+        // protocol-relative //gc.zgo.at/count.js is GoatCounter's own snippet;
+        // the site is https-only, so pinning the scheme costs nothing
+        assert.equal(SCRIPT, 'https://gc.zgo.at/count.js');
+    });
+
+    test('every page carries exactly one count.js tag, async and last', () => {
+        for (const route of pages()){
+            const html = read(route);
+            const tags = gc_tags(html);
+            assert.equal(tags.length, 1, route + ' has one goatcounter tag');
+            assert.ok(tags[0].includes(`data-goatcounter="${ENDPOINT}"`), route + ': ' + tags[0]);
+            assert.ok(tags[0].includes(`src="${SCRIPT}"`), route + ': ' + tags[0]);
+            // async or the page's own parse waits on a third-party host
+            assert.match(tags[0], /\basync\b/, route + ': ' + tags[0]);
+            // and last: after the site's own scripts, immediately before
+            // </body>, so nothing the page does is queued behind analytics
+            assert.ok(html.indexOf(tags[0]) > html.lastIndexOf('<script src="/js/'),
+                route + ': counted before the site\'s own scripts');
+            assert.ok(html.endsWith(tags[0] + '</body></html>'), route + ': not last in the body');
+        }
+    });
+
+    test('the redirect shells stay bare', () => {
+        // they replace themselves in the same tick; fetching a third-party
+        // script to count that would slow down the only thing they do, and the
+        // page they land on counts the visit a moment later
+        for (const route of ['/random/', '/random-composer/']){
+            assert.deepEqual(gc_tags(read(route)), [], route + ' has no analytics');
+        }
+    });
+
+    test('a play click is counted, but nothing waits on GoatCounter', () => {
+        const js = readFileSync(path.join(dist, 'js', 'work.js'), 'utf8');
+        // the event name comes from site.js through esbuild's define, and is a
+        // literal at the call site: no movement title, no slug, no PII
+        assert.match(js, new RegExp(`count\\(\\{\\s*path\\s*:\\s*"${EVENT}"`), 'counts a literal event');
+        assert.ok(!js.includes('goatcounter.count('), 'never calls count() unguarded');
+        // window.goatcounter is undefined whenever count.js is blocked, offline
+        // or simply not loaded yet -- all three have to be a no-op, not a throw
+        assert.match(js, /typeof\s+\w+\.count\s*!=/, 'guards on count being a function');
+        for (const event of ['click', 'auxclick']){
+            assert.ok(js.includes(`"${event}"`), `binds ${event}`);
+        }
+    });
+
+    test('no page depends on the analytics host for anything else', () => {
+        // the acceptance criterion is that a blocked gc.zgo.at costs the visitor
+        // nothing: it may serve count.js and nothing else -- no stylesheet, no
+        // preconnect, no image, nothing the page renders around
+        for (const route of routes_in(dist)){
+            const html = read(route);
+            for (const [tag] of html.matchAll(/<[^>]*\bgc\.zgo\.at[^>]*>/g)){
+                assert.match(tag, /^<script[^>]*\basync\b/, `${route}: ${tag}`);
+            }
+        }
+    });
+});
+
 describe('random redirect pages', () => {
     const REDIRECTS = ['/random/', '/random-composer/'];
     const targets = route => {

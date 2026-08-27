@@ -26,6 +26,12 @@
         * https://observablehq.com/@agware/timeline-in-office (linked visualizations with brushing)
         * https://user-images.githubusercontent.com/230541/130283717-71d42637-89e4-4794-82e6-9a8570bb527d.png from [here](https://github.com/observablehq/plot/blob/main/CHANGELOG.md)
 * Analytics -- decided 2026-08-20: hosted GoatCounter (cookie-free, supports link-click events), see [pwa.md](pwa.md) Phase 4. Supersedes the earlier self-hosted/AKM-style idea; revisit only if GoatCounter proves inadequate.
+    * site created at [quartet-roulette.goatcounter.com](https://quartet-roulette.goatcounter.com/) (hyphenated)
+    * code landed 2026-08-27: the async `count.js` tag last in the body of every page, and a
+      `play-recording` event on the mobile tap-to-play links -- which covers the "link clicks" half of
+      this item. Desktop plays happen inside a cross-origin Spotify iframe and are not countable.
+    * **Still open until the deployed site is checked with an adblocker on and off** -- see
+      pwa.md Phase 4 "Verify".
 * [SEO](https://www.google.com/search?q=quartet+roulette)
     * submit to [search console](https://search.google.com/search-console?resource_id=sc-domain:quartetroulette.com)
     * Gatsby [HEAD / SEO stuff ](https://www.gatsbyjs.com/docs/how-to/adding-common-features/adding-seo-component/)

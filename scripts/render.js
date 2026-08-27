@@ -5,7 +5,7 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 import { get_pages, random_targets } from '../src/lib/routes'
-import { SITE_TITLE, SITE_URL } from '../src/lib/site'
+import { GC_ENDPOINT, GC_PLAY_EVENT, GC_SCRIPT, SITE_TITLE, SITE_URL } from '../src/lib/site'
 
 import { PathContext } from '../src/components/path-context'
 
@@ -45,4 +45,5 @@ function render_pages(){
 // that swaps Spotify embeds for play links on touch devices needs them.
 const CLASS_NAMES = { tableMobile, playIcon };
 
-export { CLASS_NAMES, SITE_TITLE, SITE_URL, random_targets, render_pages };
+export { CLASS_NAMES, GC_ENDPOINT, GC_PLAY_EVENT, GC_SCRIPT, SITE_TITLE, SITE_URL,
+         random_targets, render_pages };

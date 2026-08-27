@@ -87,7 +87,23 @@ function script_json(value){
     return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
-function page_html({ head, body, scripts }, css, app){
+// pwa.md Phase 4: hosted GoatCounter, cookie-free and consent-banner-free.
+// `async` and last in the body, so it is fetched after the page has parsed and
+// after the site's own scripts have run -- analytics never sits on the critical
+// path, and a slow or unreachable gc.zgo.at delays nothing.
+//
+// count.js declines to count from localhost and from file:// on its own, so
+// `npm run serve` and a build opened off disk stay out of the dashboard without
+// a build-time switch here. Netlify deploy previews do NOT get that for free:
+// they are a real host, and their hits land in the same dashboard as
+// production's. Visiting any page with #toggle-goatcounter turns counting off
+// for that browser (GoatCounter stores a flag in localStorage), which is the
+// intended fix for both preview traffic and Jason's own visits.
+function analytics_tag(endpoint, src){
+    return `<script data-goatcounter="${xml_escape(endpoint)}" async src="${xml_escape(src)}"></script>`;
+}
+
+function page_html({ head, body, scripts }, css, app, analytics){
     return '<!DOCTYPE html><html lang="en"><head>'
         + '<meta charset="utf-8"/>'
         + '<meta http-equiv="x-ua-compatible" content="ie=edge"/>'
@@ -109,6 +125,7 @@ function page_html({ head, body, scripts }, css, app){
         + '</head><body>'
         + body
         + (scripts || '')
+        + analytics
         + '</body></html>';
 }
 
@@ -151,8 +168,11 @@ async function build(){
         outExtension: { '.js': '.mjs' },
     });
 
-    const { CLASS_NAMES, SITE_TITLE, SITE_URL, random_targets, render_pages } =
+    const { CLASS_NAMES, GC_ENDPOINT, GC_PLAY_EVENT, GC_SCRIPT, SITE_TITLE, SITE_URL,
+            random_targets, render_pages } =
         await import(pathToFileURL(path.join(ssr, 'render.mjs')));
+
+    const analytics = analytics_tag(GC_ENDPOINT, GC_SCRIPT);
 
     // 2. The bundle's CSS output (all modules' styles) gets inlined into
     // every page, as Gatsby did.
@@ -176,13 +196,17 @@ async function build(){
         define: {
             TABLE_MOBILE: script_json(CLASS_NAMES.tableMobile),
             PLAY_ICON: script_json(CLASS_NAMES.playIcon),
+            PLAY_EVENT: script_json(GC_PLAY_EVENT),
         },
         outdir: path.join(dist, 'js'),
     });
 
     // 4. The redirect pages, kept as entry points for typed and bookmarked
     // URLs; in-site 🔀 clicks never come here. Thin on purpose: no layout,
-    // no stylesheet, script inlined so the redirect fires during parse.
+    // no stylesheet, script inlined so the redirect fires during parse -- and
+    // no analytics tag either: fetching count.js to count a page that replaces
+    // itself in the same tick would slow down the only thing these do, and the
+    // page they land on counts the visit a moment later anyway.
     const targets = random_targets();
     const redirects = [
         { path: '/random', title: 'Random Quartet', slugs: targets['random'] },
@@ -212,7 +236,7 @@ async function build(){
             throw new Error(`page path escapes dist/: ${page.path}`);
         }
         await mkdir(dir, { recursive: true });
-        const html = page_html({ ...page, scripts }, css, app);
+        const html = page_html({ ...page, scripts }, css, app, analytics);
         await writeFile(path.join(dir, 'index.html'), html);
         if (page.path === '/404/'){
             await writeFile(path.join(dist, '404.html'), html); // Netlify's custom 404
