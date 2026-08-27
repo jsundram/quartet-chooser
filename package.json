@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "checklist": "node scripts/make-checklist.mjs",
     "icons": "node scripts/make-icons.mjs",
     "og": "node scripts/make-og.mjs",
     "serve": "npx serve dist",

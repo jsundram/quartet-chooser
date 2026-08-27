@@ -12,6 +12,16 @@ This document is the working plan for bringing quartetroulette.com up to the
   criteria and verification steps, not just "looks right."
 - **Remove**: this file stays in the repo until Jason decides it's done. Do not delete or fold it
   into TODO.md on your own initiative.
+- **Status page**: `scripts/make-checklist.mjs` (`npm run checklist`) builds `pwa-checklist.html`,
+  the human-facing companion to this file — Jason's outstanding items only, with the share cards and
+  icon proofs embedded so they can be eyeballed on a phone. It is published as an artifact at
+  **<https://claude.ai/code/artifact/39f766d2-e56f-414a-95d5-1747dfb3ece2>**.
+
+  **When a phase lands, or a decision gets made, update it in the same commit as the change**:
+  edit the `PHASES` data in the script, `npm run checklist`, then republish *passing that URL* —
+  publishing without it creates a second artifact instead of updating the first. The HTML output is
+  gitignored (~1.5 MB of inlined base64) and regenerates in seconds; the script is the source of
+  truth for the page, this file for the plan.
 
 Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is still outstanding.
 Phase 2 implemented 2026-08-27; its on-device checks are still outstanding.
