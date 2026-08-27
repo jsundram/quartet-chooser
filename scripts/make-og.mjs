@@ -14,10 +14,10 @@
 // Cards are hard-gated at MAX_BYTES: a card too big to scrape previews as a
 // silent grey box, so this fails loudly instead of shipping one. scripts/build.mjs
 // re-checks the committed files, so a stale oversized card can't sneak in.
-import { execFileSync } from 'node:child_process'
 import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { quantize, rasterize_svg, require_tools } from './png-tools.mjs'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const static_dir = path.join(root, 'static');
@@ -125,12 +125,12 @@ async function rasterize(svg, name){
     const tmp = path.join(out_dir, `.${name}.svg`);
     await writeFile(tmp, svg);
     try {
-        execFileSync('rsvg-convert', ['-w', String(W), '-h', String(H), tmp, '-o', png]);
+        rasterize_svg(tmp, { width: W, height: H, out: png });
         // Palette-quantize: a card that rasterized fine but never got
-        // compressed is exactly the one that previews as a grey box.
-        // --skip-if-larger leaves the original alone if quantizing doesn't help.
-        execFileSync('pngquant', ['--force', '--skip-if-larger', '--speed', '1',
-                                  '--output', png, png]);
+        // compressed is exactly the one that previews as a grey box. If
+        // pngquant declines (it would not have helped), the rsvg output
+        // already at `png` stands, and the size gate below still applies.
+        quantize(png);
     } finally {
         await rm(tmp, { force: true });
     }
@@ -141,17 +141,6 @@ async function rasterize(svg, name){
             + 'simplify the layout or shrink the palette');
     }
     return size;
-}
-
-function require_tools(){
-    for (const tool of ['rsvg-convert', 'pngquant']){
-        try {
-            execFileSync(tool, ['--version'], { stdio: 'ignore' });
-        } catch (e) {
-            if (e.code !== 'ENOENT') continue; // it ran; a nonzero --version is its business
-            throw new Error(`${tool} not found: brew install librsvg pngquant`);
-        }
-    }
 }
 
 async function main(){

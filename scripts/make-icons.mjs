@@ -26,10 +26,10 @@
 //             square); art outside that centred 80% circle can be cut off.
 //             The wheel being circular is lucky here -- a circle in a circular
 //             safe zone wastes no space.
-import { execFileSync } from 'node:child_process'
 import { access, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { quantize, rasterize_svg, require_tools } from './png-tools.mjs'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const static_dir = path.join(root, 'static');
@@ -92,25 +92,16 @@ function compose(source, size, { opaque, inset }){
 async function rasterize(svg, size, file){
     const tmp = file + '.svg';
     await writeFile(tmp, svg);
+    let quantized;
     try {
-        execFileSync('rsvg-convert', ['-w', String(size), '-h', String(size), tmp, '-o', file]);
-        execFileSync('pngquant', ['--force', '--skip-if-larger', '--speed', '1',
-                                  '--output', file, file]);
+        rasterize_svg(tmp, { width: size, height: size, out: file });
+        // false means pngquant declined because it would not have helped; the
+        // rsvg output already at `file` is the right answer. See png-tools.mjs.
+        quantized = quantize(file);
     } finally {
         await rm(tmp, { force: true });
     }
-    return (await stat(file)).size;
-}
-
-function require_tools(){
-    for (const tool of ['rsvg-convert', 'pngquant']){
-        try {
-            execFileSync(tool, ['--version'], { stdio: 'ignore' });
-        } catch (e) {
-            if (e.code !== 'ENOENT') continue; // it ran; a nonzero --version is its business
-            throw new Error(`${tool} not found: brew install librsvg pngquant`);
-        }
-    }
+    return { bytes: (await stat(file)).size, quantized };
 }
 
 async function main(){
@@ -135,10 +126,11 @@ async function main(){
     let total = 0;
     for (const job of jobs){
         const svg = compose(source, job.size, job);
-        const bytes = await rasterize(svg, job.size, path.join(out_dir, job.file));
+        const { bytes, quantized } = await rasterize(svg, job.size, path.join(out_dir, job.file));
         total += bytes;
         console.log(`  static/icons/${job.file.padEnd(28)} ${job.kind.padEnd(9)}`
-            + `${bytes.toLocaleString().padStart(7)} bytes`);
+            + `${bytes.toLocaleString().padStart(7)} bytes`
+            + (quantized ? '' : '   (pngquant declined; kept the rsvg output)'));
     }
     console.log(`wrote ${jobs.length} icons from ${source.name}`
         + ` (${total.toLocaleString()} bytes total)`);

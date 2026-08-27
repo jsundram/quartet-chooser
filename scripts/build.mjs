@@ -55,6 +55,11 @@ function app_meta(manifest){
     for (const field of required){
         if (!manifest[field]) throw new Error(`manifest is missing ${field}`);
     }
+    // checked before it is walked: an absent icons array would otherwise fail
+    // with a TypeError instead of something that says what to do about it
+    if (!Array.isArray(manifest.icons) || manifest.icons.length === 0){
+        throw new Error('manifest lists no icons: run `npm run icons`');
+    }
     if (!manifest.icons.some(i => i.purpose === 'maskable')){
         // without one, Android crops the artwork to its launcher shape and
         // clips the wheel's rim; see scripts/make-icons.mjs
