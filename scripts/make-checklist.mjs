@@ -64,17 +64,18 @@ const PHASES = [
         after: () => sharecards(),
     },
     {
-        n: 'Phase 2', title: 'Manifest &amp; install', chip: 'review', status: 'PR #41 open',
-        blurb: `Waiting on your review at <a href="${REPO}/pull/41">PR&nbsp;#41</a>. Preview build:
-                <a href="https://deploy-preview-41--quartet-roulette.netlify.app">deploy-preview-41</a>.`,
+        n: 'Phase 2', title: 'Manifest &amp; install', chip: 'shipped', status: 'Merged &middot; live',
+        blurb: `Merged in <span class="path">4e0f14e</span>&ndash;<span class="path">194008d</span> and
+                live on production. Everything left is on a device.`,
         tasks: [
-            { id: 'p2-blacktile', label: '<b>Before you merge: look at your current homescreen shortcut</b>',
-              note: `I expect a black tile behind the wheel. Every icon in
+            { id: 'p2-blacktile', label: '<b>Look at your existing homescreen shortcut before you replace it</b>',
+              note: `I expect a black tile behind the wheel &mdash; every icon in
                      <span class="path">static/icons/</span> was fully transparent, and iOS composites
-                     an apple-touch-icon&rsquo;s alpha against black. If yours is black, that confirms
-                     the bug this PR fixes &mdash; and it means the shortcut has looked wrong for a while.` },
-            { id: 'p2-merge', label: 'Review and merge PR #41' },
-            { id: 'p2-ios', label: '<b>Add to Home Screen on iOS</b>, from production, after merging',
+                     an apple-touch-icon&rsquo;s alpha against black. Worth seeing once, because it means
+                     the shortcut has looked wrong for a while. <b>iOS caches that icon at the moment you
+                     add it</b>, so the shipped fix will not reach your existing shortcut on its own:
+                     delete it and add it again.` },
+            { id: 'p2-ios', label: '<b>Delete the old shortcut, then Add to Home Screen again</b> from production',
               children: [
                 { id: 'p2-ios-name', label: 'Label reads <b>Quartet Roulette</b> &mdash; not truncated, not the Android short name' },
                 { id: 'p2-ios-tile', label: 'Wheel sits on off-white <span class="path">#f7f7f3</span> &mdash; <b>not black</b>' },
@@ -89,7 +90,7 @@ const PHASES = [
         after: () => icons(),
     },
     {
-        n: 'Phase 3', title: 'Mobile polish &amp; accessibility floor', chip: 'idle', status: 'Not started',
+        n: 'Phase 3', title: 'Mobile polish &amp; accessibility floor', chip: 'idle', status: 'Up next',
         blurb: `Small CSS and head items, batched. The build work is mine; these two are yours, and
                 they are the ones that actually catch things.`,
         tasks: [
