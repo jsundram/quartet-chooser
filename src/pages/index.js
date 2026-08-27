@@ -28,7 +28,9 @@ const IndexPage = () => {
                             className={image}
                         />
 
-                        <img src={get_signature(composer)} alt={composer} className={signature} />
+                        {/* decorative: the portrait above it, inside the same link, already
+                            names the composer */}
+                        <img src={get_signature(composer)} alt="" className={signature} />
                     </a>
                 ))
             }

@@ -52,15 +52,25 @@ export default function Composer({ pageContext }) {
                 <img src={get_signature(composer.name)} alt={composer.full_name} className={signature} />
             </a></h1>
 
+            {/* the <h1> above is the signature, and its alt is already the
+                composer's name -- repeating it here would have a screen reader
+                say the name twice in a row */}
             <img
-                alt={composer.full_name}
+                alt={"Portrait of " + composer.full_name}
                 src={get_portrait(composer.name)}
                 className={image}
             />
 
+            {/* `title` is a hover tooltip, and hover does not exist on touch:
+                these two links go somewhere non-obvious (daily-composers) and
+                the date alone does not say so. aria-label keeps the date and
+                adds the destination, so the tooltip is no longer the only
+                place that explanation lives. */}
             <p>
-                <a title={title} href={day(composer.birth)}>{composer.birth}</a> &ndash;&nbsp;
-                <a title={title} href={day(composer.death)}>{composer.death}</a>
+                <a title={title} aria-label={composer.birth + " — " + title}
+                   href={day(composer.birth)}>{composer.birth}</a> &ndash;&nbsp;
+                <a title={title} aria-label={composer.death + " — " + title}
+                   href={day(composer.death)}>{composer.death}</a>
             </p>
             {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
             { works.length > 1 ?
@@ -86,7 +96,9 @@ export default function Composer({ pageContext }) {
                         return (
                             <li key={grouping}>
                                 <i>{group_name(group)}&nbsp;</i>
-                                <a className={button} {...shuffle(group)}>🔀</a>
+                                <a className={button} aria-label={"Random quartet from " + group_name(group)}
+                                   title={"Random quartet from " + group_name(group)}
+                                   {...shuffle(group)}>🔀</a>
                                 <ul>
                                 {
                                     group.map(work => (

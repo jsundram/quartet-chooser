@@ -91,7 +91,15 @@ function page_html({ head, body, scripts }, css, app){
     return '<!DOCTYPE html><html lang="en"><head>'
         + '<meta charset="utf-8"/>'
         + '<meta http-equiv="x-ua-compatible" content="ie=edge"/>'
-        + '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>'
+        // viewport-fit=cover lets the page paint into the notch/home-indicator
+        // area; it only works paired with the env(safe-area-inset-*) padding on
+        // .container in layout.module.css -- one without the other either clips
+        // content under the notch or wastes the inset.
+        + '<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"/>'
+        // the site is light-only until pwa.md Phase 6 decides on dark mode.
+        // Saying so stops the browser from painting a dark canvas behind a
+        // light page (a white flash, or worse, dark form controls on it).
+        + '<meta name="color-scheme" content="light"/>'
         + head
         + `<style>${css}</style>`
         + '<link rel="icon" href="/favicon-32x32.png" type="image/png"/>'

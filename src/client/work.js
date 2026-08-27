@@ -21,7 +21,10 @@
 
         var img = document.createElement('img');
         img.src = '/play.png';
-        img.alt = 'play';
+        // the whole link is this icon, so its alt is the control's accessible
+        // name: "play" on every row of a table says nothing about which row.
+        // The iframe's title is the movement name the row shows.
+        img.alt = frame.title ? 'Play ' + frame.title : 'Play';
         img.className = PLAY_ICON;
 
         link.appendChild(img);

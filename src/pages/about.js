@@ -14,7 +14,7 @@ const AboutPage = () => {
 
     return (
         <Layout>
-            <h2>About</h2>
+            <h1>About</h1>
             <p>
                 Quartet Roulette is a project by some of <a href="http://www.haydnenthusiasts.org/about.html">The Haydn Enthusiasts</a> to help break the "what should we play" indecision by codifying a purposely small list of "standard" rep and helping people by adding a "random" button to figure out what to play next.
             </p>

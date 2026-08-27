@@ -12,6 +12,42 @@ Can use coolors.co to generate a 5th color that fits into the palette:
 # these are nice greens: 51CB20, 6BAA75
 */
 
+/* Notch and home-indicator clearance, the other half of viewport-fit=cover in
+   scripts/build.mjs page_html(). Without the padding, cover paints the page
+   under the status bar and the iOS home indicator; without cover, these insets
+   are all 0 and the padding does nothing. env() resolves to 0 on every device
+   without insets, so this costs desktop nothing. Left and right matter in
+   landscape, where the notch eats one whole edge. */
+.container {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+}
+
+/* The <h1> wrapper the home page puts around the wordmark; see layout.js. It
+   must be visually invisible -- .siteTitle already sets the font size, but the
+   h1 default would resize the spacer between the wordmark and the icon and add
+   margins the other pages do not have. */
+.siteHeading {
+    font-size: inherit;
+    font-weight: inherit;
+    margin: 0;
+}
+
+/* Nothing on the site animates or transitions today. This is the guard that
+   keeps that true for whoever adds the first one: with `reduce` set, motion is
+   cut to a duration nobody perceives rather than removed outright, so
+   animations that only signal completion by ending still end. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 .navLinks {
     display: flex;
     list-style: none;
@@ -53,7 +89,6 @@ a {
       max-width: 800px;
       font-family: -apple-system, Roboto, sans-serif, serif;
       color: #232129;
-      padding: 96;
     }
 
     .siteTitle {
@@ -76,7 +111,6 @@ a {
       max-width: 600px;
       font-family: -apple-system, Roboto, sans-serif, serif;
       color: #232129;
-      padding: 96;
     }
 
     .siteTitle {
@@ -99,7 +133,6 @@ a {
       max-width: 100%;
       font-family: -apple-system, Roboto, sans-serif, serif;
       color: #232129;
-      padding: 5;
     }
 
     .siteTitle {

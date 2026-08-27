@@ -354,6 +354,118 @@ describe('install / manifest (pwa.md Phase 2)', () => {
     });
 });
 
+describe('mobile + accessibility floor (pwa.md Phase 3)', () => {
+    const pages = () => routes_in(dist).filter(r => !r.startsWith('/random'));
+    const style_of = html => html.match(/<style>([\s\S]*?)<\/style>/)[1];
+
+    // The accessible name of a link, as a screen reader would compute the part
+    // of it that matters here: its own aria-label, else its text, else the alt
+    // text of the images inside it. Anchors cannot nest, so a non-greedy match
+    // to the next </a> is a whole link.
+    const links_in = html => [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].map(m => {
+        const [, attrs, inner] = m;
+        const label = attrs.match(/aria-label="([^"]*)"/);
+        const alts = [...inner.matchAll(/<img\b[^>]*\balt="([^"]*)"/g)].map(a => a[1]);
+        const text = inner.replace(/<[^>]*>/g, '').replace(/&[#0-9a-zA-Z]+;/g, ' ');
+        return { attrs, inner, name: [label && label[1], text, ...alts].filter(Boolean).join(' ') };
+    });
+
+    test('viewport opts into the safe area, and the page declares its scheme', () => {
+        // viewport-fit=cover without the env() padding below puts content under
+        // the notch; the padding without cover does nothing. They ship together.
+        for (const route of pages()){
+            const html = read(route);
+            const viewports = [...html.matchAll(/<meta name="viewport"[^>]*>/g)];
+            assert.equal(viewports.length, 1, route + ' has one viewport meta');
+            assert.match(viewports[0][0], /viewport-fit=cover/, route);
+            assert.match(viewports[0][0], /width=device-width/, route);
+            // light until pwa.md Phase 6 decides on dark mode; a wrong value
+            // here is a dark canvas behind a light page
+            assert.match(html, /<meta name="color-scheme" content="light"\/>/, route);
+        }
+    });
+
+    test('the stylesheet pads for the notch and honours reduce-motion', () => {
+        const css = style_of(read('/'));
+        for (const side of ['top', 'right', 'bottom', 'left']){
+            assert.ok(css.includes(`env(safe-area-inset-${side})`), `padding for inset-${side}`);
+        }
+        assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+        // nothing animates today, so this only has to survive minification --
+        // the point is that the guard is in place before the first animation is
+        assert.match(css, /animation-duration:[^;]*!important/);
+        assert.match(css, /transition-duration:[^;]*!important/);
+    });
+
+    test('focus stays visible', () => {
+        // the browser's own focus ring is the whole a11y story here; removing it
+        // without a :focus-visible replacement is what would break keyboard use
+        const css = style_of(read('/'));
+        const kills = [...css.matchAll(/outline\s*:\s*(none|0)\b/g)];
+        assert.deepEqual(kills.map(m => m[0]), [], 'no outline:none in the stylesheet');
+    });
+
+    test('exactly one <h1> per page, and it says something', () => {
+        for (const route of pages()){
+            const html = read(route);
+            const body = html.slice(html.indexOf('</head>'));
+            const h1s = [...body.matchAll(/<h1\b[^>]*>([\s\S]*?)<\/h1>/g)];
+            assert.equal(h1s.length, 1, route + ' has one <h1>');
+            const [{ name }] = links_in(h1s[0][1]).length
+                ? links_in(h1s[0][1])
+                : [{ name: h1s[0][1].replace(/<[^>]*>/g, '') }];
+            assert.ok(name.trim(), route + "'s <h1> has text or a named image");
+        }
+    });
+
+    test('the nav is a real landmark, outside <main>', () => {
+        // a VoiceOver rotor reads the page by landmark; the nav used to be
+        // inside main, so "main" meant "the whole document"
+        for (const route of pages()){
+            const html = read(route);
+            assert.equal((html.match(/<main\b/g) || []).length, 1, route + ' has one <main>');
+            assert.ok(html.indexOf('<nav>') < html.indexOf('<main>'), route + ': nav before main');
+            assert.ok(html.includes('<header>'), route + ' has a header');
+        }
+    });
+
+    test('every image declares alt, and every link has a name', () => {
+        for (const route of pages()){
+            const html = read(route);
+            for (const [tag] of html.matchAll(/<img\b[^>]*>/g)){
+                // decorative images say alt=""; a *missing* alt makes a screen
+                // reader read the file name instead
+                assert.match(tag, /\balt="/, `${route}: ${tag}`);
+            }
+            for (const link of links_in(html)){
+                assert.ok(link.name.trim(), `${route}: unnamed link <a${link.attrs}>`);
+            }
+        }
+    });
+
+    test('icon-only controls carry an aria-label', () => {
+        // 🔀 alone is not a name: the per-opus shuffle links on composer pages
+        // are an emoji and nothing else
+        let icons = 0;
+        for (const route of pages()){
+            for (const link of links_in(read(route))){
+                const text = link.inner.replace(/<[^>]*>/g, '').replace(/&[#0-9a-zA-Z]+;/g, ' ');
+                const wordless = !/[a-z0-9]/i.test(text) && !link.inner.includes('<img');
+                if (!wordless) continue;
+                icons++;
+                assert.match(link.attrs, /aria-label="[^"]+"/, `${route}: <a${link.attrs}>${text}`);
+            }
+        }
+        assert.ok(icons > 0, 'found the icon-only links to check');
+    });
+
+    test('nothing is made clickable by a handler on a non-control', () => {
+        for (const route of pages()){
+            assert.doesNotMatch(read(route), /\son[a-z]+="/, route + ' has no inline handlers');
+        }
+    });
+});
+
 describe('random redirect pages', () => {
     const REDIRECTS = ['/random/', '/random-composer/'];
     const targets = route => {

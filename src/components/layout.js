@@ -9,6 +9,7 @@ import {
   navLinks,
   navLinkItem,
   navLinkText,
+  siteHeading,
   siteTitle,
   siteIcon,
 } from './layout.module.css'
@@ -25,24 +26,39 @@ const Layout = ({ children }) => {
   const path = React.useContext(PathContext);
   let current = href => (href === path || href + '/' === path) ? 'page' : undefined;
 
-  return (
-    <main className={container}>
+  // The wordmark is the home page's only real heading, so on / it *is* the
+  // <h1>. Every other page brings its own — the work title, the composer's
+  // signature, "About", "Page not found" — and a second <h1> would flatten
+  // the outline. .siteHeading exists only to keep the h1 from changing how
+  // any of this looks: it inherits font size and weight (the <a> sets its
+  // own) and drops the default margins.
+  const wordmark = (
+    <>
       <a className={siteTitle} href="/" aria-current={current('/')}>{SITE_TITLE}</a>
-      &nbsp;&nbsp;<img src="/icon.png" alt="site icon" className={siteIcon}/>
+      {/* decorative: it repeats the wordmark next to it, so alt="" keeps a
+          screen reader from reading the site's name twice */}
+      &nbsp;&nbsp;<img src="/icon.png" alt="" className={siteIcon}/>
+    </>
+  );
 
-      <nav>
-        <ul className={navLinks}>
-          <li className={navLinkItem}><a href="/" className={navLinkText} aria-current={current('/')}>Home</a></li>
-          <li className={navLinkItem}><a href="/random" data-shuffle={SHUFFLE['random'].join(' ')} className={[navLinkText, button].join(" ")} title="Random Quartet">Quartet 🔀</a></li>
-          <li className={navLinkItem}><a href="/random-composer" data-shuffle={SHUFFLE['random-composer'].join(' ')} className={[navLinkText, button].join(" ")} title="Random Composer">Composer 🔀</a></li>
-          <li className={navLinkItem}><a href="/about" className={navLinkText} aria-current={current('/about')}>About</a></li>
-        </ul>
-      </nav>
+  return (
+    <div className={container}>
+      <header>
+        {path === '/' ? <h1 className={siteHeading}>{wordmark}</h1> : wordmark}
 
-      {children}
-    </main>
+        <nav>
+          <ul className={navLinks}>
+            <li className={navLinkItem}><a href="/" className={navLinkText} aria-current={current('/')}>Home</a></li>
+            <li className={navLinkItem}><a href="/random" data-shuffle={SHUFFLE['random'].join(' ')} className={[navLinkText, button].join(" ")} title="Random Quartet">Quartet 🔀</a></li>
+            <li className={navLinkItem}><a href="/random-composer" data-shuffle={SHUFFLE['random-composer'].join(' ')} className={[navLinkText, button].join(" ")} title="Random Composer">Composer 🔀</a></li>
+            <li className={navLinkItem}><a href="/about" className={navLinkText} aria-current={current('/about')}>About</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <main>{children}</main>
+    </div>
   )
 }
 
 export default Layout
-
