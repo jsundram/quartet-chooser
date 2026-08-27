@@ -30,6 +30,8 @@ Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is stil
 Phase 2 implemented 2026-08-27 in `4e0f14e`; its on-device checks are still outstanding.
 Phase 3 implemented 2026-08-27 in `8cd7315`, with review fixes in `a4a0ad7`; its VoiceOver /
 keyboard / landscape checks are still outstanding.
+Phase 4 implemented 2026-08-27 in `452c7fa`, on top of Phase 3's branch; its adblocker-on /
+adblocker-off check needs the deploy.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -46,7 +48,7 @@ template in `scripts/build.mjs`; per-page tags come from each page/template's `H
 
 | Decision | Status | Notes |
 |---|---|---|
-| Analytics: **GoatCounter (hosted)** | **Decided 2026-08-20** | See Phase 4 rationale. Supersedes the "self-hosted, AKM-style" wording in TODO.md — revisit only if hosted GoatCounter proves inadequate. |
+| Analytics: **GoatCounter (hosted)** | **Decided 2026-08-20**, shipped 2026-08-27 | See Phase 4 rationale. Supersedes the "self-hosted, AKM-style" wording in TODO.md — revisit only if hosted GoatCounter proves inadequate. Site: <https://quartet-roulette.goatcounter.com/>. |
 | Service worker / offline | **Open — decide at Phase 5** | Not obviously worth it for this site; see the Phase 5 decision gate before writing any SW code. |
 | Dark mode | **Open — decide at Phase 6** | Real design work (theme colors derive from portrait SVGs). Explicitly optional. |
 
@@ -299,21 +301,61 @@ visitors, and supports custom events for link clicks. The only gap vs. TODO.md's
 "self-hosted" — hosted GoatCounter is still privacy-friendly, and it can be self-hosted later
 (single Go binary) without changing any page code. Not a blocker.
 
-Tasks:
-- [ ] Create the site at goatcounter.com (e.g. `quartetroulette.goatcounter.com`) — Jason does
-      this; the code just needs the URL.
-- [ ] Add the script tag to `page_html()`, **`async`, loaded last**:
-      `<script data-goatcounter="https://SITE.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>`
-- [ ] Optional: click events on outbound Spotify/recording links
-      (`data-goatcounter-click` attributes or `goatcounter.count()`), to cover TODO.md's
-      "link clicks" requirement.
-- [ ] Update TODO.md's analytics bullet to point here.
+Tasks (all `452c7fa`):
+- [x] Create the site at goatcounter.com — Jason does this; the code just needs the URL.
+      → **<https://quartet-roulette.goatcounter.com/>**, counting endpoint
+      `https://quartet-roulette.goatcounter.com/count`. The site code is **hyphenated**; the
+      `quartetroulette.goatcounter.com` in this task's original wording was a guess and is wrong.
+      Worth stating plainly because the failure mode is silent: a page with the wrong endpoint
+      looks exactly like a page with the right one, and the hits go nowhere.
+- [x] Add the script tag to `page_html()`, **`async`, loaded last**.
+      → `analytics_tag()` in `scripts/build.mjs`, emitted after the page's own scripts and
+      immediately before `</body>`. The endpoint, the CDN URL and the event name are constants in
+      `src/lib/site.js` (`GC_ENDPOINT`, `GC_SCRIPT`, `GC_PLAY_EVENT`), re-exported through
+      `scripts/render.js`, so the generator and the client bundle read the same values — the event
+      name reaches `src/client/work.js` through the esbuild `define` that already carries the
+      hashed class names. `https://gc.zgo.at/count.js` rather than GoatCounter's protocol-relative
+      `//gc.zgo.at/count.js`: the site is https-only, so the scheme is not in question.
+      The two `/random*` redirect shells deliberately get **no** tag — they replace themselves in
+      the same tick, the page they land on counts the visit a moment later, and Phase 1's rule that
+      they trigger no extra request still holds.
+- [x] Optional: click events on outbound Spotify/recording links.
+      → `src/client/work.js` counts a `play-recording` event on the tap-to-play links it builds.
+      Two things to know about what that number means: it is **touch-only**, because that is the
+      only surface where a recording *is* a link (on desktop it is a cross-origin Spotify iframe
+      and a play inside it is not observable from the page at all); and GoatCounter's beacon is an
+      `<img>`, which a browser may cancel when the click navigates away — so it floor-counts
+      interest rather than measuring it. Both beat holding up a tap to be sure of a count.
+      `goatcounter.count()` rather than `data-goatcounter-click`: count.js binds the attribute
+      version once, on load, and these links do not exist until `work.js` has replaced the iframes
+      — a race that would silently drop the events on whichever load lost it.
+- [x] Update TODO.md's analytics bullet to point here.
+      → done, including what is still open (the adblocker check) and the touch-only caveat.
 
-Acceptance criteria: the app never *depends* on GoatCounter — it must fail silently when blocked
-or offline (this is why it's exempt from Phase 5's no-uncached-CDN rule). No PII in event names.
+Acceptance criteria:
+- ✅ the app never *depends* on GoatCounter — it must fail silently when blocked or offline
+  (this is why it's exempt from Phase 5's no-uncached-CDN rule).
+  → the tag is `async` and last in the body, so nothing renders or runs behind it, and
+  `count_play()` returns early unless `window.goatcounter.count` is a function — which it is not
+  when count.js is blocked, when the network is gone, or in the moments before it loads. The link
+  navigates either way. `test/build.test.mjs`, describe "analytics (pwa.md Phase 4)": 5 tests over
+  all 277 non-redirect routes — exactly one count.js tag per page, carrying the endpoint and the
+  CDN URL read out of `src/lib/site.js`, `async`, after the site's own scripts and last before
+  `</body>`; no tag on either redirect shell; nothing else on any page loads from `gc.zgo.at`; and
+  the bundled `work.js` counts a literal event behind a `typeof … !== 'function'` guard.
+- ✅ No PII in event names.
+  → one constant event name, `play-recording`, asserted to be a literal at the call site. No
+  movement title, no work slug, nothing per-visitor. Which work was playing is already answered by
+  that page's own hit count.
 
-Verify: visit the deployed site with an adblocker on (site works) and off (visit appears in the
-GoatCounter dashboard).
+Verify: **not done — needs the deployed site.**
+1. Visit with an adblocker **on**: the site works, nothing in the console, no layout shift.
+2. Visit with it **off**: the hit appears in the dashboard. On a phone, tap a play link on a work
+   page and check that `play-recording` shows under Events.
+3. Note for both: count.js skips localhost and `file://` on its own, so `npm run serve` stays out
+   of the dashboard — but a **Netlify deploy preview is a real host and does count**, into the same
+   site as production. Loading any page with `#toggle-goatcounter` turns counting off for that
+   browser, which is the fix for preview traffic and for Jason's own visits.
 
 ## Phase 5 — Offline / service worker  ⚠️ decision gate
 

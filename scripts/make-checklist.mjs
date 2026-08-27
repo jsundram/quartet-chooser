@@ -145,16 +145,54 @@ const PHASES = [
         },
     },
     {
-        n: 'Phase 4', title: 'Analytics &mdash; GoatCounter', chip: 'waiting-c', status: 'Blocked on you',
-        blurb: `Decided 2026-08-20: hosted GoatCounter. Cookie-free, so no consent banner, and it
-                counts unique visitors and custom events. Nothing can start until the site exists.`,
+        n: 'Phase 4', title: 'Analytics &mdash; GoatCounter', chip: 'shipped', status: 'Built &middot; unmerged',
+        blurb: `Built in <span class="path">452c7fa</span> on
+                <span class="path">pwa-phase-4-analytics</span>, stacked on Phase 3&rsquo;s branch, so
+                it merges after that one. Cookie-free, so no consent banner, and no page waits on it:
+                the tag is <span class="path">async</span> and the last thing in the body. One check
+                left, and it needs the deploy.`,
         tasks: [
-            { id: 'p4-account', label: '<b>Create the site at goatcounter.com</b> &mdash; only you can do this',
-              note: `Then hand me the URL. Everything after it is code: the async script tag in
-                     <span class="path">page_html()</span>, optional click events on outbound Spotify
-                     links, and a TODO.md pointer.` },
-            { id: 'p4-verify', label: 'Once it ships: load the site with an adblocker <b>on</b> (site still works) and <b>off</b> (visit appears in the dashboard)' },
+            { done: true, label: 'Create the site at goatcounter.com',
+              note: `Done &mdash;
+                     <a href="https://quartet-roulette.goatcounter.com/">quartet<b>-</b>roulette.goatcounter.com</a>.
+                     Note the hyphen: <span class="path">pwa.md</span> had guessed
+                     <span class="path">quartetroulette</span>, and that mistake would have been
+                     invisible &mdash; a page with the wrong endpoint looks exactly like a page with
+                     the right one, and the hits just go nowhere. The test now pins the real URL.` },
+            { id: 'p4-verify', label: '<b>Once it is deployed: load the site with an adblocker on, then off</b>',
+              note: `Two different questions, and the first one matters more &mdash; the site must be
+                     exactly as good when count.js is blocked, which it is for a large share of
+                     visitors.`,
+              children: [
+                { id: 'p4-blocked', label: 'Adblocker <b>on</b>: the site works normally, nothing broken in the console' },
+                { id: 'p4-counted', label: 'Adblocker <b>off</b>: the visit shows up in the <a href="https://quartet-roulette.goatcounter.com/">dashboard</a>' },
+                { id: 'p4-event', label: 'On a <b>phone</b>: tap a play link on a work page, then look for <span class="path">play-recording</span> under Events',
+                  note: `Only touch devices can produce this one. On desktop the recording is a Spotify
+                         iframe, and a play inside it is invisible to the page &mdash; nothing to count.` },
+              ] },
         ],
+        more: {
+            summary: 'What landed, and two things worth knowing',
+            tasks: [
+                { done: true, label: 'The async <span class="path">count.js</span> tag, last in the body of all 277 pages',
+                  note: `The two <span class="path">/random*</span> redirect shells deliberately get
+                         none: they replace themselves in the same tick, and the page they land on
+                         counts the visit a moment later anyway.` },
+                { done: true, label: '<span class="path">play-recording</span> event on the mobile tap-to-play links' },
+                { done: true, label: 'TODO.md&rsquo;s analytics bullet now points at the phase' },
+                { done: true, label: '<b>Deploy previews count into the same dashboard as production</b>',
+                  note: `count.js skips localhost and <span class="path">file://</span> on its own, so
+                         <span class="path">npm run serve</span> never shows up &mdash; but a Netlify
+                         preview is a real host. Loading any page with
+                         <span class="path">#toggle-goatcounter</span> turns counting off for that
+                         browser, which is also how you keep your own visits out of your numbers.` },
+                { done: true, label: '<b>A counted play is a floor, not a count</b>',
+                  note: `GoatCounter&rsquo;s beacon is an <span class="path">&lt;img&gt;</span>, and a
+                         browser may cancel it when the click navigates away &mdash; most likely when
+                         the tap opens the Spotify app. Waiting for the beacon would mean delaying the
+                         tap, which is a worse trade.` },
+            ],
+        },
     },
     {
         n: 'Phase 5', title: 'Offline &amp; service worker', chip: 'waiting-c', status: 'Decision gate',
@@ -204,9 +242,6 @@ const BLOCKING = [
         service worker opens to a blank error on a plane.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
-    { tag: 'Account', muted: true, body: `<b>Phase 4 needs a GoatCounter site.</b> Only you can create
-        it &mdash; e.g. <span class="path">quartetroulette.goatcounter.com</span>. The code just needs
-        the URL.` },
 ];
 
 // ---------------------------------------------------------------- rendering
