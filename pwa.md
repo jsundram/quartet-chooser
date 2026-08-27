@@ -57,10 +57,11 @@ Tasks (all `cfc3777`):
       → `scripts/make-og.mjs` (`npm run og`), 18 composer cards in `static/og/`. Each is the
       composer's `<Name>.svg` portrait beside their `<Name>-Signature.svg`, both *nested inline*
       into one composed SVG (one rasterization pass, no font dependency), on the palette
-      background. Committed, not built on Netlify — Netlify has neither tool.
+      background. Committed, not built on Netlify — Netlify has neither tool. Work pages reuse
+      their composer's card; giving each of the 256 its own is #40.
 - [x] One site-wide card for home / about / 404 (roulette icon + wordmark on theme background).
       → `static/og/og.png`: icon, wordmark, "What should we play next?", and four portraits,
-      because four players is the point.
+      because four players is the point. Its design is deliberately provisional — #39.
 - [x] Size budget: every card **< 250 KB** after compression; the build fails if over
       (pattern: pwa-starter `scripts/og-lint.py`). A too-big card previews as a grey box.
       → gated twice: `make-og.mjs` at generation, `check_og_cards()` in `scripts/build.mjs` on

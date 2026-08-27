@@ -36,6 +36,9 @@ const MAX_BYTES = 250_000;
 
 // A card is read at thumbnail size in a chat bubble, so the type has to be big
 // and the stack short. -apple-system is not a real font to rsvg; name real ones.
+// Note this resolves against locally installed fonts, so a machine without
+// Helvetica Neue regenerates a subtly different card -- issue #39 tracks
+// vendoring and embedding a face so generation is reproducible anywhere.
 const SANS = 'Helvetica Neue, Helvetica, Arial, sans-serif';
 
 function xml_escape(s){

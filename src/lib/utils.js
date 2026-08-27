@@ -56,7 +56,8 @@ function get_signature(composer_name) {
 // The composer's share card: a raster of the portrait + signature above,
 // composed by scripts/make-og.mjs. Work pages use their composer's card too --
 // the portrait is what identifies the page at preview size, and the alternative
-// is 256 near-identical cards. The SVGs above are for the page, this is for
+// is 256 near-identical cards. Revisited in issue #40: a preview should be able
+// to say *which* Haydn quartet. The SVGs above are for the page, this is for
 // scrapers: they ignore SVG.
 function get_card(composer_name) {
     return "/og/og-" + composer_name.toLowerCase() + ".png";
