@@ -15,6 +15,11 @@
     if (table) table.className = TABLE_MOBILE;
 
     document.querySelectorAll('iframe').forEach(function (frame) {
+        // an iframe with no src would give link.href = '', which resolves to
+        // the current page: a play button that reloads. The template no longer
+        // emits one, and this makes sure a future one cannot become a link.
+        if (!frame.src) return;
+
         var link = document.createElement('a');
         link.href = frame.src.replace('/embed/track/', '/track/');
         link.className = PLAY_ICON;

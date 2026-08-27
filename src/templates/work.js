@@ -49,10 +49,16 @@ export default function Work({ pageContext }) {
     }
 
     // desktop rendering; /js/work.js swaps in the mobile play links and
-    // table layout on touch devices
+    // table layout on touch devices.
+    //
+    // 70 of the 916 movements have no recording (all Boccherini). They used to
+    // render an iframe with no src: an empty 80px box on desktop, and on touch
+    // a play link whose href resolved to the current page -- a button that
+    // silently reloads. Nothing to play, nothing to render.
     let player = function (m){
+        if (!m.spotify) return null;
         return (<iframe
-            src={m.spotify ? m.spotify.replace("/track/", "/embed/track/") : null}
+            src={m.spotify.replace("/track/", "/embed/track/")}
             title={m.title}
             width="100%" height="80" frameBorder="0" allowFullScreen=""
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"

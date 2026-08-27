@@ -424,7 +424,12 @@ describe('mobile + accessibility floor (pwa.md Phase 3)', () => {
         for (const route of pages()){
             const html = read(route);
             assert.equal((html.match(/<main\b/g) || []).length, 1, route + ' has one <main>');
-            assert.ok(html.indexOf('<nav>') < html.indexOf('<main>'), route + ': nav before main');
+            // indexOf returns -1 for a missing nav, and -1 is less than any
+            // real index -- so without this the landmark test passes on a page
+            // that has no nav at all
+            const nav = html.indexOf('<nav>');
+            assert.ok(nav >= 0, route + ' has a nav');
+            assert.ok(nav < html.indexOf('<main>'), route + ': nav before main');
             assert.ok(html.includes('<header>'), route + ' has a header');
         }
     });
@@ -457,6 +462,31 @@ describe('mobile + accessibility floor (pwa.md Phase 3)', () => {
             }
         }
         assert.ok(icons > 0, 'found the icon-only links to check');
+    });
+
+    test('the composer-date links name their own date and their destination', () => {
+        const composers = JSON.parse(
+            readFileSync(path.join(root, 'src', 'data', 'data.json'), 'utf8')).composers;
+        let checked = 0;
+        for (const route of pages()){
+            const dates = links_in(read(route)).filter(l => l.attrs.includes('daily-composers'));
+            if (!dates.length) continue;
+            assert.equal(dates.length, 2, route + ': a birth link and a death link');
+            ['Born', 'Died'].forEach((verb, i) => {
+                const label = dates[i].attrs.match(/aria-label="([^"]*)"/);
+                assert.ok(label, route + ': date link carries an aria-label');
+                // The label keeps the date the link shows and says which date
+                // it is -- a screen reader gets no dash between them. It names
+                // the destination rather than the date's meaning, because
+                // daily-composers lists everyone *born* on that calendar day:
+                // "born on this day" on the death link misstated the year it
+                // had just read out.
+                const date = dates[i].inner.replace(/<[^>]*>/g, '');
+                assert.equal(label[1], `${verb} ${date} — see composers born on that day`, route);
+                checked++;
+            });
+        }
+        assert.equal(checked, composers.length * 2, 'both dates on every composer page');
     });
 
     test('nothing is made clickable by a handler on a non-control', () => {
@@ -576,9 +606,16 @@ describe('client scripts', () => {
         assert.ok(work_js().includes('"/track/"'));
         let embeds = 0;
         for (const route of routes_in(dist)){
-            // ~70 movements (mostly Boccherini) have no spotify link in
-            // data.json and render an iframe with no src attribute
-            for (const [, src] of read(route).matchAll(/<iframe[^>]*\bsrc="([^"]*)"/g)){
+            const html = read(route);
+            // 70 movements (all Boccherini) have no spotify link in data.json.
+            // They used to render an iframe with no src: an empty box on
+            // desktop, and on touch a play link whose href resolved to the
+            // current page -- a button that silently reloads. The template
+            // renders no player for them at all now.
+            for (const [tag] of html.matchAll(/<iframe\b[^>]*>/g)){
+                assert.match(tag, /\bsrc="/, `${route}: iframe with no src`);
+            }
+            for (const [, src] of html.matchAll(/<iframe[^>]*\bsrc="([^"]*)"/g)){
                 assert.match(src, /^https:\/\/open\.spotify\.com\/embed\/track\//, `${route}: ${src}`);
                 embeds++;
             }

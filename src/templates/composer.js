@@ -44,7 +44,13 @@ export default function Composer({ pageContext }) {
         let d = new Date(s);
         return "https://daily-composers.netlify.app/" + (d.getMonth() + 1) + "-" + d.getDate();
     }
-    let title = "See composers born on this day!";
+    // daily-composers lists everyone *born* on a calendar day, so "born on this
+    // day" is only true of the birth link -- the death link lands on composers
+    // born on the anniversary of the death. Harmless in a tooltip nobody reads
+    // twice; actively wrong as an accessible name, which reads the year out
+    // first. So the wording names the destination rather than the date.
+    let title = "See composers born on that day";
+    let date_label = (verb, date) => verb + " " + date + " — " + title.toLowerCase();
 
     return (
         <Layout>
@@ -63,13 +69,14 @@ export default function Composer({ pageContext }) {
 
             {/* `title` is a hover tooltip, and hover does not exist on touch:
                 these two links go somewhere non-obvious (daily-composers) and
-                the date alone does not say so. aria-label keeps the date and
-                adds the destination, so the tooltip is no longer the only
-                place that explanation lives. */}
+                the date alone does not say so. aria-label keeps the date, adds
+                the destination, and says which date it is -- sighted readers
+                get born-vs-died from the dash, a screen reader gets two bare
+                numbers. */}
             <p>
-                <a title={title} aria-label={composer.birth + " — " + title}
+                <a title={title} aria-label={date_label("Born", composer.birth)}
                    href={day(composer.birth)}>{composer.birth}</a> &ndash;&nbsp;
-                <a title={title} aria-label={composer.death + " — " + title}
+                <a title={title} aria-label={date_label("Died", composer.death)}
                    href={day(composer.death)}>{composer.death}</a>
             </p>
             {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
