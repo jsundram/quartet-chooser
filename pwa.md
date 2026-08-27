@@ -95,7 +95,7 @@ Tasks (all `cfc3777`):
       → e.g. `/haydn-opus-76-3/`: "Quartet Opus 76#3 in C major — "Kaiser" — by Joseph Haydn,
       completed in 1797: 4 movements, with recordings." Movement counts come from the same
       `movements_of()` the page body uses, so they can't drift.
-      **Corrected during Phase 3 review (`8422876`):** the tail used to read "with keys and
+      **Corrected during Phase 3 review (`7554232`):** the tail used to read "with keys and
       recordings" on every page, and neither half held. The movement table has no key column at all
       (only Bach's bulleted list carries a key, in a hover title), and 29 works have no recording
       linked — survivable while those pages still rendered empty players, false once they stopped.
@@ -232,7 +232,7 @@ Tasks:
       `aria-label`/`title` "Random quartet from Opus 76". The tap-to-play links `src/client/work.js`
       builds on touch devices said `alt="play"` on every row; they now say `Play <movement>`, taken
       from the iframe title the row already carries.
-      → **Found in review (`a4a0ad7`, `8422876`):** naming those links made a pre-existing dead one louder. 70
+      → **Found in review (`a4a0ad7`, `7554232`):** naming those links made a pre-existing dead one louder. 70
       of the 916 movements have no recording (all Boccherini, 29 pages) and rendered an iframe with
       no `src` — an empty 80px box on desktop, and on touch a play link whose `href` resolved to the
       current page, i.e. a button that silently reloads while announcing "Play Allegro". `player()`
