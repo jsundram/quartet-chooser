@@ -28,8 +28,8 @@ This document is the working plan for bringing quartetroulette.com up to the
 
 Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is still outstanding.
 Phase 2 implemented 2026-08-27 in `4e0f14e`; its on-device checks are still outstanding.
-Phase 3 implemented 2026-08-27 in `8cd7315`; its VoiceOver / keyboard / landscape checks are
-still outstanding.
+Phase 3 implemented 2026-08-27 in `8cd7315`, with review fixes in `a4a0ad7`; its VoiceOver /
+keyboard / landscape checks are still outstanding.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -190,7 +190,7 @@ Verify: **not done — needs devices.**
 
 Small CSS/head items, batched. Touch-target work is already largely done (see TODO.md Done list).
 
-Tasks are all `8cd7315`.
+Tasks are all `8cd7315`, with review fixes in `a4a0ad7`.
 
 **Found while doing the work:** the site's wordmark, nav and page content all lived inside a single
 `<main>`, and the home page had no `<h1>` at all (`about` started at `<h2>`). `Layout` now emits
@@ -226,6 +226,12 @@ Tasks:
       `aria-label`/`title` "Random quartet from Opus 76". The tap-to-play links `src/client/work.js`
       builds on touch devices said `alt="play"` on every row; they now say `Play <movement>`, taken
       from the iframe title the row already carries.
+      → **Found in review (`a4a0ad7`):** naming those links made a pre-existing dead one louder. 70
+      of the 916 movements have no recording (all Boccherini, 29 pages) and rendered an iframe with
+      no `src` — an empty 80px box on desktop, and on touch a play link whose `href` resolved to the
+      current page, i.e. a button that silently reloads while announcing "Play Allegro". `player()`
+      in `src/templates/work.js` now returns nothing for a movement with no `spotify`, which fixes
+      both surfaces, and `work.js` refuses to build a link from a `src`-less iframe.
       → `alt`: the wordmark icon in `Layout` (it repeats the wordmark beside it) and the signature on
       each home-page tile (the portrait in the same link already names the composer) are decorative,
       `alt=""` — before this, a home-page tile announced "Haydn Haydn". The composer-page portrait
@@ -241,20 +247,26 @@ Tasks:
       rather than truncating in the mobile layout; Bach's `li title={m.key}` is the work's own key,
       which the `<h1>` already states.
       The fourth is real: the composer page's birth/death dates link to daily-composers, and only the
-      tooltip said so. They now carry `aria-label="1732-03-31 — See composers born on this day!"`,
-      which keeps the date and adds the destination.
+      tooltip said so. They now carry `aria-label="Born 31 March 1732 — see composers born on that
+      day"`, which keeps the date the link shows, says *which* date it is (a screen reader gets no
+      dash between two bare numbers) and names the destination.
+      **Corrected in review (`a4a0ad7`):** the first version reused one string for both links, so the
+      death link's name claimed the year it had just read out was a birth year. daily-composers lists
+      everyone *born* on a calendar day, so the href was right and the wording was not — which is
+      exactly the sort of thing promoting a tooltip to an accessible name exposes.
       **Residual, deliberate:** a touch user still gets no hint before tapping a date. The link is
       non-destructive and the destination explains itself on arrival, and the alternative — visible
       hint text under every composer's dates — is a design change, not an accessibility floor. Flag
       it on the device pass if it feels wrong in the hand.
 
 Acceptance criteria: each bullet above verifiable by grep or by keyboard-tabbing the deployed site.
-- ✅ `test/build.test.mjs`, describe "mobile + accessibility floor (pwa.md Phase 3)": 8 tests over all
+- ✅ `test/build.test.mjs`, describe "mobile + accessibility floor (pwa.md Phase 3)": 9 tests over all
   277 non-redirect routes — one viewport meta carrying `viewport-fit=cover`, `color-scheme=light`,
   safe-area padding on all four sides and a surviving `prefers-reduced-motion` block in the inlined
   CSS, no `outline:none`, exactly one non-empty `<h1>`, one `<main>` with the nav outside it, an
   `alt` on every `<img>`, an accessible name on every `<a>`, `aria-label` on every icon-only link,
-  and no inline event handlers.
+  no inline event handlers, and a label on both date links built from the date the link shows.
+  The embeds test also holds that no iframe ships without a `src`.
 - ✅ The redirect shells stay bare (Phase 2's test still holds): they get no viewport and no CSS.
 
 Verify: **not done — needs a device and a keyboard.**
