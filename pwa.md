@@ -6,6 +6,9 @@ This document is the working plan for bringing quartetroulette.com up to the
 
 **How to use this file:**
 - **Drive**: work the phases in order; check items off as they land, with the commit hash.
+  Because this file *cites* those hashes, **merge these PRs with a fast-forward or a merge commit,
+  never a squash or rebase** — either of those rewrites the commits and turns every hash below into
+  a dangling reference. The repo's history is linear, so `git merge --ff-only` has worked so far.
 - **Audit**: re-walk the "Acceptance criteria" of any phase against the code; each criterion names
   the file where the evidence lives.
 - **Review**: a code change claiming to complete an item should be reviewed against that item's
@@ -24,7 +27,7 @@ This document is the working plan for bringing quartetroulette.com up to the
   truth for the page, this file for the plan.
 
 Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is still outstanding.
-Phase 2 implemented 2026-08-27; its on-device checks are still outstanding.
+Phase 2 implemented 2026-08-27 in `4e0f14e`; its on-device checks are still outstanding.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -135,7 +138,7 @@ no `theme-color` meta; no maskable icon; no dedicated 180×180 apple-touch-icon.
 channel in an apple-touch-icon against **black**, so the existing home-screen shortcut showed the
 wheel on a black tile. Not in the original defect list; fixed here.
 
-Tasks:
+Tasks (all `4e0f14e`, with review fixes in `e4c6da5`):
 - [x] Manifest: add `name: "Quartet Roulette"`, `short_name: "Quartets"` (≤12 chars, confirm
       wording with Jason), `start_url: "/"`, `display: "standalone"`, `theme_color`,
       `background_color`.
