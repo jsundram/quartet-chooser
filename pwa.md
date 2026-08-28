@@ -555,65 +555,56 @@ Measured against `dist/` and against production headers, worst first:
       gone — the glyph is inline SVG. `tableMobile`/`tableBig` are now `tableRest`/`tablePlaying`:
       neither is about the device any more, only about whether a player is in the column.
       **This is also what makes work pages work offline, so Phase 5 depends on it.**
-- [x] **svgo over the portraits, with the precision chosen per drawing.** `5882d33`, then
-      `05aed1e` when Jason pushed back that 386 KB is a lot for 36 line drawings. He was right; the
-      first pass ran svgo's defaults and left most of it on the floor.
+- [x] **The drawings, minified properly.** `5882d33`, `05aed1e`, then `079a4c3` — three passes,
+      each one because the previous had the wrong model of what these files are.
 
-      What is actually in these files: **91,000 coordinate pairs** across the 36 the home page
-      loads, for artwork drawn 200px tall — about a hundred times more geometry than the render can
-      use. 99% of every file is path data, and its numbers average 5.3 characters because Inkscape
-      wrote coordinates in the tens of thousands with a decimal place. `Britten.svg` is 94 KB for
+      What is actually in them: **91,000 coordinate pairs** across the 36 the home page loads, for
+      artwork drawn at most 600 CSS px. 99% of every file is path data. `Britten.svg` was 94 KB for
       nine paths.
 
-      svgo's `floatPrecision` counts *decimal places*, which is the wrong unit when the drawings
-      disagree about what a unit is — viewBox heights here run from 17 to 5,179. So each file now
-      gets the precision that puts its error at ~1/4096 of its own height.
+      **The thing that mattered, found by looking at the largest file:** svgo collapses Inkscape's
+      nested groups but will *not* fold their transform into the path coordinates, because these
+      paths contain elliptical arcs and the matrix reflects — arc flags would need adjusting, and it
+      declines rather than get that wrong. So every file shipped with
+      `transform="matrix(.13333 0 0 -.13333 …)"` repeated on every path and its coordinates still in
+      a space up to 8× larger than its own viewBox, costing a digit or two on each of ~7,000 numbers.
+      It also meant the earlier per-file precision heuristic was measuring the wrong space: it read
+      the viewBox, but the rounding happened in each path's local space — safe only by luck.
 
-      **The largest size the site ever draws these is 600 CSS px** — the composer page portrait
-      (`composer.module.css`, above 800px wide), which is **1,800 device pixels on a 3x phone**. Not
-      the home grid's 200px, which is merely the most frequent. Work pages draw 300px, signatures
-      100px. At 1,800px the budget above is 0.44px of error. Verified there and it holds — the worst
-      file is indistinguishable from the authored original side by side — but it is a thinner margin
-      than the arithmetic first suggested, and someone zooming a composer portrait past ~2× would
-      start to see it. If those CSS heights change, this budget changes with them.
+      The build now does svgo → fold the transforms (`svgpath`, which knows the arc maths) → scale
+      every drawing into one 16,384-unit space → svgo again, rounding to plain integers. "Round to
+      N places" finally means one thing across all 54 files.
 
-      Raising the budget is not worth much: 8192 costs 74 KB of the 84 KB saved, because precision
-      is paid for in digits and most files flip from integers to one decimal at the same threshold.
+      | | home page's 36 | all 54 | worst file at 1800px |
+      |---|---|---|---|
+      | as authored | 436 KB | 855 KB | — |
+      | svgo defaults (`5882d33`) | 370 KB | 760 KB | — |
+      | per-file precision (`05aed1e`) | 286 KB | 553 KB | 3.30% |
+      | **folded + normalized (`079a4c3`)** | **213 KB** | **393 KB** | **1.08%** |
 
-      | | raw | brotli |
-      |---|---|---|
-      | as authored | 2,523 KB | 875 KB |
-      | svgo defaults (`5882d33`) | 2,034 KB | 760 KB |
-      | per-file precision (`05aed1e`) | **1,515 KB** | — |
-      | *the 36 the home page loads* | 777 KB | **286 KB** (from 370) |
+      Strictly better on both axes than what it replaced: half the authored weight, and a *lower*
+      worst-case error than the 286 KB version, because the error budget is now 1/16384 of each
+      drawing's height (~0.11px at the 1,800px maximum) rather than whatever each file's leftover
+      transform happened to make it.
 
-      Verified, not assumed: all 54 rasterized before and after at 200, 400 and 600px and compared
-      channel by channel — mean 0.6% of pixels differ, worst file 2.7%, all edge antialiasing, and
-      the worst case is indistinguishable side by side at 4× magnification.
+      Verified: all 54 rasterized against the authored originals at 600, 900 and 1,800px and
+      compared channel by channel — mean 0.5–0.7% of pixels differ, **none over 3% at any size**,
+      all of it edge antialiasing, indistinguishable side by side at 6× magnification. Two tests
+      guard it: no path in `dist/` may carry a transform, and every drawing must land in the
+      normalized space — either failing means the fold declined silently.
 
-      **Two false starts worth recording, both about pre-scaling the drawings into one coordinate
-      space so plain integers would do — which reaches 178 KB with *less* error on paper, and is
-      therefore tempting:**
-      1. Replacing `width`/`height` with the viewBox dimensions restretches 10 of the 54 files,
-         whose `width`/`height` ratios disagree with their `viewBox` — Grieg by 31% — so they are
-         meant to render letterboxed. Scaling the viewBox and the content together instead, and
-         leaving `width`/`height` alone, fixes that.
-      2. But it still fails, for a reason that matters more: **svgo does not actually fold the
-         group transforms into the path data here.** Every output file still carries per-path
-         `transform=` attributes, so rounding happens in each path's *local* space and is then
-         multiplied by scale factors up to 1,900×. Tchaikovsky's signature came out 15% wrong.
-
-      That second fact also qualifies the shipped heuristic: it reads the viewBox, but the rounding
-      does not happen in viewBox units. It is safe here only because Inkscape's local spaces are
-      consistently *larger* than viewBox units, so the heuristic asks for more precision than it
-      computes — luck about how these files were exported, not something the code enforces. The
-      guarantee is the pixel comparison, not the arithmetic. **Do not retry the pre-scaling without
-      first making `applyTransforms` actually apply.**
-- [ ] **Reducing the node count — the real excess, not attempted.** 91,000 points for artwork shown
-      at 200px. Simplifying the curves would beat everything above put together, plausibly halving
-      the drawings again. But it changes the artwork rather than how it is written down, so it needs
-      a tool that refits curves (Inkscape's Simplify, `picosvg`, or similar) and Marusya's drawings
-      looked at by a person afterwards. **Ask before starting.**
+      **A trap worth recording, which cost two attempts:** scaling the drawings into a common space
+      requires scaling the viewBox and the path data *together* and leaving `width`/`height` alone.
+      10 of the 54 have `width`/`height` ratios that disagree with their `viewBox` — Grieg by 31% —
+      so they are meant to render letterboxed, and rewriting those attributes un-letterboxes them.
+      And doing the rescale *before* folding is worse than useless: the rounding then happens in
+      local space and gets multiplied by the leftover transform, up to 1,900×. Tchaikovsky's
+      signature came out 15% wrong that way.
+- [ ] **Reducing the node count — the last lever, not attempted.** ~91,000 points for artwork shown
+      at most 600 CSS px. Everything above changes only how the geometry is *written down*;
+      simplifying the curves would remove geometry, and could plausibly halve the drawings again.
+      It needs a tool that refits curves (Inkscape's Simplify, `picosvg`, or similar) and Marusya's
+      drawings looked at by a person afterwards. **Ask before starting.**
 - [x] **Rasterizing the portraits: experimented, and the answer is no.** Done properly on
       2026-08-28 rather than estimated — 18 portraits and 18 signatures rendered with
       `rsvg-convert` at the sizes the home page actually draws them (200px and 25px), at 1x, 2x and
@@ -670,7 +661,7 @@ conservative 60 KB each and `gc.zgo.at` is aborted.)
 | **Work page** — cross-origin | 7 Spotify frames | **none** |
 | **Home page** — LCP | 5.2s | **4.6s** |
 | **Home page** — load | 12.4s | **9.1s** |
-| **Home page** — wire | 550 KB | **386 KB** |
+| **Home page** — wire | 550 KB | **300 KB** |
 | Site HTML total | 3.16 MB | 2.54 MB |
 | `dist/` total | 6.53 MB | **5.45 MB** |
 
