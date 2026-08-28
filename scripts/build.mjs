@@ -42,34 +42,82 @@ async function check_og_cards(dir){
     return cards.length;
 }
 
-// The portraits are Inkscape output: 2.58 MB across 54 files, and the single
-// biggest asset class on the site. svgo takes ~19% off raw and ~13% off
-// brotli, verified pixel-identical -- 54 files rasterized before and after at
-// 600px, 200px and 150px and compared channel by channel, with the only
-// differences being edge antialiasing (max 1.5% of pixels, none of it visible
-// at 4.5x magnification).
+// The portraits are Inkscape output and they are the biggest thing the site
+// ships: 2.58 MB across 54 files, 91,000 coordinate pairs, for drawings shown
+// 200px tall. That is roughly a hundred times more geometry than the render
+// can use, and it is where the home page's weight lives.
 //
-// Done here rather than committed, which is the opposite of what the icons and
+// Two things happen here. svgo's usual work -- re-encoding path data, dropping
+// editor cruft -- and a precision chosen per file, which is where most of the
+// win is.
+//
+// Why per file: svgo's floatPrecision counts decimal places, and these
+// drawings do not agree on what a unit is. Their viewBoxes range from 49 units
+// tall (a signature) to 5,179 (Britten), so a single setting means wildly
+// different accuracy per drawing -- 3 decimals is 500x more precision than
+// anyone can see on Britten and barely enough on a signature. Instead each
+// file gets the precision that puts its error at ~1/4096 of its own height,
+// which is about 0.15px at a 600px render: sharper than a 3x phone can show at
+// the 200px these are drawn at.
+//
+// Verified rather than assumed, and it is worth re-verifying if these numbers
+// are ever touched: all 54 rasterized before and after at 200, 400 and 600px
+// and compared channel by channel. Mean 0.6% of pixels differ, worst file
+// 2.7%, all of it edge antialiasing -- indistinguishable side by side at 4x
+// magnification. Together this takes the home page's 36 images from 370 KB to
+// 286 KB over the wire.
+//
+// What is deliberately NOT done: reducing the node count. 91,000 points is the
+// real excess and simplifying the curves would beat all of this, but that
+// changes the drawings rather than how they are written down, and it needs
+// Marusya's artwork looked at by a person. See pwa.md Phase 7.
+//
+// Run here rather than committed, which is the opposite of what the icons and
 // share cards do -- those are committed because Netlify has neither
 // rsvg-convert nor pngquant. svgo is pure JS and runs anywhere, so static/ gets
 // to keep the original drawings and there is no 54-file diff to review every
 // time the artwork changes. That is also why svgo is a real dependency and not
 // a devDependency: `npm run build` needs it, and Netlify runs `npm run build`.
-//
-// multipass because one pass leaves work on the table on files this shape, and
-// it is a static site generator, not a hot loop: the whole sweep costs well
-// under a second.
+
+// ~1/4096 of a drawing's height is the error we are willing to accept: about
+// 0.15px where a 3x phone renders these, and finer than the antialiasing.
+const SVG_STEPS = 4096;
+
+function svg_precision(source){
+    const vb = /viewBox="\s*[-\d.eE]+\s+[-\d.eE]+\s+[-\d.eE]+\s+([-\d.eE]+)/.exec(source);
+    // no viewBox is not a case these files have, but guessing small is the
+    // safe direction: it asks for more precision, not less
+    const height = vb ? Math.abs(parseFloat(vb[1])) : 0;
+    if (!(height > 0)) return 3;
+    return Math.min(4, Math.max(0, Math.ceil(Math.log10(SVG_STEPS / height))));
+}
+
 async function minify_svgs(dir){
     const files = (await readdir(dir)).filter(f => f.endsWith('.svg'));
     let before = 0, after = 0;
     for (const name of files){
         const file = path.join(dir, name);
         const source = await readFile(file, 'utf8');
-        const { data } = svgo(source, { path: file, multipass: true });
+        const digits = svg_precision(source);
+        const { data } = svgo(source, {
+            path: file,
+            multipass: true, // one pass leaves work on the table on files this shape
+            plugins: [{ name: 'preset-default', params: { overrides: {
+                // applyTransforms folds the group transforms Inkscape leaves
+                // behind into the path data, which is what puts every
+                // coordinate in viewBox units and makes `digits` mean one
+                // thing across all 54 files
+                convertPathData: { floatPrecision: digits, transformPrecision: 5,
+                                   applyTransforms: true },
+                // never 0 here: this rounds things like stroke-width, where
+                // dropping to an integer can visibly fatten a hairline
+                cleanupNumericValues: { floatPrecision: Math.max(digits, 1) },
+            } } }],
+        });
         // A plugin that drops viewBox turns an <img> sized by CSS height into
         // one that ignores its aspect ratio. preset-default does not, today --
-        // this is here so that a future svgo, or a future svgo.config.js, has
-        // to fail the build rather than quietly reshape 54 portraits.
+        // this is here so that a future svgo has to fail the build rather than
+        // quietly reshape 54 portraits.
         if (source.includes('viewBox') && !data.includes('viewBox')){
             throw new Error(`svgo dropped the viewBox from ${name}`);
         }
