@@ -220,23 +220,23 @@ const PHASES = [
         ],
     },
     {
-        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; one decision',
-        blurb: `You said the site feels slower than it should. Work pages were, badly: they now load
-                <b>72&nbsp;KB instead of 1,044&nbsp;KB</b> and paint in 2.5s instead of 4.8s on a
-                slow connection. The home page went from <b>8.8s to 6.1s</b>. One optional decision
-                below would take it further; everything else here is done.`,
+        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; one check',
+        blurb: `You said the site feels slower than it should, and work pages were: on a slow
+                phone connection they went from <b>3.8s and seven third-party frames to 1.5s and
+                none</b>. The home page is 30% lighter. Everything here is done and measured &mdash;
+                the only thing left needs a deployed URL, not a decision.`,
         tasks: [
-            { id: 'p7-portraits', label: '<b>Rasterize the home page portraits? A yes/no &mdash; and it can wait.</b>',
-              note: `svgo took 19% off the drawings and the home page is now
-                     <b>6.1s instead of 8.8s</b>, so this is no longer urgent. But the page still
-                     ships about 1&nbsp;MB of vector art drawn at 200&nbsp;px, and rendering those
-                     to PNGs at the size they are actually shown would be roughly 300&nbsp;KB
-                     &mdash; probably around 2s. The icons already do exactly this
-                     (<span class="path">icon-192x192.png</span> is 8.9&nbsp;KB of the same kind of
-                     artwork). <b>The catch is yours to judge:</b> 36 drawings &times; two screen
-                     densities, generated and committed like the share cards, and someone has to
-                     decide whether Marusya's line art still reads right rasterized. I have not
-                     started it.` },
+            { id: 'p7-portraits', done: true, label: 'Answered: <b>rasterizing the portraits would make the site slower</b>, not faster',
+              note: `You were right that the SVGs hold up at any scale &mdash; and it turns out they
+                     are also the cheap option, which is the opposite of what I told you. Rendered
+                     all 36 home page drawings as PNG, WebP and AVIF at 1&times;, 2&times; and
+                     3&times; and loaded them for real. One SVG serves every screen and compresses
+                     to <b>370&nbsp;KB</b>; a raster set has to pick a density, and at the
+                     <b>3&times;</b> of an iPhone the best format is <b>596&nbsp;KB</b> and paints
+                     in 7.6s against the SVG's 3.4s. Raster only wins on a 1&times; screen, and
+                     phones have not been 1&times; in a decade. It looks worse too &mdash; softer
+                     strokes at 200&nbsp;px, and mush if you pinch-zoom. <b>Nothing for you to
+                     decide; the portraits stay as they are.</b>` },
             { id: 'p7-headers', label: '<b>Check two cache headers on the deploy preview</b>',
               note: `The only thing in this phase I could not test locally. Netlify documents
                      directory globs; extension globs much less so, and the portraits live at the
@@ -316,11 +316,9 @@ const PHASES = [
 ];
 
 const BLOCKING = [
-    { tag: 'Optional', body: `<b>Phase 7 &mdash; rasterize the home page portraits?</b> Not urgent
-        any more: svgo took 19% off and the home page is down to 6.1s. But it still ships about
-        1&nbsp;MB of vector art drawn at 200&nbsp;px, and rendering those to PNGs would be roughly
-        300&nbsp;KB. It is 36 drawings, and whether they still read right rasterized is a judgement
-        I cannot make.` },
+    { tag: 'Check', body: `<b>Phase 7 &mdash; two curl commands on the deploy preview.</b> Everything
+        else in the phase is done and measured; the cache headers are the one thing that cannot be
+        tested until it is deployed, because Netlify's own matcher decides whether they apply.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];
