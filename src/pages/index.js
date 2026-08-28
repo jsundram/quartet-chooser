@@ -13,20 +13,38 @@ import {
     composer_box
 } from './index.module.css'
 
-// loading="lazy" on the grid is a performance fix, not a preference, and it is
-// load-bearing twice over (pwa.md Phase 7):
+// The grid is deliberately EAGER, all 36 images, with no loading attribute.
+// That is the state this page started in; Phase 7 tried lazy, measured it, and
+// put it back. Recording why, because "add loading=lazy to the image grid"
+// is exactly the change someone will propose again:
 //
-//  1. React 19 emits a <link rel="preload" as="image"> for every *eager* image
-//     it server-renders. Thirty-six portraits and signatures meant 1.31 MB
-//     (447 KB brotli) of top-priority preloads racing the HTML on the one page
-//     everybody lands on first. loading="lazy" suppresses the preload.
-//  2. It also defers the fetch for everything below the fold. In-viewport
-//     images still load immediately -- the lazy threshold does not delay what
-//     is on screen -- so nothing visible arrives later than it used to.
+// React 19 emits a <link rel="preload" as="image"> for every eager image it
+// server-renders, so this page does emit 36 preloads, and that looks like the
+// obvious thing to kill. It is not.
 //
-// Do not "optimize" this back to eager. Composer and work pages keep their one
-// portrait eager on purpose: there it is the LCP element and it is above the
-// fold, which is exactly when a preload earns its priority.
+//   - lazy does not defer anything here. Chrome fetches all 36 on load anyway,
+//     on a phone viewport and on throttled Slow 3G alike; the page is too
+//     short for its threshold. The only thing lazy changes is priority.
+//   - and priority is already right. Document order is visual order, so 36
+//     uniform-priority fetches in document order deliver the top of the page
+//     first. Mixing priorities lets the 24 below-the-fold images interleave
+//     with the 12 that decide LCP.
+//
+// Measured on Slow 3G (400kbps/400ms), median of 3, mobile viewport:
+//
+//     all eager (this)        LCP  8.8s    load 29.3s
+//     12 eager + 24 lazy      LCP 13.7s    load 23.5s
+//
+// The load-event win is mostly bookkeeping -- lazy images do not block the
+// load event, so it fires earlier without the page being readier. LCP is the
+// one that tracks when this page looks done, and lazy made it 55% worse.
+//
+// The real problem is not the loading attribute. It is that this page ships
+// ~1.3 MB of SVG: 36 full-detail vector portraits, drawn at 200px on desktop
+// and 150px on a phone. At 50 KB/s nothing scheduled cleverly gets under ~9s.
+// Rasterizing them to display size would cut that several-fold -- the icons
+// already do exactly this (icon-192x192.png is 8.9 KB) and are generated and
+// committed because Netlify has no rsvg-convert. See pwa.md Phase 7.
 
 // markup
 const IndexPage = () => {
@@ -41,14 +59,11 @@ const IndexPage = () => {
                             src={get_portrait(composer)}
                             key={composer}
                             className={image}
-                            loading="lazy"
-                            decoding="async"
                         />
 
                         {/* decorative: the portrait above it, inside the same link, already
                             names the composer */}
-                        <img src={get_signature(composer)} alt="" className={signature}
-                             loading="lazy" decoding="async" />
+                        <img src={get_signature(composer)} alt="" className={signature} />
                     </a>
                 ))
             }
