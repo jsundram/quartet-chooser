@@ -90,11 +90,10 @@ const PHASES = [
         after: () => icons(),
     },
     {
-        n: 'Phase 3', title: 'Mobile polish &amp; accessibility floor', chip: 'shipped', status: 'Built &middot; unmerged',
-        blurb: `Built in <span class="path">8cd7315</span> on
-                <span class="path">pwa-phase-3-mobile-a11y</span>, not merged yet. The head and CSS
-                half was small; the sweep found three real defects. Everything left needs a device,
-                a keyboard, or your opinion.`,
+        n: 'Phase 3', title: 'Mobile polish &amp; accessibility floor', chip: 'shipped', status: 'Merged &middot; live',
+        blurb: `Merged 2026-08-28 (<span class="path">8cd7315</span>&ndash;<span class="path">800f7dc</span>)
+                and live on production. The head and CSS half was small; the sweep found three real
+                defects. Everything left needs a device, a keyboard, or your opinion.`,
         tasks: [
             { id: 'p3-voiceover', label: '<b>VoiceOver skim of one work page</b>',
               note: `<a href="https://quartetroulette.com/haydn-opus-76-3/">/haydn-opus-76-3/</a>.
@@ -145,14 +144,13 @@ const PHASES = [
         },
     },
     {
-        n: 'Phase 4', title: 'Analytics &mdash; GoatCounter', chip: 'shipped', status: 'Built &middot; unmerged',
-        blurb: `Built in <span class="path">452c7fa</span>, with two of your review&rsquo;s three fixes
-                in <span class="path">bd34cac</span> and the third reverted at your word
-                (<span class="path">d424376</span>), on
-                <span class="path">pwa-phase-4-analytics</span>, stacked on Phase 3&rsquo;s branch, so
-                it merges after that one. Cookie-free, so no consent banner, and no page waits on it:
-                the tag is <span class="path">async</span> and the last thing in the body. One check
-                left, and it needs the deploy.`,
+        n: 'Phase 4', title: 'Analytics &mdash; GoatCounter', chip: 'shipped', status: 'Merged &middot; live',
+        blurb: `Merged 2026-08-28 (<span class="path">452c7fa</span>, with two of your review&rsquo;s three
+                fixes in <span class="path">bd34cac</span> and the third reverted at your word,
+                <span class="path">d424376</span>) and live on production &mdash;
+                <b>quartetroulette.com is counting right now</b>. Cookie-free, so no consent banner,
+                and no page waits on it: the tag is <span class="path">async</span> and the last
+                thing in the body. One check left, and you can do it today.`,
         tasks: [
             { done: true, label: 'Create the site at goatcounter.com',
               note: `Done &mdash;
@@ -161,12 +159,12 @@ const PHASES = [
                      <span class="path">quartetroulette</span>, and that mistake would have been
                      invisible &mdash; a page with the wrong endpoint looks exactly like a page with
                      the right one, and the hits just go nowhere. The test now pins the real URL.` },
-            { id: 'p4-verify', label: '<b>Once it is deployed: load the site with an adblocker on, then off</b>',
-              note: `Two different questions, and the first one matters more &mdash; the site must be
-                     exactly as good when count.js is blocked, which it is for a large share of
-                     visitors. The PR&rsquo;s <b>preview URL works for this</b>, so it does not have to
-                     wait for the merge; <span class="path">npm run serve</span> does not, because
-                     count.js ignores localhost by design.`,
+            { id: 'p4-verify', label: '<b>Load <a href="https://quartetroulette.com/">quartetroulette.com</a> with an adblocker on, then off</b>',
+              note: `Live now, so this is doable today. Two different questions, and the first one
+                     matters more &mdash; the site must be exactly as good when count.js is blocked,
+                     which it is for a large share of visitors.
+                     <span class="path">npm run serve</span> cannot answer either, because count.js
+                     ignores localhost by design.`,
               children: [
                 { id: 'p4-blocked', label: 'Adblocker <b>on</b>: the site works normally, nothing broken in the console' },
                 { id: 'p4-counted', label: 'Adblocker <b>off</b>: the visit shows up in the <a href="https://quartet-roulette.goatcounter.com/">dashboard</a>' },

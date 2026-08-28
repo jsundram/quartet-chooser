@@ -28,11 +28,14 @@ This document is the working plan for bringing quartetroulette.com up to the
 
 Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is still outstanding.
 Phase 2 implemented 2026-08-27 in `4e0f14e`; its on-device checks are still outstanding.
-Phase 3 implemented 2026-08-27 in `8cd7315`, with review fixes in `a4a0ad7`; its VoiceOver /
-keyboard / landscape checks are still outstanding.
-Phase 4 implemented 2026-08-27 in `452c7fa`, on top of Phase 3's branch, with review fixes in
-`bd34cac` and one of them reverted by decision in `d424376`; its adblocker-on / adblocker-off check
-needs a deploy — a preview will do.
+Phase 3 implemented 2026-08-27 in `8cd7315`, with review fixes in `a4a0ad7`; merged 2026-08-28 and
+live. Its VoiceOver / keyboard / landscape checks are still outstanding.
+Phase 4 implemented 2026-08-27 in `452c7fa`, with review fixes in `bd34cac` and one of them reverted
+by decision in `d424376`; merged 2026-08-28 and live, so the count.js tag is on production now. Its
+adblocker-on / adblocker-off check is outstanding.
+
+Both merged as fast-forwards (`git merge --ff-only`), so main is still linear and every hash cited
+here still resolves.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -386,7 +389,7 @@ Acceptance criteria:
   movement title, no work slug, nothing per-visitor. Which work was playing is already answered by
   that page's own hit count.
 
-Verify: **not done — needs the deployed site.**
+Verify: **not done — the site is deployed, so this is live-checkable now.**
 1. Visit with an adblocker **on**: the site works, nothing in the console, no layout shift.
 2. Visit with it **off**: the hit appears in the dashboard. On a phone, tap a play link on a work
    page and check that `play-recording` shows under Events.
