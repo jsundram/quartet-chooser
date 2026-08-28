@@ -220,7 +220,7 @@ const PHASES = [
         ],
     },
     {
-        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; one check',
+        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'In review &middot; PR #44',
         blurb: `You said the site feels slower than it should, and asked why a page this small
                 weighs so much. Answer below &mdash; it is the drawings, and there is one more thing
                 that could be done to them. <b>For what it is worth, every page is already under a
@@ -354,9 +354,10 @@ const BLOCKING = [
         hundred times more geometry than a 200&nbsp;px render can use, and that is the last real
         lever on page weight. It would change Marusya's linework, not just its file size, so it
         needs your eyes rather than my judgement.` },
-    { tag: 'Check', body: `<b>Phase 7 &mdash; two curl commands on the deploy preview.</b> The cache
-        headers are the one thing that cannot be tested until it is deployed, because Netlify's own
-        matcher decides whether they apply.` },
+    { tag: 'Review', body: `<b>Phase 7 is up as <a href="${REPO}/pull/44">PR&nbsp;#44</a>.</b> Merge it
+        with <span class="path">--ff-only</span> or a merge commit &mdash; never squash or rebase,
+        because <span class="path">pwa.md</span> cites the commit hashes. While the preview is up,
+        two curl commands are the one thing I could not test locally; they are in the PR body.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];

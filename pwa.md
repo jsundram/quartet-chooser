@@ -42,7 +42,9 @@ load performance**, which was missing from the plan entirely. Phase 7 runs first
 online for reasons caching would not fix, and its precache list is a performance budget. So the
 remaining order is **7, then 5**, with Phase 6 still an open gate.
 
-Phase 7 implemented 2026-08-28 on the branch `phase-7-performance`, eight commits, **not merged**.
+Phase 7 implemented 2026-08-28 on the branch `phase-7-performance`, 23 commits, open for review as
+**[PR #44](https://github.com/jsundram/quartet-chooser/pull/44)** — remember `--ff-only`, since this
+file cites those hashes.
 Rendered and driven under headless Chrome with throttling, which reversed one of its findings and
 sized the rest. On Slow 3G at phone density, served the way Netlify serves it: **work pages went
 from 3.8s and 7 third-party frames to 1.5s and none; the home page from 5.2s to 4.6s and 550 KB to
@@ -495,7 +497,7 @@ in both modes, second `theme-color` meta (one per scheme), flip `color-scheme` m
 
 ---
 
-## Phase 7 — Page load performance  ✅ implemented, unmerged
+## Phase 7 — Page load performance  ✅ implemented, in review (PR #44)
 
 Added 2026-08-28: "page load time … should be part of any of these phases … the site feels slower
 than it should." It wasn't in the plan; it is now. It runs **before** Phase 5 for two reasons: the
