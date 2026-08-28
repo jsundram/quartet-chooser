@@ -31,7 +31,8 @@ Phase 2 implemented 2026-08-27 in `4e0f14e`; its on-device checks are still outs
 Phase 3 implemented 2026-08-27 in `8cd7315`, with review fixes in `a4a0ad7`; its VoiceOver /
 keyboard / landscape checks are still outstanding.
 Phase 4 implemented 2026-08-27 in `452c7fa`, on top of Phase 3's branch, with review fixes in
-`bd34cac`; its adblocker-on / adblocker-off check needs the deploy.
+`bd34cac` and one of them reverted by decision in `d424376`; its adblocker-on / adblocker-off check
+needs a deploy — a preview will do.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -303,10 +304,10 @@ visitors, and supports custom events for link clicks. The only gap vs. TODO.md's
 
 Tasks are all `452c7fa`, with review fixes in `bd34cac`.
 
-**Found in review (`bd34cac`):** all three findings were places where the code claimed less harm
-than it could do — an `auxclick` handler that counted right-clicks as plays, a `count()` call that
-could throw a `SecurityError` into the console on every tap, and deploy previews counting into the
-production dashboard. Each is recorded against the task it belongs to below.
+**Found in review (`bd34cac`):** two real defects — an `auxclick` handler that counted right-clicks
+as plays, and a `count()` call that could throw a `SecurityError` into the console on every tap.
+A third finding, deploy previews counting into the production dashboard, was fixed and then
+deliberately reverted (`d424376`). Each is recorded against the task it belongs to below.
 
 Tasks:
 - [x] Create the site at goatcounter.com — Jason does this; the code just needs the URL.
@@ -326,17 +327,17 @@ Tasks:
       The two `/random*` redirect shells deliberately get **no** tag — they replace themselves in
       the same tick, the page they land on counts the visit a moment later, and Phase 1's rule that
       they trigger no extra request still holds.
-      **Corrected in review (`bd34cac`):** the first version shipped the tag on *every* host, and
-      argued that `#toggle-goatcounter` covered deploy previews. It does not — it opts out one
-      browser, while a preview URL gets opened by reviewers, by link unfurlers in Slack or iMessage,
-      and by whatever crawls it, and each of those becomes a production pageview with no field to
-      filter it out by afterwards. `counts_hits()` now gates on Netlify's `CONTEXT`: only
-      `production` gets the tag, and the build log says so when it does not. An **unset** `CONTEXT`
-      still counts, so a local build and the test suite see production's exact markup; count.js
-      ignores localhost anyway. This is not Phase 1's rejected `DEPLOY_PRIME_URL` trick — that one
-      would have shipped preview URLs *into* production's og tags, where the wrong value is
-      invisible; here a wrong `CONTEXT` shows up as an empty dashboard, which is the first thing the
-      verification below looks at.
+      **Raised in review and settled, 2026-08-28 (`bd34cac`, reverted in `d424376`):** the tag ships
+      on **every** host, deploy previews included, so preview traffic lands in the same dashboard as
+      production's with nothing to tell it apart afterwards. A `CONTEXT`-based gate was written,
+      then reverted — **Jason's call**: he tests against production anyway, so his own clicks are in
+      the numbers either way, and the site should have enough real traffic to dilute them. The gate
+      also cost something real, which is what tipped it: with previews carrying no tag, the
+      adblocker check below could only ever be rehearsed *after* a merge — the same "cannot verify
+      from a preview" trap Phase 1 hit with `og:image`. `#toggle-goatcounter` on any page opts one
+      browser out for good, which is the tool for keeping your own visits out of your own numbers.
+      Do not re-add the gate without asking; `test/build.test.mjs` asserts the build output is
+      byte-identical under `deploy-preview`, `branch-deploy` and `production`, so it fails loudly.
 - [x] Optional: click events on outbound Spotify/recording links.
       → `src/client/work.js` counts a `play-recording` event on the tap-to-play links it builds.
       Two things to know about what that number means: it is **touch-only**, because that is the
@@ -374,11 +375,12 @@ Acceptance criteria:
   and last before `</body>`; no tag on either redirect shell; nothing else on any page loads from
   `gc.zgo.at`; and the bundled `work.js` counts a literal event behind a `typeof … !== 'function'`
   guard, inside a `try`, with `auxclick` filtered to the middle button.
-- ✅ Only production counts.
-  → describe "deploy previews do not count (pwa.md Phase 4)" rebuilds `dist/` with
-  `CONTEXT=deploy-preview` and asserts each sampled page is the production page **minus the tag and
-  nothing else** — so a preview URL still shows exactly what will ship — then with
-  `branch-deploy`, then restores the normal build. It runs last in the file for that reason.
+- ✅ Every host ships the same page.
+  → describe "the build is not host-aware (pwa.md Phase 4)" rebuilds `dist/` under
+  `CONTEXT=deploy-preview`, `branch-deploy` and `production` and asserts each sampled page is
+  byte-identical to the local build, then restores it. It runs last in the file for that reason.
+  This pins the decision above: what you review on a preview URL is exactly what ships, analytics
+  included.
 - ✅ No PII in event names.
   → one constant event name, `play-recording`, asserted to be a literal at the call site. No
   movement title, no work slug, nothing per-visitor. Which work was playing is already answered by
@@ -388,12 +390,11 @@ Verify: **not done — needs the deployed site.**
 1. Visit with an adblocker **on**: the site works, nothing in the console, no layout shift.
 2. Visit with it **off**: the hit appears in the dashboard. On a phone, tap a play link on a work
    page and check that `play-recording` shows under Events.
-3. Note for both: **this only works on production.** count.js skips localhost and `file://` on its
-   own, and since `bd34cac` a deploy preview builds the tag out altogether — so neither
-   `npm run serve` nor a preview URL can be used to check that a hit lands. If the dashboard is
-   empty after a production deploy, check the build log: it prints `analytics off (CONTEXT=…)` when
-   it decided not to emit the tag. Keeping your *own* production visits out of your numbers is a
-   separate thing, and `#toggle-goatcounter` on any page is how.
+3. Note for both: **a deploy preview works for this**, since it carries the same tag production
+   does — so the check can be rehearsed on the PR's preview URL and repeated after the merge. What
+   will *not* work is `npm run serve`: count.js declines to count from localhost and `file://` on
+   its own. Preview hits do land in the real dashboard; that is the accepted trade above. To keep
+   one browser out of the numbers for good, load any page with `#toggle-goatcounter`.
 
 ## Phase 5 — Offline / service worker  ⚠️ decision gate
 
