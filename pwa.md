@@ -555,21 +555,41 @@ Measured against `dist/` and against production headers, worst first:
       gone — the glyph is inline SVG. `tableMobile`/`tableBig` are now `tableRest`/`tablePlaying`:
       neither is about the device any more, only about whether a player is in the column.
       **This is also what makes work pages work offline, so Phase 5 depends on it.**
-- [x] **svgo over the portraits, in the build.** `5882d33`. An earlier pass in this branch measured
-      a hand-rolled minifier at 5% and concluded the SVGs were near-irreducible — that was a floor,
-      not a ceiling. Real svgo takes **19% off raw and 13% off brotli**, because it re-encodes path
-      data rather than just collapsing Inkscape's whitespace. Verified pixel-identical before being
-      trusted: all 54 files rasterized before and after at 600/200/150px in headless Chrome and
-      compared channel by channel; differences are edge antialiasing only, invisible side by side
-      at 4.5× magnification. The build asserts `viewBox` survives — these are `<img>`s sized by CSS
-      height, so a dropped `viewBox` would silently reshape 54 drawings — and a test asserts the
-      step still fires at all.
+- [x] **svgo over the portraits, with the precision chosen per drawing.** `5882d33`, then
+      `05aed1e` when Jason pushed back that 386 KB is a lot for 36 line drawings. He was right; the
+      first pass ran svgo's defaults and left most of it on the floor.
 
-      Run in the build, **not committed**, which is the opposite of the icons and share cards: those
-      are committed because Netlify has neither `rsvg-convert` nor `pngquant`, whereas svgo is pure
-      JS and runs anywhere. So `static/` keeps the original drawings and there is no 54-file diff
-      every time the artwork changes. svgo is a `dependency`, not a devDependency, because
-      `npm run build` needs it and Netlify runs `npm run build`. Build time ~2.5s → ~4s.
+      What is actually in these files: **91,000 coordinate pairs** across the 36 the home page
+      loads, for artwork drawn 200px tall — about a hundred times more geometry than the render can
+      use. 99% of every file is path data, and its numbers average 5.3 characters because Inkscape
+      wrote coordinates in the tens of thousands with a decimal place. `Britten.svg` is 94 KB for
+      nine paths.
+
+      svgo's `floatPrecision` counts *decimal places*, which is the wrong unit when the drawings
+      disagree about what a unit is — viewBox heights here run from 49 to 5,179. So each file now
+      gets the precision that puts its error at ~1/4096 of its own height: ~0.15px at a 600px
+      render, finer than a 3x phone resolves at the 200px these are drawn at.
+
+      | | raw | brotli |
+      |---|---|---|
+      | as authored | 2,523 KB | 875 KB |
+      | svgo defaults (`5882d33`) | 2,034 KB | 760 KB |
+      | per-file precision (`05aed1e`) | **1,515 KB** | — |
+      | *the 36 the home page loads* | 777 KB | **286 KB** (from 370) |
+
+      Verified, not assumed: all 54 rasterized before and after at 200, 400 and 600px and compared
+      channel by channel — mean 0.6% of pixels differ, worst file 2.7%, all edge antialiasing, and
+      the worst case is indistinguishable side by side at 4× magnification.
+
+      **A false start worth recording:** normalizing every drawing into one coordinate space first
+      would reach 178 KB, but 10 of the 54 have `width`/`height` ratios that disagree with their
+      `viewBox` — Grieg by 31% — so they render letterboxed, and rewriting the root element
+      silently restretched them. The per-file approach touches no structure at all.
+- [ ] **Reducing the node count — the real excess, not attempted.** 91,000 points for artwork shown
+      at 200px. Simplifying the curves would beat everything above put together, plausibly halving
+      the drawings again. But it changes the artwork rather than how it is written down, so it needs
+      a tool that refits curves (Inkscape's Simplify, `picosvg`, or similar) and Marusya's drawings
+      looked at by a person afterwards. **Ask before starting.**
 - [x] **Rasterizing the portraits: experimented, and the answer is no.** Done properly on
       2026-08-28 rather than estimated — 18 portraits and 18 signatures rendered with
       `rsvg-convert` at the sizes the home page actually draws them (200px and 25px), at 1x, 2x and
@@ -634,6 +654,20 @@ Earlier revisions of this section carried larger absolute numbers (home LCP 8.8s
 2.5s). Those were measured against a harness that did not compress, so every SVG was charged its
 uncompressed size. The before/after *ratios* held up; the absolute figures above are the ones to
 quote.
+
+**And the numbers above are Slow 3G, which is the worst case this workstream targets, not the
+typical one.** The same two pages across four connections, current build, 3x phone:
+
+| | home LCP | home load | work LCP | work load |
+|---|---|---|---|---|
+| Slow 3G — 400 kbps / 400 ms | 4.1s | 7.3s | 1.3s | 1.3s |
+| Fast 3G — 1.6 Mbps / 300 ms | 1.6s | 2.9s | 0.75s | 0.75s |
+| 4G — 9 Mbps / 85 ms | **0.42s** | **0.80s** | **0.23s** | **0.21s** |
+| Broadband — 40 Mbps / 25 ms | 0.16s | 0.27s | 0.09s | 0.07s |
+
+So "every page under a second" is already true from 4G upwards, and work pages manage it on Fast 3G.
+What is left is the home page on a genuinely bad connection, and that is a geometry problem (the
+node-count item above), not a delivery one.
 
 The honest summary: **work pages got 5× lighter and load in a third of the time; the home page is
 30% lighter and about 12% faster to LCP.** The work-page win is the seven Spotify frames not
