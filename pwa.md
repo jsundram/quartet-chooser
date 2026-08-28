@@ -42,11 +42,12 @@ load performance**, which was missing from the plan entirely. Phase 7 runs first
 online for reasons caching would not fix, and its precache list is a performance budget. So the
 remaining order is **7, then 5**, with Phase 6 still an open gate.
 
-Phase 7 implemented 2026-08-28 on the branch `phase-7-performance`, five commits, **not merged**.
+Phase 7 implemented 2026-08-28 on the branch `phase-7-performance`, eight commits, **not merged**.
 Rendered and driven under headless Chrome with throttling, which reversed one of its findings and
-sized the rest: **work pages went from 1,044 KB and 4.8s to 95 KB and 2.7s on Slow 3G; the home page
-barely moved, and its remaining 1.3 MB of portrait SVG is the phase's main open item.** The two
-`netlify.toml` extension globs still cannot be checked until it is deployed.
+sized the rest: **work pages went from 1,044 KB and 4.8s to 72 KB and 2.5s on Slow 3G; the home page
+from 8.8s to 6.1s.** Rasterizing the portraits is the only change left that would move the home page
+further, and it needs a yes first. The two `netlify.toml` extension globs still cannot be checked
+until it is deployed.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -552,22 +553,28 @@ Measured against `dist/` and against production headers, worst first:
       gone — the glyph is inline SVG. `tableMobile`/`tableBig` are now `tableRest`/`tablePlaying`:
       neither is about the device any more, only about whether a player is in the column.
       **This is also what makes work pages work offline, so Phase 5 depends on it.**
-- [ ] **The home page's real problem: 1.3 MB of SVG. Not fixed, and it is the biggest thing left
-      in this phase.** The 36 portraits and signatures are full-detail vector art drawn at 200px on
-      desktop and 150px on a phone. At 50 KB/s nothing scheduled cleverly gets LCP under ~7s,
-      which is where it now sits. Two things measured on the way to that conclusion:
-      - Minifying the SVGs is worth **5%**, raw and brotli alike (875 KB → 829 KB site-wide,
-        stripping the Inkscape formatting and rounding coordinates to two decimals). They are
-        almost entirely irreducible path data. A real `svgo` pass would beat that — it re-encodes
-        `d`, collapses transforms, drops hidden elements — but not by the order of magnitude this
-        page needs, and svgo could not be installed in the environment this was built in.
-      - **Rasterizing to display size is the fix.** `icon-192x192.png` is 8.9 KB for artwork of the
-        same kind; 36 portraits at that size is ~300 KB against 1.3 MB today. The machinery already
-        exists — `scripts/make-icons.mjs` and `scripts/png-tools.mjs` drive `rsvg-convert` and
-        `pngquant`, and their output is committed because Netlify has neither. This would be an
-        `npm run portraits` in the same mould, plus `srcset` for 1x/2x. It is real work: 36 files ×
-        two densities, a size gate like the share cards have, and someone has to look at whether
-        raster line art at 200px still looks like Marusya's drawings. **Ask before starting it.**
+- [x] **svgo over the portraits, in the build.** `5882d33`. An earlier pass in this branch measured
+      a hand-rolled minifier at 5% and concluded the SVGs were near-irreducible — that was a floor,
+      not a ceiling. Real svgo takes **19% off raw and 13% off brotli**, because it re-encodes path
+      data rather than just collapsing Inkscape's whitespace. Verified pixel-identical before being
+      trusted: all 54 files rasterized before and after at 600/200/150px in headless Chrome and
+      compared channel by channel; differences are edge antialiasing only, invisible side by side
+      at 4.5× magnification. The build asserts `viewBox` survives — these are `<img>`s sized by CSS
+      height, so a dropped `viewBox` would silently reshape 54 drawings — and a test asserts the
+      step still fires at all.
+
+      Run in the build, **not committed**, which is the opposite of the icons and share cards: those
+      are committed because Netlify has neither `rsvg-convert` nor `pngquant`, whereas svgo is pure
+      JS and runs anywhere. So `static/` keeps the original drawings and there is no 54-file diff
+      every time the artwork changes. svgo is a `dependency`, not a devDependency, because
+      `npm run build` needs it and Netlify runs `npm run build`. Build time ~2.5s → ~4s.
+- [ ] **Rasterizing the portraits — still open, and now less urgent.** The home page is still
+      1,034 KB raw / 388 KB brotli, almost all of it 36 vector portraits drawn at 200px. Rendering
+      them to PNGs at display size would be roughly 300 KB raw — `icon-192x192.png` is 8.9 KB of
+      the same kind of artwork — and would take LCP from ~6s to somewhere near 2s on this
+      connection. It is real work (36 drawings × two densities, generated and committed like the
+      share cards because `rsvg-convert` cannot run on Netlify, plus `srcset`), and it needs
+      somebody to judge whether the line art still reads at 200px raster. **Ask before starting.**
 - [x] **GoatCounter's `count.js` cannot delay a load.** Checked: still `async`, still last in
       `<body>`, and `src/client/work.js` reads `window.goatcounter` behind a guard, so a hung
       `gc.zgo.at` is invisible to the page.
@@ -581,26 +588,30 @@ a deliberately conservative 60 KB per frame, and aborts `gc.zgo.at`.)
 
 | | before | after |
 |---|---|---|
-| **Work page** — LCP | 4.3s | **2.7s** |
-| **Work page** — load | 4.8s | **2.7s** |
-| **Work page** — bytes | 1,044 KB | **95 KB** |
+| **Work page** — LCP | 4.3s | **2.5s** |
+| **Work page** — load | 4.8s | **2.5s** |
+| **Work page** — payload | 1,044 KB | **72 KB** |
 | **Work page** — requests | 13, incl. 7 Spotify frames | **5, none third-party** |
-| **Home page** — LCP | 8.8s | **7.0s** |
-| **Home page** — load | 29.3s | 27.4s |
-| **Home page** — bytes | 1,398 KB | 1,300 KB |
+| **Home page** — LCP | 8.8s | **6.1s** |
+| **Home page** — load | 29.3s | 21.9s |
+| **Home page** — payload | 1,409 KB raw / 548 KB brotli | **1,034 KB / 388 KB** |
 | Site HTML total | 3.16 MB | 2.54 MB |
+| `dist/` total | 6.53 MB | **5.45 MB** |
 | Revalidation round trips per navigation | one per asset | none while fresh |
 
-The honest summary: **the work pages got dramatically faster and the home page barely moved.** The
-work-page win is the seven Spotify frames not loading, and it is real — note that the "before" run
-loaded all seven, because on a slow connection the lazy iframes start arriving before `work.js` gets
-to delete them, which is the bug this phase was arguing about in the abstract. The home page's
-1.9s of LCP is the header icon alone. Its remaining 1.3 MB of portraits is the open item above.
+The home page's LCP came down in two steps, both of them bytes rather than scheduling: the header
+icon (8.8s → 7.0s) and svgo (7.0s → 6.1s).
+
+The honest summary: **work pages got 14× lighter, the home page about 30% faster.** The work-page
+win is the seven Spotify frames not loading — note that the "before" run loaded all seven, because
+on a slow connection the lazy iframes start arriving before `work.js` gets to delete them, which is
+the bug this phase had been arguing about in the abstract. The home page is still dominated by
+portrait bytes; rasterizing them is the open item above and the only thing left that would move it.
 
 ### Still open
 
 - [ ] **Rasterize the home page portraits** — the bullet above. The one change left that would move
-      the home page, and it needs a yes first.
+      the home page, and it needs a yes first. Less urgent now that svgo has taken 19% off.
 - [ ] **The `/*.svg` and `/*.png` header globs are unverified.** Netlify's path matcher is well
       documented for directory splats like `/icons/*` and much less so for extension globs;
       `netlify.toml` says so and names the curl to run against the preview. If they don't match, the
