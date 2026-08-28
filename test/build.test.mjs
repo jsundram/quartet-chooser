@@ -903,10 +903,26 @@ describe('link integrity', () => {
 // to see what that build really ships, then rebuilds it back. Every describe
 // above reads the normal build, so this one has to come after all of them.
 describe('the build is not host-aware (pwa.md Phase 4)', () => {
+    // Shells out to a real build, four times, so this is the slow test in the
+    // suite (~20s). It is also the one that breaks if anything else builds at
+    // the same moment: build.mjs opens with `rm -rf dist`, so two concurrent
+    // builds delete each other's output and one dies on ENOENT. Don't run two
+    // `npm test`s, or a `npm run build`, against this working tree at once.
+    //
+    // stderr is captured rather than discarded because of exactly that: a bare
+    // "Command failed: node scripts/build.mjs" is unreadable, and this failure
+    // is rare enough that you do not get a second chance at it cheaply.
     const build_with = context => {
         const env = { ...process.env };
         if (context) env.CONTEXT = context; else delete env.CONTEXT;
-        execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs')], { env, stdio: 'ignore' });
+        try {
+            execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs')],
+                         { env, stdio: ['ignore', 'ignore', 'pipe'] });
+        } catch (e) {
+            const why = (e.stderr || '').toString().trim();
+            throw new Error(`build failed under CONTEXT=${context ?? '(unset)'}`
+                + (why ? `:\n${why}` : ' with no stderr'));
+        }
     };
     const sample = ['/', '/haydn/', '/haydn-opus-76-3/', '/about/', '/404/'];
 
