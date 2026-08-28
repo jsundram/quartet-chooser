@@ -15,7 +15,7 @@ import NotFoundPage, { Head as NotFoundHead } from '../src/pages/404'
 import Composer, { Head as ComposerHead } from '../src/templates/composer'
 import Work, { Head as WorkHead } from '../src/templates/work'
 
-import { tableMobile, playIcon } from '../src/templates/work.module.css'
+import { tablePlaying, playIcon } from '../src/templates/work.module.css'
 
 const COMPONENTS = {
     'index': { Page: IndexPage, Head: IndexHead },
@@ -42,8 +42,9 @@ function render_pages(){
 }
 
 // class names come out of the CSS-modules build hashed; the client script
-// that swaps Spotify embeds for play links on touch devices needs them.
-const CLASS_NAMES = { tableMobile, playIcon };
+// needs them to widen the Recording column when a player is embedded, and to
+// find the play controls it upgrades.
+const CLASS_NAMES = { tablePlaying, playIcon };
 
 export { CLASS_NAMES, GC_ENDPOINT, GC_PLAY_EVENT, GC_SCRIPT, SITE_TITLE, SITE_URL,
          random_targets, render_pages };

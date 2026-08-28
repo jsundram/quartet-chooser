@@ -4,12 +4,34 @@
   box-sizing: border-box;
 }
 
+/* The play control. Every recording is one of these at rest, on every
+   device; /js/work.js decides what a click does. It used to be a 13 KB
+   512x512 PNG drawn at 24 px -- the glyph is now inline SVG, so it costs no
+   request at all, stays sharp at any size, and takes its colour from the
+   cell. */
 .playIcon {
-    height: 24px;
+    display: inline-flex;
+    align-items: center;
     margin: auto;
+    color: inherit;
+    /* the tap target, not the glyph: 24px of ink in a 44px box is the
+       floor the Phase 3 touch-target pass set */
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
 }
 
-.tableMobile {
+.playIcon svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+/* Two column layouts, and neither of them is about the device any more
+   (pwa.md Phase 7). At rest every row holds a play control, so the Recording
+   column is narrow everywhere; work.js widens it the moment a real Spotify
+   player is embedded in it, which now only happens when someone asks. */
+.tableRest {
   display: grid;
   border-collapse: collapse;
   min-width: 350px;
@@ -20,7 +42,7 @@
     minmax(100px, .5fr);
 }
 
-.tableBig {
+.tablePlaying {
   display: grid;
   border-collapse: collapse;
   min-width: 350px;

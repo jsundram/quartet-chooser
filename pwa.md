@@ -37,6 +37,11 @@ adblocker-on / adblocker-off check is outstanding.
 Both merged as fast-forwards (`git merge --ff-only`), so main is still linear and every hash cited
 here still resolves.
 
+Phase 5's gate was answered **yes** on 2026-08-28, and the same conversation added **Phase 7 — page
+load performance**, which was missing from the plan entirely. Phase 7 runs first: the site is slow
+online for reasons caching would not fix, and its precache list is a performance budget. So the
+remaining order is **7, then 5**, with Phase 6 still an open gate.
+
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
 
@@ -53,7 +58,8 @@ template in `scripts/build.mjs`; per-page tags come from each page/template's `H
 | Decision | Status | Notes |
 |---|---|---|
 | Analytics: **GoatCounter (hosted)** | **Decided 2026-08-20**, shipped 2026-08-27 | See Phase 4 rationale. Supersedes the "self-hosted, AKM-style" wording in TODO.md — revisit only if hosted GoatCounter proves inadequate. Site: <https://quartet-roulette.goatcounter.com/>. |
-| Service worker / offline | **Open — decide at Phase 5** | Not obviously worth it for this site; see the Phase 5 decision gate before writing any SW code. |
+| Service worker / offline | **Decided 2026-08-28: yes** | Offline matters; a functional site on lie-fi outranks playback; precache all static content. See Phase 5. |
+| Page load performance | **Added 2026-08-28** | Was missing from the plan. Now Phase 7, and it runs *before* Phase 5 — the precache list is a performance budget. |
 | Dark mode | **Open — decide at Phase 6** | Real design work (theme colors derive from portrait SVGs). Explicitly optional. |
 
 ---
@@ -399,30 +405,70 @@ Verify: **not done — the site is deployed, so this is live-checkable now.**
    its own. Preview hits do land in the real dashboard; that is the accepted trade above. To keep
    one browser out of the numbers for good, load any page with `#toggle-goatcounter`.
 
-## Phase 5 — Offline / service worker  ⚠️ decision gate
+## Phase 5 — Offline / service worker  ✅ decided yes
 
-**Do not start this phase without an explicit yes from Jason.** The honest case against: this is a
-"what should we play next?" lookup site — its core content (Spotify embeds, outbound links) is
-useless offline anyway, and Chrome no longer requires a SW for installability. The case for: an
-iOS home-screen install without a SW opens to a blank error on a plane, and the works/movements
-data itself *is* useful offline (~280 routes, all static).
+**Decided 2026-08-28: yes.** Jason's framing, which settles the open questions below as well as the
+gate itself:
 
-If **yes**, port the pwa-starter `sw.js` patterns (all are hard-won; see its CLAUDE.md §Offline):
-- [ ] `SHELL` derived from the build's route list (`test/fixtures/routes.json` is generated from
-      the same source), not hand-maintained. Decide: precache all ~280 pages (they're small) vs.
-      shell + runtime caching — pwa-starter warns runtime-cached pages go stale until a `V` bump.
+> offline is important. being able to play is less important than the whole site being functional
+> on lie-fi. Ideally the whole static content of the site would be cached.
+
+Read that as a priority order, and note that **lie-fi, not airplane mode, is the target case** — the
+hard failure mode is a phone with two bars that hangs on a request for twenty seconds, not one that
+fails fast:
+
+1. **Every page reachable and complete without the network.** Nav, portraits, movement tables,
+   composer text. This is the bar.
+2. **Never wait on the network for something already cached.** A cached response must win
+   immediately, not after a timeout — that is what makes lie-fi feel broken.
+3. **Playback is allowed to require the network.** A Spotify embed offline degrades to the play
+   link; the link may fail. Acceptable, explicitly.
+
+So the precache question resolves to **precache everything static**, not shell + runtime. What
+"everything" costs today, measured against `dist/` on 2026-08-28:
+
+| | files | bytes | after Phase 7 |
+|---|---|---|---|
+| HTML | 280 | 3.16 MB | ~1.2 MB (the shuffle route list stops being inlined twice per page) |
+| Portrait SVGs | 54 | 2.58 MB | smaller; unminified today |
+| PNGs (icons, share cards, `icon.png`, `play.png`) | 32 | 1.06 MB | ~0.95 MB (`icon.png` stops shipping at 512×16-bit) |
+| JS | 2 | 1 KB | |
+| **Total** | **368** | **7.7 MB** | **~4 MB** |
+
+7.7 MB and 368 requests is too much to fetch at install time on the connection this is meant to
+survive. **This is why Phase 7 runs first** — it roughly halves the payload, and it removes the
+reason the page is slow online, which no amount of caching would have fixed. Then:
+
+- [ ] **Two-tier precache.** Tier 1 at `install`, small and synchronous-feeling: `/`, `/about/`,
+      `/404.html`, the offline fallback, both JS files, the header icon, `play.png`, the manifest
+      icons. Tier 2 after `activate`, throttled and failure-tolerant in the background: all ~280
+      routes and every portrait. A tier-2 failure must never fail the install.
+- [ ] `SHELL` and the tier-2 list derived from the build's route list (`test/fixtures/routes.json`
+      is generated from the same source), never hand-maintained.
 - [ ] Version constant `V` with a numeric tail, bumped on every shell change; wire an
       `sw-lint.py`-style check into CI/pre-commit so a forgotten bump can't ship.
 - [ ] Per-file precache, never bare `cache.addAll` (one 404 = no cache at all); self-heal an
       evicted cache on load.
-- [ ] `respondWith()` never resolves undefined, rejects, or hangs: cache-first shell, bounded
-      network fallback (`withTimeout`), terminal offline fallback at every path.
+- [ ] **Cache-first for everything same-origin**, with revalidation in the background — not
+      network-first, and not network-with-timeout. Priority 2 above: a cached page renders now, and
+      a `V` bump is what flushes staleness. `respondWith()` never resolves undefined, rejects, or
+      hangs; terminal offline fallback at every path.
 - [ ] Cache writes gated on `resp.ok` (opaque responses exempt).
-- [ ] No uncached third-party dependency (audit `dist/` for CDN/webfont refs; GoatCounter exempt).
-- [ ] Test offline **three ways**: fresh-cache basic; empty precache (clear site data → offline →
-      open shows the offline page, not a blank screen); across a `V`-bump update.
+- [ ] No uncached third-party dependency (audit `dist/` for CDN/webfont refs; GoatCounter exempt —
+      and it must not be able to hang a page load, see Phase 7).
+- [ ] Spotify iframes and `open.spotify.com` links are cross-origin: never cached, never blocked on,
+      and their failure offline must not break the page around them.
+- [ ] Test offline **four ways**: fresh-cache basic; empty precache (clear site data → offline →
+      open shows the offline page, not a blank screen); across a `V`-bump update; and **throttled to
+      "Slow 3G" with the cache warm**, which is the case this phase actually exists for.
 
-If **no**: record the decision here with the date, and this phase closes.
+### Acceptance criteria
+
+- Airplane mode, installed from the home screen, cold: every one of the ~280 routes opens with its
+  portrait and movement table. Only the embeds are missing.
+- DevTools "Slow 3G" with a warm cache: navigation paints from cache without a network round trip.
+- Clearing site data and going offline shows the offline page, never a blank screen or a browser
+  error page.
 
 ## Phase 6 — Dark mode  ⚠️ decision gate
 
@@ -432,6 +478,63 @@ in both modes, second `theme-color` meta (one per scheme), flip `color-scheme` m
 `light dark`. If declined, record the decision here and close.
 
 ---
+
+## Phase 7 — Page load performance  ⚠️ do this before Phase 5
+
+Added 2026-08-28: "page load time … should be part of any of these phases … the site feels slower
+than it should." It wasn't in the plan; it is now. It runs **before** Phase 5 for two reasons: the
+precache list is a performance budget (Phase 5's table above), and caching a page does nothing about
+the 1.3 MB it asks for on the first visit.
+
+Measured 2026-08-28 against `dist/` and against production headers, worst first:
+
+- [ ] **The home page preloads 1.31 MB of SVG (447 KB brotli) at highest priority.** React 19 emits
+      a `<link rel="preload" as="image">` for every eager `<img>` it renders — verified locally
+      against react-dom 19.2.8 — and `src/pages/index.js` renders 36 portraits and signatures with
+      no `loading`. So all 36 land in `<head>`-priority preloads and compete with the HTML, ahead of
+      anything below the fold. Adding `loading="lazy"` suppresses React's preload *and* defers the
+      fetch; also verified. Keep the above-the-fold portrait on composer/work pages eager — it's the
+      LCP element.
+- [ ] **`/icon.png` is a 512×512 16-bit RGBA PNG, 105 KB, drawn at 25–35 px** in the header of every
+      page — and preloaded, so it competes with the HTML too. `static/icons/icon-48x48.png` is
+      2,368 bytes: a 44× cut on every page on the site. `play.png` is the same bug in miniature
+      (512×512, 13 KB, drawn small) on all 256 work pages.
+- [ ] **Everything on production revalidates on every navigation.** Netlify's default,
+      `cache-control: public,max-age=0,must-revalidate`, is served for HTML, SVG, PNG and JS alike —
+      confirmed against quartetroulette.com on 2026-08-28. That is a conditional round trip per
+      asset per page view: six or more on a work page, all of them 304s, all of them RTT-bound on a
+      bad connection. Add `[[headers]]` to `netlify.toml`: long immutable `max-age` for `/icons/*`,
+      `/js/*`, `*.svg` and `*.png`, short + `stale-while-revalidate` for HTML. Immutable needs
+      stable content per URL, so either hash the JS filenames in `scripts/build.mjs` or accept that
+      a JS change waits out the TTL — decide as part of the phase.
+- [ ] **The shuffle route list is inlined twice in every page.** Each `data-shuffle` attribute is
+      ~3.9 KB of route paths, and there are two per page (quartet, composer) — more than half of a
+      10–14 KB page, ~2 MB across the 280. It gzips well, so this is worth little over the wire, but
+      it is 2 MB of the Phase 5 precache and it is on the critical path of every parse. Move the
+      list into `js/shuffle.js`, fetched once and cached.
+- [ ] **Work pages build up to seven Spotify iframes, then throw them away on phones.**
+      `src/client/work.js` replaces every `<iframe>` with a play link on any touch device — after
+      the iframes are already in the DOM and the ones in view have begun loading. Render the link
+      server-side and *upgrade* to an iframe where it's wanted, rather than shipping iframes and
+      deleting them. This is also what makes work pages work offline (Phase 5, priority 3), so the
+      two phases want the same change. **Open question for Jason: click-to-play on desktop too?**
+- [ ] **Portraits are unminified SVG** — `Britten-Original.svg` is 122 KB (43 KB brotli). An svgo
+      pass in `scripts/build.mjs` (or committed, like the share cards) cuts both the wire cost and
+      the precache.
+- [ ] **GoatCounter's `count.js` must not be able to delay a load.** It is `async` today, which is
+      right; confirm nothing later makes it render-blocking, and that a hung `gc.zgo.at` is
+      invisible to the page.
+
+### Acceptance criteria
+
+- Home page: no `<link rel="preload" as="image">` for a below-the-fold portrait; the preload set is
+  the LCP image and nothing else.
+- No page requests `/icon.png`; the header icon is served at a size near its rendered size.
+- `curl -I` against production returns a long `max-age` for a versioned static asset and a
+  revalidating policy for HTML.
+- A work page on a phone issues zero requests to `open.spotify.com` until something is tapped.
+- Lighthouse mobile on `/` and on a work page, before and after, recorded here — this phase gets a
+  number, not an impression.
 
 ## Already done (baseline ✅ — don't redo)
 

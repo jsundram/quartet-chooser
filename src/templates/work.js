@@ -4,7 +4,8 @@ import Layout from '../components/layout'
 import Meta from '../components/meta'
 
 import {
-    tableBig,
+    playIcon,
+    tableRest,
 } from './work.module.css'
 
 // the work's movements in playing order. Both the page and its share-card
@@ -48,8 +49,23 @@ export default function Work({ pageContext }) {
         return "table"; // return "numerals";
     }
 
-    // desktop rendering; /js/work.js swaps in the mobile play links and
-    // table layout on touch devices.
+    // A recording renders as a play control, never as a player (pwa.md
+    // Phase 7). /js/work.js decides what a click does: on a touch device it
+    // follows the link and the Spotify app opens, as it always has; on
+    // anything else it swaps this control for the real embed in place.
+    //
+    // What this replaces: every page shipped up to seven <iframe>s to
+    // open.spotify.com, and then work.js deleted every one of them again on
+    // touch devices -- after they were in the DOM and the ones in view had
+    // started loading. Seven third-party frames, on a page most people open
+    // to read, none of which anyone asked for. It is also what makes these
+    // pages work offline (Phase 5): there is nothing cross-origin on them
+    // until someone chooses to play something.
+    //
+    // The href is a real link to the track, so this works with no JS, with
+    // JS that failed to load, and offline (where it fails honestly, at the
+    // click, instead of rendering a broken frame). Cmd- and middle-click
+    // still open Spotify in a new tab, because work.js leaves those alone.
     //
     // 70 of the 916 movements have no recording (all Boccherini). They used to
     // render an iframe with no src: an empty 80px box on desktop, and on touch
@@ -57,13 +73,22 @@ export default function Work({ pageContext }) {
     // silently reloads. Nothing to play, nothing to render.
     let player = function (m){
         if (!m.spotify) return null;
-        return (<iframe
-            src={m.spotify.replace("/track/", "/embed/track/")}
-            title={m.title}
-            width="100%" height="80" frameBorder="0" allowFullScreen=""
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy" >
-        </iframe>);
+        return (
+            <a className={playIcon}
+               href={m.spotify}
+               data-embed={m.spotify.replace("/track/", "/embed/track/")}
+               /* the whole control is a glyph, so this is its accessible
+                  name; "Play" on every row of a table says nothing about
+                  which row */
+               aria-label={"Play " + m.title}>
+                {/* decorative twin of the label above it */}
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="12" r="10.6" fill="none"
+                            stroke="currentColor" strokeWidth="2.4"/>
+                    <path d="M9.6 7.4 16.4 12l-6.8 4.6z" fill="currentColor"/>
+                </svg>
+            </a>
+        );
     }
 
     const items = mvmts.map(m => (
@@ -75,7 +100,7 @@ export default function Work({ pageContext }) {
 
     // mvmt #, mvmt title, link
     const mvmt_table = (
-        <table className={tableBig}>
+        <table className={tableRest}>
             <thead>
                 <tr>
                     <th>#</th>

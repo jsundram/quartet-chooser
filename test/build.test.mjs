@@ -725,37 +725,75 @@ describe('client scripts', () => {
         assert.match(shuffle_js, /persisted/, 'distinguishes a bfcache restore from a load');
     });
 
-    test('every Spotify embed src round-trips through work.js\'s reversal', () => {
-        // work.js turns iframe src into a play link via
-        // src.replace('/embed/track/', '/track/'); both halves must hold
-        assert.ok(work_js().includes('"/embed/track/"'));
-        assert.ok(work_js().includes('"/track/"'));
-        let embeds = 0;
+    test('no page ships an iframe (pwa.md Phase 7)', () => {
+        // The whole of Phase 7's work-page change, as one assertion. Pages
+        // used to carry up to seven frames to open.spotify.com and then throw
+        // them away again on touch devices. Nothing cross-origin is embedded
+        // until someone clicks a play control -- which is also what lets these
+        // pages work offline, so Phase 5 depends on this staying true.
         for (const route of routes_in(dist)){
             const html = read(route);
-            // 70 movements (all Boccherini) have no spotify link in data.json.
-            // They used to render an iframe with no src: an empty box on
-            // desktop, and on touch a play link whose href resolved to the
-            // current page -- a button that silently reloads. The template
-            // renders no player for them at all now.
-            for (const [tag] of html.matchAll(/<iframe\b[^>]*>/g)){
-                assert.match(tag, /\bsrc="/, `${route}: iframe with no src`);
-            }
-            for (const [, src] of html.matchAll(/<iframe[^>]*\bsrc="([^"]*)"/g)){
-                assert.match(src, /^https:\/\/open\.spotify\.com\/embed\/track\//, `${route}: ${src}`);
-                embeds++;
+            assert.equal(html.match(/<iframe\b/g), null, route + ' ships an iframe');
+            assert.ok(!html.includes('/play.png'), route + ' still asks for play.png');
+        }
+    });
+
+    test('every play control carries a track link and its embed URL', () => {
+        // work.js builds the frame from data-embed; the href is what a click
+        // does without JS, on touch, and in a new tab. Both halves must hold,
+        // and they must name the same track.
+        let controls = 0;
+        for (const route of routes_in(dist)){
+            for (const [, href, embed] of read(route).matchAll(
+                    /<a class="[^"]*" href="([^"]*)" data-embed="([^"]*)"/g)){
+                assert.match(href, /^https:\/\/open\.spotify\.com\/track\//, `${route}: ${href}`);
+                assert.match(embed, /^https:\/\/open\.spotify\.com\/embed\/track\//, `${route}: ${embed}`);
+                assert.equal(embed, href.replace('/track/', '/embed/track/'), `${route}: ${href} vs ${embed}`);
+                controls++;
             }
         }
-        assert.ok(embeds >= 800, `found ${embeds} embeds`); // ~846 linked movements
+        assert.ok(controls >= 800, `found ${controls} play controls`); // ~846 linked movements
+    });
+
+    test('a movement with no recording renders a dash, not a play control', () => {
+        // 70 movements (all Boccherini) have no spotify link in data.json.
+        // They used to render an iframe with no src: an empty box on desktop,
+        // and on touch a play link whose href resolved to the current page --
+        // a button that silently reloads. An empty cell under a "Recording"
+        // header reads as broken; a dash reads as an answer.
+        const unrecorded = routes_in(dist).filter(r => read(r).includes('<td>—</td>'));
+        assert.ok(unrecorded.length > 0, 'some work still has an unrecorded movement');
+        for (const route of unrecorded){
+            const html = read(route);
+            assert.ok(!/data-embed="(?!https:\/\/open\.spotify\.com\/embed\/track\/)/.test(html),
+                route + ': a play control with no real embed URL');
+            assert.ok(!/<a class="[^"]*" href=""/.test(html), route + ': play link with an empty href');
+        }
     });
 
     test('work.js uses the hashed class names from the page CSS', () => {
         const html = read('/haydn-opus-76-3/');
-        for (const suffix of ['tableMobile', 'playIcon']){
-            const m = work_js().match(new RegExp(`"([\\w-]*${suffix})"`));
+        // playIcon is on the control in the markup; tablePlaying is the wide
+        // Recording column work.js switches to when a real player appears, so
+        // it is in the CSS but not in any page until then.
+        for (const suffix of ['tablePlaying', 'playIcon']){
+            // the optional leading dot: work.js uses playIcon as a selector,
+            // so esbuild folds '.' + PLAY_ICON into one ".work_playIcon"
+            // literal, while tablePlaying is assigned to className bare
+            const m = work_js().match(new RegExp(`"\\.?([\\w-]*${suffix})"`));
             assert.ok(m, `work.js references a ${suffix} class`);
             assert.ok(html.includes('.' + m[1] + '{'), `${m[1]} exists in the inlined CSS`);
         }
+    });
+
+    test('work.js does nothing to the page until a click', () => {
+        // the point of the change: no DOM rewriting at load. If this file ever
+        // grows a querySelectorAll over the controls again, it is doing the
+        // work Phase 7 removed.
+        const js = work_js();
+        assert.ok(js.includes('addEventListener("click"') || js.includes("addEventListener('click'"),
+            'listens for clicks');
+        assert.ok(!js.includes('querySelectorAll'), 'does not sweep the DOM at load');
     });
 });
 
@@ -805,7 +843,9 @@ describe('link integrity', () => {
     });
 
     test('static assets copied through', () => {
-        for (const f of ['icon.png', 'play.png', 'favicon-32x32.png', 'manifest.webmanifest',
+        // play.png is deliberately absent: the play glyph is inline SVG now
+        // (pwa.md Phase 7), so it costs no request and no 13 KB.
+        for (const f of ['icon.png', 'favicon-32x32.png', 'manifest.webmanifest',
                          'Haydn.svg', 'Haydn-Signature.svg', 'Haydn-Original.svg',
                          'icons/icon-512x512.png']){
             assert.ok(files.has(f), f);

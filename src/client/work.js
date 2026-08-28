@@ -1,28 +1,42 @@
-// On touch devices, swap each Spotify embed for a tap-to-play link and
-// switch the movement table to its mobile layout. This replaces what
-// React hydration used to do via Utils.is_mobile() in work.js — with one
-// deliberate change: is_mobile read navigator.maxtouchpoints (wrong case,
-// always undefined), so only 'ontouchstart' ever fired. We use the real
-// maxTouchPoints, so touch-capable desktops without ontouchstart now get
-// play links instead of embeds.
-// TABLE_MOBILE and PLAY_ICON are injected by scripts/build.mjs (esbuild
+// What a click on a play control does (pwa.md Phase 7).
+//
+// The page arrives with a play control per recording and no Spotify iframe
+// anywhere -- see the player() comment in src/templates/work.js for why. This
+// script does nothing at load: no DOM rewriting, no class swapping, no frames
+// created or destroyed. It attaches one listener and waits.
+//
+// On a touch device the control stays exactly what the markup says it is: a
+// link to the track, which opens the Spotify app. That was already the
+// behaviour, and it is better than an 80px embed on a phone.
+//
+// On anything else, a plain left click swaps the control for the real embed,
+// in place, and widens the Recording column to fit it. That costs a second
+// click to actually start playback -- the embed cannot autoplay from a gesture
+// outside its own frame -- which is the price of not loading seven
+// third-party frames on a page most people open to read.
+//
+// TABLE_PLAYING and PLAY_ICON are injected by scripts/build.mjs (esbuild
 // define) with the hashed CSS-module class names; PLAY_EVENT with the
 // GoatCounter event name from src/lib/site.js.
 (function () {
-    var mobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (!mobile) return;
+    var touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    // pwa.md Phase 4: count a click through to Spotify as an event.
+    // pwa.md Phase 4: count a click through to a recording as an event.
     //
     // Guarded on purpose. count.js is on every adblock list there is, and it is
     // loaded async, so window.goatcounter is undefined when it is blocked, when
     // the network is gone, and for the first moments of any page load. In all
-    // three cases this does nothing and the link still navigates -- the site
+    // three cases this does nothing and the click still works -- the site
     // never depends on analytics being there.
     //
-    // Only touch devices reach this code, so this counts only the surface where
-    // a recording IS a link. On desktop the recording is a cross-origin Spotify
-    // iframe, and a play inside it is not observable from here at all.
+    // This used to fire only on touch devices, because touch was the only
+    // place a recording was a link rather than an iframe, and a play inside a
+    // cross-origin frame is not observable from here at all. Now that every
+    // device has to ask for the player, the ask is observable everywhere, and
+    // the event counts it everywhere. So the numbers step up when this ships:
+    // it is wider coverage, not more listening. What it counts is unchanged --
+    // a constant event name, no movement title, no work slug, nothing that
+    // could identify anybody.
     //
     // GoatCounter sends its beacon as an <img>, which the browser may cancel
     // when the click navigates away; a click that opens the Spotify app is the
@@ -32,57 +46,77 @@
         var gc = window.goatcounter;
         if (!gc || typeof gc.count !== 'function') return;
         try {
-            // A constant event name: no movement title, no work slug, nothing
-            // that could identify anybody. Which work was playing is already
-            // answered by that page's own hit count.
-            gc.count({ path: PLAY_EVENT, title: 'Recording opened on Spotify', event: true });
+            // "opened on Spotify" was accurate when a play was only ever a
+            // link out; on desktop the same click now opens a player in
+            // place, so the label describes the click instead of the
+            // destination. The path is what GoatCounter groups by and it is
+            // unchanged, so the existing series continues.
+            gc.count({ path: PLAY_EVENT, title: 'Play requested for a recording', event: true });
         } catch (e) {
             // count() is not as safe as the guard above implies: it calls
             // goatcounter.filter(), whose last check reads localStorage without
             // catching anything, and merely *touching* localStorage throws a
             // SecurityError in a browser set to block all site data. That would
-            // put an uncaught error in the console on every single tap. The tap
-            // itself would still work -- a throwing listener does not cancel the
-            // navigation -- but "the site never depends on analytics" has to
-            // mean the console too.
+            // put an uncaught error in the console on every single click. The
+            // click itself would still work -- a throwing listener does not
+            // cancel the navigation -- but "the site never depends on
+            // analytics" has to mean the console too.
         }
     }
 
-    var table = document.querySelector('table');
-    if (table) table.className = TABLE_MOBILE;
+    function embed(link){
+        var frame = document.createElement('iframe');
+        frame.src = link.getAttribute('data-embed');
+        // the control's accessible name is "Play <movement>"; the frame that
+        // replaces it is the movement's player, so it keeps the movement name
+        frame.title = (link.getAttribute('aria-label') || '').replace(/^Play /, '');
+        frame.width = '100%';
+        frame.height = '80';
+        frame.frameBorder = '0';
+        frame.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+        frame.allowFullscreen = true;
 
-    document.querySelectorAll('iframe').forEach(function (frame) {
-        // an iframe with no src would give link.href = '', which resolves to
-        // the current page: a play button that reloads. The template no longer
-        // emits one, and this makes sure a future one cannot become a link.
-        if (!frame.src) return;
+        // widen the Recording column, once, the first time a player appears --
+        // at rest it is sized for a 24px glyph, which an 80px player would
+        // spill out of. The list and single-player layouts have no table.
+        var table = link.closest('table');
+        if (table) table.className = TABLE_PLAYING;
 
-        var link = document.createElement('a');
-        link.href = frame.src.replace('/embed/track/', '/track/');
-        link.className = PLAY_ICON;
+        link.parentNode.replaceChild(frame, link);
+        // the click that summoned it was on the link, so focus went nowhere a
+        // keyboard user can find; the frame is the thing they asked for
+        frame.focus();
+    }
 
-        var img = document.createElement('img');
-        img.src = '/play.png';
-        // the whole link is this icon, so its alt is the control's accessible
-        // name: "play" on every row of a table says nothing about which row.
-        // The iframe's title is the movement name the row shows.
-        img.alt = frame.title ? 'Play ' + frame.title : 'Play';
-        img.className = PLAY_ICON;
+    // One listener on the document rather than one per control: a work page
+    // has up to seven, and this way nothing is bound on a page where nobody
+    // ever plays anything.
+    document.addEventListener('click', function (e){
+        var link = e.target.closest ? e.target.closest('.' + PLAY_ICON) : null;
+        if (!link) return;
 
-        // auxclick as well as click: a middle-click opens the recording in a new
-        // tab, which is a play, and it is the one case where the beacon
-        // reliably survives. But auxclick fires for *every* non-primary button,
-        // the right one included -- so without the button check, right-clicking
-        // a play link to copy its address and then dismissing the menu counts as
-        // a play. Not hypothetical here: this code runs wherever
-        // maxTouchPoints > 0, which includes touchscreen laptops that have a
-        // real right mouse button.
-        link.addEventListener('click', count_play, false);
-        link.addEventListener('auxclick', function (e){
-            if (e.button === 1) count_play();
-        }, false);
+        count_play();
 
-        link.appendChild(img);
-        frame.parentNode.replaceChild(link, frame);
-    });
+        // Let the browser do what the markup says for touch (open the app),
+        // and for every click that means "somewhere else, please": a new tab,
+        // a new window, a download, a middle click. Only a plain left click
+        // is ours to take over.
+        if (touch) return;
+        if (e.defaultPrevented || e.button !== 0) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+        e.preventDefault();
+        embed(link);
+    }, false);
+
+    // auxclick as well as click: a middle-click opens the recording in a new
+    // tab, which is a play, and it is the one case where the beacon reliably
+    // survives. But auxclick fires for *every* non-primary button, the right
+    // one included -- so without the button check, right-clicking a play link
+    // to copy its address and then dismissing the menu counts as a play.
+    document.addEventListener('auxclick', function (e){
+        if (e.button !== 1) return;
+        var link = e.target.closest ? e.target.closest('.' + PLAY_ICON) : null;
+        if (link) count_play();
+    }, false);
 })();

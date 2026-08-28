@@ -191,7 +191,7 @@ async function build(){
         target: BROWSER_TARGET,
     })).code.trim();
 
-    // 3. Client scripts: the touch-device player swap for work pages and
+    // 3. Client scripts: the play-control click handler for work pages and
     // the 🔀-link randomizer, which every page loads for its nav links.
     //
     // The nav's two 🔀 lists are baked into shuffle.js rather than into every
@@ -207,7 +207,7 @@ async function build(){
         minify: true,
         target: BROWSER_TARGET,
         define: {
-            TABLE_MOBILE: script_json(CLASS_NAMES.tableMobile),
+            TABLE_PLAYING: script_json(CLASS_NAMES.tablePlaying),
             PLAY_ICON: script_json(CLASS_NAMES.playIcon),
             PLAY_EVENT: script_json(GC_PLAY_EVENT),
             SHUFFLE_TARGETS: script_json(targets),
