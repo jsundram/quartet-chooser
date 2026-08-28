@@ -9,3 +9,78 @@
   # (Build & deploy → Dependency management) is set to match. Bump both
   # together with .nvmrc.
   NODE_VERSION = "24"
+
+# --------------------------------------------------------------------------
+# Caching (pwa.md Phase 7).
+#
+# Netlify's default for everything it serves is
+#   cache-control: public,max-age=0,must-revalidate
+# which was live on every HTML page, portrait, icon and script on this site.
+# That is a conditional round trip *per asset per navigation* -- six or more on
+# a work page -- every one of them a 304 carrying no bytes, and every one of
+# them RTT-bound. On a good connection it is invisible. On a phone with two
+# bars it is most of what "the site feels slow" means, and no amount of
+# service worker (Phase 5) fixes the first visit or a browser without one.
+#
+# Nothing here is content-hashed, so nothing here is `immutable`. The lever
+# used instead is stale-while-revalidate: serve from cache immediately, always,
+# and refresh in the background afterwards. A changed file is then at most one
+# navigation behind, and no visitor ever waits on a revalidation.
+#
+# Deliberately NOT hashing /js/* filenames. It is the textbook answer and it
+# would buy `immutable`, but the two scripts total about 1 KB: the whole cost
+# is the round trip, which max-age already removes, and hashing would put a
+# build manifest between the generator, the tests and Phase 5's precache list
+# for no measurable gain. Revisit if the client JS ever grows into a bundle.
+#
+# VERIFY ON THE DEPLOY PREVIEW, not locally: `npm run serve` sets its own
+# headers and knows nothing about this file. The extension globs below
+# (/*.svg, /*.png) are the part to check -- Netlify's path matcher is well
+# documented for directory splats like /icons/* and much less so for these:
+#   curl -sI https://<preview>/Bach.svg | grep -i cache-control
+# If an extension glob turns out not to match, the fallback is to serve the
+# portraits from a directory and glob that instead.
+
+# There is deliberately no `for = "/*"` rule. HTML must revalidate on every
+# request -- a deploy has to be visible immediately -- and Netlify's default
+# already says exactly that, so writing it out again would buy nothing and
+# would make every rule below depend on how Netlify merges two rules that both
+# match one file. Assets opt out of the default one class at a time instead.
+
+# The generated icon set: stable names, artwork that changes about never.
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+# Share cards. Scrapers fetch these by absolute URL and cache them anyway.
+[[headers]]
+  for = "/og/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+# Client scripts: an hour fresh, a week of background refresh. An hour is
+# longer than any browsing session, which is where the round trips were.
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=604800"
+
+# The portraits and signatures, which live at the root because that is where
+# static/ copies them. The single biggest asset class on the site.
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
+
+# The manifest is read at install time and on updates; a day is plenty, and a
+# short one keeps a fixed icon or name from being stuck behind a week.
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
