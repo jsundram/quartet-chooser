@@ -221,22 +221,22 @@ const PHASES = [
     },
     {
         n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; one decision',
-        blurb: `You said the site feels slower than it should. Work pages were: they now load
-                <b>95&nbsp;KB instead of 1,044&nbsp;KB</b> and paint in 2.7s instead of 4.8s on a
-                slow connection. The home page was not, quite &mdash; and the one thing that would
-                fix it needs a yes from you.`,
+        blurb: `You said the site feels slower than it should. Work pages were, badly: they now load
+                <b>72&nbsp;KB instead of 1,044&nbsp;KB</b> and paint in 2.5s instead of 4.8s on a
+                slow connection. The home page went from <b>8.8s to 6.1s</b>. One optional decision
+                below would take it further; everything else here is done.`,
         tasks: [
-            { id: 'p7-portraits', label: '<b>Rasterize the home page portraits? A yes/no.</b>',
-              note: `The home page ships <b>1.3&nbsp;MB of SVG</b> &mdash; 36 full-detail vector
-                     portraits and signatures, drawn at 200&nbsp;px. On a slow connection nothing
-                     scheduled cleverly gets it under about seven seconds; I tried, and measured,
-                     and put my change back. Rendering them to PNGs at the size they are actually
-                     drawn would be roughly 300&nbsp;KB instead &mdash; the icons already do this
+            { id: 'p7-portraits', label: '<b>Rasterize the home page portraits? A yes/no &mdash; and it can wait.</b>',
+              note: `svgo took 19% off the drawings and the home page is now
+                     <b>6.1s instead of 8.8s</b>, so this is no longer urgent. But the page still
+                     ships about 1&nbsp;MB of vector art drawn at 200&nbsp;px, and rendering those
+                     to PNGs at the size they are actually shown would be roughly 300&nbsp;KB
+                     &mdash; probably around 2s. The icons already do exactly this
                      (<span class="path">icon-192x192.png</span> is 8.9&nbsp;KB of the same kind of
                      artwork). <b>The catch is yours to judge:</b> 36 drawings &times; two screen
                      densities, generated and committed like the share cards, and someone has to
-                     decide whether Marusya's line art still looks right rasterized at
-                     200&nbsp;px. I have not started it.` },
+                     decide whether Marusya's line art still reads right rasterized. I have not
+                     started it.` },
             { id: 'p7-headers', label: '<b>Check two cache headers on the deploy preview</b>',
               note: `The only thing in this phase I could not test locally. Netlify documents
                      directory globs; extension globs much less so, and the portraits live at the
@@ -271,6 +271,13 @@ const PHASES = [
               note: `About 4&nbsp;KB of route paths in the nav of all 279 pages, identical
                      everywhere. Moved into <span class="path">shuffle.js</span>, fetched once. Site
                      HTML total: 3.16&nbsp;MB &rarr; 2.54&nbsp;MB.` },
+            { id: 'p7-svgo', done: true, label: 'Fixed: the portraits ship <b>19% smaller</b>, and are pixel-identical',
+              note: `svgo, run in the build rather than committed, so
+                     <span class="path">static/</span> keeps Marusya's original files and there is
+                     no 54-file diff whenever the artwork changes. I checked it properly before
+                     trusting it: every drawing rasterized before and after at three sizes and
+                     compared pixel by pixel &mdash; the only differences are edge antialiasing,
+                     invisible side by side at 4.5&times; magnification.` },
             { id: 'p7-lazy', done: true, label: 'Tried, measured, and <b>put back</b>: lazy-loading the home page grid',
               note: `It looked like the big win &mdash; React preloads all 36 portraits at top
                      priority. Rendering it under throttling said otherwise: lazy defers nothing
@@ -309,10 +316,10 @@ const PHASES = [
 ];
 
 const BLOCKING = [
-    { tag: 'Decide', body: `<b>Phase 7 &mdash; rasterize the home page portraits?</b> The home page
-        ships 1.3&nbsp;MB of vector artwork drawn at 200&nbsp;px, and that, not anything clever
-        about loading, is why it is slow. Rendering the portraits to PNGs would be roughly
-        300&nbsp;KB &mdash; but it is 36 drawings, and whether they still look right is a judgement
+    { tag: 'Optional', body: `<b>Phase 7 &mdash; rasterize the home page portraits?</b> Not urgent
+        any more: svgo took 19% off and the home page is down to 6.1s. But it still ships about
+        1&nbsp;MB of vector art drawn at 200&nbsp;px, and rendering those to PNGs would be roughly
+        300&nbsp;KB. It is 36 drawings, and whether they still read right rasterized is a judgement
         I cannot make.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
