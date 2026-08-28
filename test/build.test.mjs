@@ -788,10 +788,10 @@ describe('link integrity', () => {
     });
 });
 
-// Last in the file on purpose: it rebuilds dist/ as a Netlify deploy preview to
-// see what that build really ships, then rebuilds it back. Every describe above
-// reads the normal build, so this one has to come after all of them.
-describe('deploy previews do not count (pwa.md Phase 4)', () => {
+// Last in the file on purpose: it rebuilds dist/ under a Netlify build context
+// to see what that build really ships, then rebuilds it back. Every describe
+// above reads the normal build, so this one has to come after all of them.
+describe('the build is not host-aware (pwa.md Phase 4)', () => {
     const build_with = context => {
         const env = { ...process.env };
         if (context) env.CONTEXT = context; else delete env.CONTEXT;
@@ -799,26 +799,25 @@ describe('deploy previews do not count (pwa.md Phase 4)', () => {
     };
     const sample = ['/', '/haydn/', '/haydn-opus-76-3/', '/about/', '/404/'];
 
-    test('a preview build is the production page minus the tag', () => {
-        // not "has no tag": the point is that a preview is otherwise the same
-        // document, so what gets reviewed on a preview URL is what ships
+    test('a deploy preview ships exactly what production ships, analytics included', () => {
+        // Deploy previews count into the same dashboard as production, and that
+        // is a decision rather than an oversight: Jason tests against production
+        // anyway, the traffic should dilute it, and keeping the tag everywhere is
+        // what lets a preview URL answer "does a hit actually land" before a
+        // merge. A CONTEXT gate was written and reverted; this asserts the build
+        // output does not depend on the environment at all, so re-adding one is
+        // a deliberate act with a failing test attached, not a quiet change.
         const counted = sample.map(read);
         try {
-            build_with('deploy-preview');
-            sample.forEach((route, i) => {
-                const preview = read(route);
-                assert.ok(!preview.includes('data-goatcounter'), route + ' counts on a preview');
-                const tag = counted[i].match(/<script[^>]*\bdata-goatcounter=[^>]*><\/script>/)[0];
-                assert.equal(preview, counted[i].replace(tag, ''), route + ' differs beyond the tag');
-            });
-
-            // a branch deploy is not production either; an unset CONTEXT is a
-            // local build and keeps the tag, which is what every test above sees
-            build_with('branch-deploy');
-            assert.ok(!read('/').includes('data-goatcounter'), 'branch deploy counts');
+            for (const context of ['deploy-preview', 'branch-deploy', 'production']){
+                build_with(context);
+                sample.forEach((route, i) => {
+                    assert.equal(read(route), counted[i], `${route} differs under CONTEXT=${context}`);
+                });
+            }
         } finally {
             build_with(null); // leave dist/ as the rest of the suite found it
         }
-        assert.equal(read('/'), counted[0], 'the restored build matches production');
+        assert.equal(read('/'), counted[0], 'the restored build matches');
     });
 });
