@@ -220,63 +220,64 @@ const PHASES = [
         ],
     },
     {
-        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; needs your eyes',
-        blurb: `You said the site feels slower than it should, and you were right &mdash; it was not
-                subtle. It is built and the tests pass, on the branch
-                <span class="path">phase-7-performance</span>, but <b>nobody has looked at it</b>:
-                a headless browser would not run where it was built, so the checks below are the
-                first time any of this is seen.`,
+        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; one decision',
+        blurb: `You said the site feels slower than it should. Work pages were: they now load
+                <b>95&nbsp;KB instead of 1,044&nbsp;KB</b> and paint in 2.7s instead of 4.8s on a
+                slow connection. The home page was not, quite &mdash; and the one thing that would
+                fix it needs a yes from you.`,
         tasks: [
-            { id: 'p7-look', label: '<b>Open a work page on the deploy preview and look at it</b>',
-              note: `This is the one that matters. Recordings are now a play control instead of an
-                     inline Spotify player, so the Recording column starts narrow and widens when
-                     you click one. That layout has never been rendered.`,
-              children: [
-                  { id: 'p7-look-rest', label: 'The play control looks like a play control &mdash; right size, centred in its cell' },
-                  { id: 'p7-look-click', label: 'Clicking one <b>swaps in the real Spotify player</b> and the column widens to fit it' },
-                  { id: 'p7-look-second', label: 'Clicking a second one works too, and the first stays put' },
-                  { id: 'p7-look-phone', label: 'On a <b>phone</b>: tapping still opens the Spotify app, as it always did' },
-              ] },
-            { id: 'p7-headers', label: '<b>Check two cache headers on the preview</b>',
-              note: `Netlify documents directory globs; extension globs much less so, and the
-                     portraits live at the root. If <span class="path">/*.svg</span> does not match,
-                     the fallback is in <span class="path">netlify.toml</span>.`,
+            { id: 'p7-portraits', label: '<b>Rasterize the home page portraits? A yes/no.</b>',
+              note: `The home page ships <b>1.3&nbsp;MB of SVG</b> &mdash; 36 full-detail vector
+                     portraits and signatures, drawn at 200&nbsp;px. On a slow connection nothing
+                     scheduled cleverly gets it under about seven seconds; I tried, and measured,
+                     and put my change back. Rendering them to PNGs at the size they are actually
+                     drawn would be roughly 300&nbsp;KB instead &mdash; the icons already do this
+                     (<span class="path">icon-192x192.png</span> is 8.9&nbsp;KB of the same kind of
+                     artwork). <b>The catch is yours to judge:</b> 36 drawings &times; two screen
+                     densities, generated and committed like the share cards, and someone has to
+                     decide whether Marusya's line art still looks right rasterized at
+                     200&nbsp;px. I have not started it.` },
+            { id: 'p7-headers', label: '<b>Check two cache headers on the deploy preview</b>',
+              note: `The only thing in this phase I could not test locally. Netlify documents
+                     directory globs; extension globs much less so, and the portraits live at the
+                     root. If <span class="path">/*.svg</span> does not match, the fallback is
+                     written down in <span class="path">netlify.toml</span>.`,
               children: [
                   { id: 'p7-headers-svg', label: '<span class="path">curl -sI &lt;preview&gt;/Bach.svg | grep -i cache-control</span> &mdash; wanted: <span class="path">max-age=604800</span>' },
                   { id: 'p7-headers-html', label: 'The same on the page itself still says <span class="path">max-age=0, must-revalidate</span> &mdash; deploys must stay instant' },
               ] },
-            { id: 'p7-lighthouse', label: 'Run <b>Lighthouse mobile</b> on the home page and a work page',
-              note: `Everything below is measured, but the phase should end with a number rather
-                     than an impression. Worth doing against production first, so there is a before.` },
-            { id: 'p7-preload', done: true, label: 'Fixed: the home page <b>preloaded 1.31&nbsp;MB of portraits</b> (447&nbsp;KB brotli) at top priority',
-              note: `React&nbsp;19 emits a preload link for every eager image it renders, and the home
-                     page rendered 36 portraits and signatures with nothing marked lazy. They all
-                     competed with the HTML. Now 36 preloads and 1.42&nbsp;MB have become one and
-                     4.4&nbsp;KB.` },
+            { id: 'p7-spotify-real', label: 'On the preview, <b>click a play control and check the real Spotify player</b>',
+              note: `I drove this in a headless browser with the embed stubbed, because
+                     <span class="path">open.spotify.com</span> was not reachable from where I ran
+                     it. The swap, the column widening and the keyboard path all work; the real
+                     player inside the frame is the one thing that was faked.` },
+            { id: 'p7-work', done: true, label: 'Fixed: work pages built <b>seven Spotify iframes</b> nobody asked for',
+              note: `And then threw them away again on phones &mdash; after they had started
+                     loading, which a throttled render confirmed. Now nothing cross-origin loads
+                     until you click. <b>1,044&nbsp;KB &rarr; 95&nbsp;KB, 4.8s &rarr; 2.7s</b>, 13
+                     requests &rarr; 5. This is also what will make work pages work offline in
+                     Phase&nbsp;5.` },
             { id: 'p7-icon', done: true, label: 'Fixed: the header icon was a <b>105&nbsp;KB, 512&times;512, 16-bit PNG drawn at 25&nbsp;px</b>',
-              note: `On every page on the site, and preloaded. It now uses the 96&times;96 from the
-                     set <span class="path">npm run icons</span> already makes: 4,424 bytes, 24&times;
-                     smaller, still sharp on a 2&times; screen.` },
+              note: `On every page, and preloaded, so it was competing with the portraits for the
+                     connection. Now 4,424 bytes. On its own it took the home page from 8.8s to
+                     7.0s.` },
             { id: 'p7-cache', done: true, label: 'Fixed: <b>every asset revalidated on every navigation</b> in production',
               note: `Netlify&rsquo;s default is
                      <span class="path">cache-control: public,max-age=0,must-revalidate</span> for
                      HTML, SVG, PNG and JS alike &mdash; I checked quartetroulette.com directly. Six
                      or more round trips per work page even when your phone already had every byte.
                      This is the one that made a weak connection feel broken.` },
-            { id: 'p7-frames', done: true, label: 'Fixed: work pages built <b>seven Spotify iframes</b> and then threw them away on phones',
-              note: `You chose click-to-play everywhere. Nothing cross-origin loads on a work page
-                     until you ask for it &mdash; which is also what will make those pages work
-                     offline in Phase&nbsp;5. <span class="path">play.png</span> is gone too; the
-                     glyph is inline SVG now.` },
             { id: 'p7-shuffle', done: true, label: 'Fixed: the 🔀 route list was inlined <b>twice in every page</b>',
               note: `About 4&nbsp;KB of route paths in the nav of all 279 pages, identical
                      everywhere. Moved into <span class="path">shuffle.js</span>, fetched once. Site
                      HTML total: 3.16&nbsp;MB &rarr; 2.54&nbsp;MB.` },
-            { id: 'p7-svg', done: true, label: 'Measured and <b>left alone</b>: minifying the portraits is worth about 5%',
-              note: `They are almost entirely path data. A real <span class="path">svgo</span> pass
-                     would likely beat that, but it is not a dependency and rounding coordinates on
-                     artwork nobody can render is not a good trade. <span class="path">pwa.md</span>
-                     has the recipe if you ever want it.` },
+            { id: 'p7-lazy', done: true, label: 'Tried, measured, and <b>put back</b>: lazy-loading the home page grid',
+              note: `It looked like the big win &mdash; React preloads all 36 portraits at top
+                     priority. Rendering it under throttling said otherwise: lazy defers nothing
+                     here (Chrome fetches all 36 anyway) and only costs priority, so LCP went
+                     <b>8.8s &rarr; 13.7s</b>. Reverted, with the numbers written above the code so
+                     nobody tries it again. Mentioned because it is the reason the home page did
+                     not improve much.` },
         ],
     },
     {
@@ -308,10 +309,11 @@ const PHASES = [
 ];
 
 const BLOCKING = [
-    { tag: 'Look', body: `<b>Phase 7 is built but unseen.</b> A headless browser would not run where
-        I built it, so the new play control on work pages &mdash; and the Recording column widening
-        when you click one &mdash; has never actually been rendered. It is the first thing to open
-        on the deploy preview.` },
+    { tag: 'Decide', body: `<b>Phase 7 &mdash; rasterize the home page portraits?</b> The home page
+        ships 1.3&nbsp;MB of vector artwork drawn at 200&nbsp;px, and that, not anything clever
+        about loading, is why it is slow. Rendering the portraits to PNGs would be roughly
+        300&nbsp;KB &mdash; but it is 36 drawings, and whether they still look right is a judgement
+        I cannot make.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];
