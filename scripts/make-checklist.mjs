@@ -168,7 +168,7 @@ const PHASES = [
               children: [
                 { id: 'p4-blocked', label: 'Adblocker <b>on</b>: the site works normally, nothing broken in the console' },
                 { id: 'p4-counted', label: 'Adblocker <b>off</b>: the visit shows up in the <a href="https://quartet-roulette.goatcounter.com/">dashboard</a>' },
-                { id: 'p4-event', label: 'On a <b>phone</b>: tap a play link on a work page, then look for <span class="path">play-recording</span> under Events',
+                { id: 'p4-event', label: 'Tap or click a play control on a work page, then look for <span class="path">play-recording</span> under Events',
                   note: `Only touch devices can produce this one. On desktop the recording is a Spotify
                          iframe, and a play inside it is invisible to the page &mdash; nothing to count.` },
               ] },
@@ -220,33 +220,63 @@ const PHASES = [
         ],
     },
     {
-        n: 'Phase 7', title: 'Page load performance', chip: 'idle', status: 'Next up',
-        blurb: `You said the site feels slower than it should, and you were right &mdash; it is not
-                subtle. Nothing here needs a decision from you except the last one; the findings are
-                listed so you can see what is coming and push back on any of it.`,
+        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; needs your eyes',
+        blurb: `You said the site feels slower than it should, and you were right &mdash; it was not
+                subtle. It is built and the tests pass, on the branch
+                <span class="path">phase-7-performance</span>, but <b>nobody has looked at it</b>:
+                a headless browser would not run where it was built, so the checks below are the
+                first time any of this is seen.`,
         tasks: [
-            { id: 'p7-preload', done: true, label: 'Found: the home page <b>preloads 1.31&nbsp;MB of portraits</b> (447&nbsp;KB brotli) at top priority',
+            { id: 'p7-look', label: '<b>Open a work page on the deploy preview and look at it</b>',
+              note: `This is the one that matters. Recordings are now a play control instead of an
+                     inline Spotify player, so the Recording column starts narrow and widens when
+                     you click one. That layout has never been rendered.`,
+              children: [
+                  { id: 'p7-look-rest', label: 'The play control looks like a play control &mdash; right size, centred in its cell' },
+                  { id: 'p7-look-click', label: 'Clicking one <b>swaps in the real Spotify player</b> and the column widens to fit it' },
+                  { id: 'p7-look-second', label: 'Clicking a second one works too, and the first stays put' },
+                  { id: 'p7-look-phone', label: 'On a <b>phone</b>: tapping still opens the Spotify app, as it always did' },
+              ] },
+            { id: 'p7-headers', label: '<b>Check two cache headers on the preview</b>',
+              note: `Netlify documents directory globs; extension globs much less so, and the
+                     portraits live at the root. If <span class="path">/*.svg</span> does not match,
+                     the fallback is in <span class="path">netlify.toml</span>.`,
+              children: [
+                  { id: 'p7-headers-svg', label: '<span class="path">curl -sI &lt;preview&gt;/Bach.svg | grep -i cache-control</span> &mdash; wanted: <span class="path">max-age=604800</span>' },
+                  { id: 'p7-headers-html', label: 'The same on the page itself still says <span class="path">max-age=0, must-revalidate</span> &mdash; deploys must stay instant' },
+              ] },
+            { id: 'p7-lighthouse', label: 'Run <b>Lighthouse mobile</b> on the home page and a work page',
+              note: `Everything below is measured, but the phase should end with a number rather
+                     than an impression. Worth doing against production first, so there is a before.` },
+            { id: 'p7-preload', done: true, label: 'Fixed: the home page <b>preloaded 1.31&nbsp;MB of portraits</b> (447&nbsp;KB brotli) at top priority',
               note: `React&nbsp;19 emits a preload link for every eager image it renders, and the home
-                     page renders 36 portraits and signatures with nothing marked lazy. They all
-                     compete with the HTML for bandwidth. Marking them lazy suppresses the preload and
-                     defers the fetch &mdash; both verified against the React version we ship.` },
-            { id: 'p7-icon', done: true, label: 'Found: the header icon is a <b>105&nbsp;KB, 512&times;512, 16-bit PNG drawn at 25&nbsp;px</b>',
-              note: `On every page on the site, and preloaded. The 48&times;48 icon we already ship is
-                     2,368 bytes. <span class="path">play.png</span> is the same bug, smaller, on all
-                     256 work pages.` },
-            { id: 'p7-headers', done: true, label: 'Found: <b>every asset revalidates on every navigation</b> in production',
+                     page rendered 36 portraits and signatures with nothing marked lazy. They all
+                     competed with the HTML. Now 36 preloads and 1.42&nbsp;MB have become one and
+                     4.4&nbsp;KB.` },
+            { id: 'p7-icon', done: true, label: 'Fixed: the header icon was a <b>105&nbsp;KB, 512&times;512, 16-bit PNG drawn at 25&nbsp;px</b>',
+              note: `On every page on the site, and preloaded. It now uses the 96&times;96 from the
+                     set <span class="path">npm run icons</span> already makes: 4,424 bytes, 24&times;
+                     smaller, still sharp on a 2&times; screen.` },
+            { id: 'p7-cache', done: true, label: 'Fixed: <b>every asset revalidated on every navigation</b> in production',
               note: `Netlify&rsquo;s default is
                      <span class="path">cache-control: public,max-age=0,must-revalidate</span> for
-                     HTML, SVG, PNG and JS alike &mdash; I checked quartetroulette.com directly. That
-                     is six-plus round trips per work page even when your phone already has every
-                     byte. This is the one that makes a weak connection feel broken.` },
-            { id: 'p7-spotify', label: '<b>Opinion wanted: click-to-play on desktop too?</b>',
-              note: `Work pages build up to seven Spotify iframes, and on phones
-                     <span class="path">work.js</span> then throws every one of them away and puts a
-                     play link there instead. Rendering the link and upgrading to a player only where
-                     it is wanted is faster everywhere, and it is what makes work pages work offline.
-                     The question is only whether desktop keeps inline players by default, or also
-                     gets a link that swaps the player in when you click it.` },
+                     HTML, SVG, PNG and JS alike &mdash; I checked quartetroulette.com directly. Six
+                     or more round trips per work page even when your phone already had every byte.
+                     This is the one that made a weak connection feel broken.` },
+            { id: 'p7-frames', done: true, label: 'Fixed: work pages built <b>seven Spotify iframes</b> and then threw them away on phones',
+              note: `You chose click-to-play everywhere. Nothing cross-origin loads on a work page
+                     until you ask for it &mdash; which is also what will make those pages work
+                     offline in Phase&nbsp;5. <span class="path">play.png</span> is gone too; the
+                     glyph is inline SVG now.` },
+            { id: 'p7-shuffle', done: true, label: 'Fixed: the 🔀 route list was inlined <b>twice in every page</b>',
+              note: `About 4&nbsp;KB of route paths in the nav of all 279 pages, identical
+                     everywhere. Moved into <span class="path">shuffle.js</span>, fetched once. Site
+                     HTML total: 3.16&nbsp;MB &rarr; 2.54&nbsp;MB.` },
+            { id: 'p7-svg', done: true, label: 'Measured and <b>left alone</b>: minifying the portraits is worth about 5%',
+              note: `They are almost entirely path data. A real <span class="path">svgo</span> pass
+                     would likely beat that, but it is not a dependency and rounding coordinates on
+                     artwork nobody can render is not a good trade. <span class="path">pwa.md</span>
+                     has the recipe if you ever want it.` },
         ],
     },
     {
@@ -278,10 +308,10 @@ const PHASES = [
 ];
 
 const BLOCKING = [
-    { tag: 'Opinion', body: `<b>Phase 7 &mdash; click-to-play on desktop too?</b> Phones already get a
-        play link instead of an inline Spotify player; the question is whether desktop should as
-        well. It is the difference between a work page loading seven third-party frames you may not
-        want and loading none until you ask.` },
+    { tag: 'Look', body: `<b>Phase 7 is built but unseen.</b> A headless browser would not run where
+        I built it, so the new play control on work pages &mdash; and the Recording column widening
+        when you click one &mdash; has never actually been rendered. It is the first thing to open
+        on the deploy preview.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];
