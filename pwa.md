@@ -30,8 +30,8 @@ Phase 1 implemented 2026-08-26 in `cfc3777` (merged); its iMessage check is stil
 Phase 2 implemented 2026-08-27 in `4e0f14e`; its on-device checks are still outstanding.
 Phase 3 implemented 2026-08-27 in `8cd7315`, with review fixes in `a4a0ad7`; its VoiceOver /
 keyboard / landscape checks are still outstanding.
-Phase 4 implemented 2026-08-27 in `452c7fa`, on top of Phase 3's branch; its adblocker-on /
-adblocker-off check needs the deploy.
+Phase 4 implemented 2026-08-27 in `452c7fa`, on top of Phase 3's branch, with review fixes in
+`bd34cac`; its adblocker-on / adblocker-off check needs the deploy.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -301,7 +301,14 @@ visitors, and supports custom events for link clicks. The only gap vs. TODO.md's
 "self-hosted" — hosted GoatCounter is still privacy-friendly, and it can be self-hosted later
 (single Go binary) without changing any page code. Not a blocker.
 
-Tasks (all `452c7fa`):
+Tasks are all `452c7fa`, with review fixes in `bd34cac`.
+
+**Found in review (`bd34cac`):** all three findings were places where the code claimed less harm
+than it could do — an `auxclick` handler that counted right-clicks as plays, a `count()` call that
+could throw a `SecurityError` into the console on every tap, and deploy previews counting into the
+production dashboard. Each is recorded against the task it belongs to below.
+
+Tasks:
 - [x] Create the site at goatcounter.com — Jason does this; the code just needs the URL.
       → **<https://quartet-roulette.goatcounter.com/>**, counting endpoint
       `https://quartet-roulette.goatcounter.com/count`. The site code is **hyphenated**; the
@@ -319,6 +326,17 @@ Tasks (all `452c7fa`):
       The two `/random*` redirect shells deliberately get **no** tag — they replace themselves in
       the same tick, the page they land on counts the visit a moment later, and Phase 1's rule that
       they trigger no extra request still holds.
+      **Corrected in review (`bd34cac`):** the first version shipped the tag on *every* host, and
+      argued that `#toggle-goatcounter` covered deploy previews. It does not — it opts out one
+      browser, while a preview URL gets opened by reviewers, by link unfurlers in Slack or iMessage,
+      and by whatever crawls it, and each of those becomes a production pageview with no field to
+      filter it out by afterwards. `counts_hits()` now gates on Netlify's `CONTEXT`: only
+      `production` gets the tag, and the build log says so when it does not. An **unset** `CONTEXT`
+      still counts, so a local build and the test suite see production's exact markup; count.js
+      ignores localhost anyway. This is not Phase 1's rejected `DEPLOY_PRIME_URL` trick — that one
+      would have shipped preview URLs *into* production's og tags, where the wrong value is
+      invisible; here a wrong `CONTEXT` shows up as an empty dashboard, which is the first thing the
+      verification below looks at.
 - [x] Optional: click events on outbound Spotify/recording links.
       → `src/client/work.js` counts a `play-recording` event on the tap-to-play links it builds.
       Two things to know about what that number means: it is **touch-only**, because that is the
@@ -329,6 +347,17 @@ Tasks (all `452c7fa`):
       `goatcounter.count()` rather than `data-goatcounter-click`: count.js binds the attribute
       version once, on load, and these links do not exist until `work.js` has replaced the iframes
       — a race that would silently drop the events on whichever load lost it.
+      **Corrected in review (`bd34cac`), twice.** The `auxclick` listener was bound unfiltered,
+      and `auxclick` fires for *every* non-primary button — so right-clicking a play link to copy
+      its address, then dismissing the menu, counted as a play. Reachable rather than theoretical:
+      this script runs wherever `maxTouchPoints > 0`, which includes touchscreen laptops with a real
+      right mouse button. It now takes button 1 only, the open-in-new-tab case it was there for.
+      And the `typeof gc.count === 'function'` guard turned out not to be enough: `count()` calls
+      `goatcounter.filter()`, which reads `localStorage` without catching anything, and *touching*
+      `localStorage` throws a `SecurityError` in a browser set to block all site data. The tap would
+      still have worked — a throwing listener does not cancel the navigation — but every tap would
+      have put an uncaught error in the console, which is the opposite of what this phase promises.
+      The call sits in a `try` now.
 - [x] Update TODO.md's analytics bullet to point here.
       → done, including what is still open (the adblocker check) and the touch-only caveat.
 
@@ -338,11 +367,18 @@ Acceptance criteria:
   → the tag is `async` and last in the body, so nothing renders or runs behind it, and
   `count_play()` returns early unless `window.goatcounter.count` is a function — which it is not
   when count.js is blocked, when the network is gone, or in the moments before it loads. The link
-  navigates either way. `test/build.test.mjs`, describe "analytics (pwa.md Phase 4)": 5 tests over
-  all 277 non-redirect routes — exactly one count.js tag per page, carrying the endpoint and the
-  CDN URL read out of `src/lib/site.js`, `async`, after the site's own scripts and last before
-  `</body>`; no tag on either redirect shell; nothing else on any page loads from `gc.zgo.at`; and
-  the bundled `work.js` counts a literal event behind a `typeof … !== 'function'` guard.
+  navigates either way, and so does the console: the `count()` call is wrapped, so a browser that
+  throws on `localStorage` costs a tap nothing. `test/build.test.mjs`, describe "analytics (pwa.md
+  Phase 4)": 5 tests over all 277 non-redirect routes — exactly one count.js tag per page, carrying
+  the endpoint and the CDN URL read out of `src/lib/site.js`, `async`, after the site's own scripts
+  and last before `</body>`; no tag on either redirect shell; nothing else on any page loads from
+  `gc.zgo.at`; and the bundled `work.js` counts a literal event behind a `typeof … !== 'function'`
+  guard, inside a `try`, with `auxclick` filtered to the middle button.
+- ✅ Only production counts.
+  → describe "deploy previews do not count (pwa.md Phase 4)" rebuilds `dist/` with
+  `CONTEXT=deploy-preview` and asserts each sampled page is the production page **minus the tag and
+  nothing else** — so a preview URL still shows exactly what will ship — then with
+  `branch-deploy`, then restores the normal build. It runs last in the file for that reason.
 - ✅ No PII in event names.
   → one constant event name, `play-recording`, asserted to be a literal at the call site. No
   movement title, no work slug, nothing per-visitor. Which work was playing is already answered by
@@ -352,10 +388,12 @@ Verify: **not done — needs the deployed site.**
 1. Visit with an adblocker **on**: the site works, nothing in the console, no layout shift.
 2. Visit with it **off**: the hit appears in the dashboard. On a phone, tap a play link on a work
    page and check that `play-recording` shows under Events.
-3. Note for both: count.js skips localhost and `file://` on its own, so `npm run serve` stays out
-   of the dashboard — but a **Netlify deploy preview is a real host and does count**, into the same
-   site as production. Loading any page with `#toggle-goatcounter` turns counting off for that
-   browser, which is the fix for preview traffic and for Jason's own visits.
+3. Note for both: **this only works on production.** count.js skips localhost and `file://` on its
+   own, and since `bd34cac` a deploy preview builds the tag out altogether — so neither
+   `npm run serve` nor a preview URL can be used to check that a hit lands. If the dashboard is
+   empty after a production deploy, check the build log: it prints `analytics off (CONTEXT=…)` when
+   it decided not to emit the tag. Keeping your *own* production visits out of your numbers is a
+   separate thing, and `#toggle-goatcounter` on any page is how.
 
 ## Phase 5 — Offline / service worker  ⚠️ decision gate
 

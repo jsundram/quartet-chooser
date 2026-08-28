@@ -146,7 +146,8 @@ const PHASES = [
     },
     {
         n: 'Phase 4', title: 'Analytics &mdash; GoatCounter', chip: 'shipped', status: 'Built &middot; unmerged',
-        blurb: `Built in <span class="path">452c7fa</span> on
+        blurb: `Built in <span class="path">452c7fa</span>, with your review&rsquo;s three fixes in
+                <span class="path">bd34cac</span>, on
                 <span class="path">pwa-phase-4-analytics</span>, stacked on Phase 3&rsquo;s branch, so
                 it merges after that one. Cookie-free, so no consent banner, and no page waits on it:
                 the tag is <span class="path">async</span> and the last thing in the body. One check
@@ -159,10 +160,11 @@ const PHASES = [
                      <span class="path">quartetroulette</span>, and that mistake would have been
                      invisible &mdash; a page with the wrong endpoint looks exactly like a page with
                      the right one, and the hits just go nowhere. The test now pins the real URL.` },
-            { id: 'p4-verify', label: '<b>Once it is deployed: load the site with an adblocker on, then off</b>',
+            { id: 'p4-verify', label: '<b>Once it is on production: load the site with an adblocker on, then off</b>',
               note: `Two different questions, and the first one matters more &mdash; the site must be
                      exactly as good when count.js is blocked, which it is for a large share of
-                     visitors.`,
+                     visitors. <b>Production only</b>: since the review fix, a deploy preview does not
+                     carry the tag at all, so a preview URL cannot answer either question.`,
               children: [
                 { id: 'p4-blocked', label: 'Adblocker <b>on</b>: the site works normally, nothing broken in the console' },
                 { id: 'p4-counted', label: 'Adblocker <b>off</b>: the visit shows up in the <a href="https://quartet-roulette.goatcounter.com/">dashboard</a>' },
@@ -180,12 +182,17 @@ const PHASES = [
                          counts the visit a moment later anyway.` },
                 { done: true, label: '<span class="path">play-recording</span> event on the mobile tap-to-play links' },
                 { done: true, label: 'TODO.md&rsquo;s analytics bullet now points at the phase' },
-                { done: true, label: '<b>Deploy previews count into the same dashboard as production</b>',
-                  note: `count.js skips localhost and <span class="path">file://</span> on its own, so
-                         <span class="path">npm run serve</span> never shows up &mdash; but a Netlify
-                         preview is a real host. Loading any page with
-                         <span class="path">#toggle-goatcounter</span> turns counting off for that
-                         browser, which is also how you keep your own visits out of your numbers.` },
+                { done: true, label: '<b>Only production counts</b> &mdash; a deploy preview builds the tag out',
+                  note: `Found in review: previews were counting into your dashboard, and
+                         <span class="path">#toggle-goatcounter</span> does not cover that &mdash; it
+                         opts out one browser, while a preview URL gets opened by reviewers, link
+                         unfurlers and crawlers, and each of those becomes a production pageview you
+                         cannot filter out later. The build now gates on Netlify&rsquo;s
+                         <span class="path">CONTEXT</span>. <b>The flip side is that the check below
+                         can only be done on production</b> &mdash; not on a preview, and not on
+                         <span class="path">npm run serve</span>. Use
+                         <span class="path">#toggle-goatcounter</span> for what it is good at:
+                         keeping your own visits out of your own numbers.` },
                 { done: true, label: '<b>A counted play is a floor, not a count</b>',
                   note: `GoatCounter&rsquo;s beacon is an <span class="path">&lt;img&gt;</span>, and a
                          browser may cancel it when the click navigates away &mdash; most likely when
