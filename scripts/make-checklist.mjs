@@ -225,18 +225,18 @@ const PHASES = [
                 weighs so much. Answer below &mdash; it is the drawings, and there is one more thing
                 that could be done to them. <b>For what it is worth, every page is already under a
                 second on 4G</b> (home 0.80s, a work page 0.21s); the multi-second numbers I have
-                been quoting are all a deliberately awful two-bar connection.`,
+                been quoting are all a deliberately awful two-bar connection. The drawings are now
+                half their original weight with no visible change.`,
         tasks: [
             { id: 'p7-nodes', label: '<b>Simplify the drawings themselves? A yes/no &mdash; and it needs your eyes.</b>',
-              note: `Here is why the page is heavy. The 36 drawings the home page loads contain
-                     <b>91,000 coordinate pairs</b>, for artwork shown 200&nbsp;px tall &mdash;
-                     about a hundred times more geometry than the screen can render.
-                     <span class="path">Britten.svg</span> is 94&nbsp;KB for nine shapes. I have
-                     already taken everything that can be taken <i>without touching the drawings</i>
-                     (see below). Going further means simplifying the curves &mdash; genuinely
-                     fewer points, refitted &mdash; which would plausibly halve them again, but it
-                     changes Marusya's linework rather than just how it is written down, so it
-                     wants a person looking at the result. <b>I have not started it.</b>` },
+              note: `The last lever, and the only one that would change the artwork rather than how
+                     it is written down. The 36 drawings on the home page hold about <b>91,000
+                     points</b>, for pictures shown at most 600&nbsp;px &mdash; far more than any
+                     screen can draw. Refitting the curves with fewer points could plausibly halve
+                     them again, but it is Marusya's linework being altered, not just its file
+                     format, so someone has to look at the result and say whether it still reads.
+                     <b>I have not started it</b>, and everything else on this list is done without
+                     it.` },
             { id: 'p7-portraits', done: true, label: 'Answered: <b>rasterizing the portraits would make the site slower</b>, not faster',
               note: `You were right that the SVGs hold up at any scale &mdash; and they are also the
                      cheap option, which is the opposite of what I first told you. Rendered all 36
@@ -280,15 +280,19 @@ const PHASES = [
               note: `About 4&nbsp;KB of route paths in the nav of all 279 pages, identical
                      everywhere. Moved into <span class="path">shuffle.js</span>, fetched once. Site
                      HTML total: 3.16&nbsp;MB &rarr; 2.54&nbsp;MB.` },
-            { id: 'p7-svgo', done: true, label: 'Fixed: the drawings ship <b>40% smaller</b>, and are indistinguishable',
-              note: `svgo, with the rounding precision picked <i>per drawing</i> &mdash; their
-                     coordinate systems differ by a factor of a hundred, so one setting was far too
-                     coarse for the signatures and absurdly fine for the portraits. Each now carries
-                     about 0.15&nbsp;px of error at the size a 3&times; phone renders it. Home page
-                     images: <b>370&nbsp;KB &rarr; 286&nbsp;KB</b>. Checked by rasterizing all 54
-                     before and after at three sizes and comparing pixel by pixel; the worst file is
-                     indistinguishable from the original at 4&times; magnification. Run in the build,
-                     so <span class="path">static/</span> keeps the originals untouched.` },
+            { id: 'p7-svgo', done: true, label: 'Fixed: the drawings ship at <b>half</b> their authored weight, and look the same',
+              note: `The interesting one. Inkscape leaves a transform on every shape, and svgo will
+                     not fold it into the coordinates &mdash; these drawings contain arcs, the
+                     transform mirrors them, and svgo declines rather than risk getting the arc
+                     maths wrong. So every file was shipping its coordinates in a space up to
+                     8&times; bigger than it needed, which costs a digit or two on each of about
+                     7,000 numbers per drawing. Folding those in, then putting every drawing in one
+                     coordinate space, took the home page's 36 images from <b>436&nbsp;KB to
+                     213&nbsp;KB</b> &mdash; and the worst-case pixel difference actually
+                     <i>improved</i>, because the rounding finally means the same thing in every
+                     file. Checked by rasterizing all 54 at three sizes against your originals:
+                     nothing differs by more than edge antialiasing, indistinguishable at 6&times;
+                     magnification.` },
             { id: 'p7-lazy', done: true, label: 'Tried, measured, and <b>put back</b>: lazy-loading the home page grid',
               note: `It looked like the big win &mdash; React preloads all 36 portraits at top
                      priority. Rendering it under throttling said otherwise: lazy defers nothing
