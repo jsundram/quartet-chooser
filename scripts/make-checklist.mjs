@@ -221,22 +221,31 @@ const PHASES = [
     },
     {
         n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'Built &middot; one check',
-        blurb: `You said the site feels slower than it should, and work pages were: on a slow
-                phone connection they went from <b>3.8s and seven third-party frames to 1.5s and
-                none</b>. The home page is 30% lighter. Everything here is done and measured &mdash;
-                the only thing left needs a deployed URL, not a decision.`,
+        blurb: `You said the site feels slower than it should, and asked why a page this small
+                weighs so much. Answer below &mdash; it is the drawings, and there is one more thing
+                that could be done to them. <b>For what it is worth, every page is already under a
+                second on 4G</b> (home 0.80s, a work page 0.21s); the multi-second numbers I have
+                been quoting are all a deliberately awful two-bar connection.`,
         tasks: [
+            { id: 'p7-nodes', label: '<b>Simplify the drawings themselves? A yes/no &mdash; and it needs your eyes.</b>',
+              note: `Here is why the page is heavy. The 36 drawings the home page loads contain
+                     <b>91,000 coordinate pairs</b>, for artwork shown 200&nbsp;px tall &mdash;
+                     about a hundred times more geometry than the screen can render.
+                     <span class="path">Britten.svg</span> is 94&nbsp;KB for nine shapes. I have
+                     already taken everything that can be taken <i>without touching the drawings</i>
+                     (see below). Going further means simplifying the curves &mdash; genuinely
+                     fewer points, refitted &mdash; which would plausibly halve them again, but it
+                     changes Marusya's linework rather than just how it is written down, so it
+                     wants a person looking at the result. <b>I have not started it.</b>` },
             { id: 'p7-portraits', done: true, label: 'Answered: <b>rasterizing the portraits would make the site slower</b>, not faster',
-              note: `You were right that the SVGs hold up at any scale &mdash; and it turns out they
-                     are also the cheap option, which is the opposite of what I told you. Rendered
-                     all 36 home page drawings as PNG, WebP and AVIF at 1&times;, 2&times; and
-                     3&times; and loaded them for real. One SVG serves every screen and compresses
-                     to <b>370&nbsp;KB</b>; a raster set has to pick a density, and at the
-                     <b>3&times;</b> of an iPhone the best format is <b>596&nbsp;KB</b> and paints
-                     in 7.6s against the SVG's 3.4s. Raster only wins on a 1&times; screen, and
-                     phones have not been 1&times; in a decade. It looks worse too &mdash; softer
-                     strokes at 200&nbsp;px, and mush if you pinch-zoom. <b>Nothing for you to
-                     decide; the portraits stay as they are.</b>` },
+              note: `You were right that the SVGs hold up at any scale &mdash; and they are also the
+                     cheap option, which is the opposite of what I first told you. Rendered all 36
+                     as PNG, WebP and AVIF at 1&times;, 2&times; and 3&times;. One SVG serves every
+                     screen and compresses to <b>286&nbsp;KB</b>; a raster set must pick a density,
+                     and at the <b>3&times;</b> of an iPhone the best format is <b>596&nbsp;KB</b>
+                     and paints in 7.6s against the SVG's 3.4s. Raster only wins on a 1&times;
+                     screen. It looks worse too &mdash; softer at 200&nbsp;px, mush if you
+                     pinch-zoom. <b>Nothing to decide; they stay as they are.</b>` },
             { id: 'p7-headers', label: '<b>Check two cache headers on the deploy preview</b>',
               note: `The only thing in this phase I could not test locally. Netlify documents
                      directory globs; extension globs much less so, and the portraits live at the
@@ -271,13 +280,15 @@ const PHASES = [
               note: `About 4&nbsp;KB of route paths in the nav of all 279 pages, identical
                      everywhere. Moved into <span class="path">shuffle.js</span>, fetched once. Site
                      HTML total: 3.16&nbsp;MB &rarr; 2.54&nbsp;MB.` },
-            { id: 'p7-svgo', done: true, label: 'Fixed: the portraits ship <b>19% smaller</b>, and are pixel-identical',
-              note: `svgo, run in the build rather than committed, so
-                     <span class="path">static/</span> keeps Marusya's original files and there is
-                     no 54-file diff whenever the artwork changes. I checked it properly before
-                     trusting it: every drawing rasterized before and after at three sizes and
-                     compared pixel by pixel &mdash; the only differences are edge antialiasing,
-                     invisible side by side at 4.5&times; magnification.` },
+            { id: 'p7-svgo', done: true, label: 'Fixed: the drawings ship <b>40% smaller</b>, and are indistinguishable',
+              note: `svgo, with the rounding precision picked <i>per drawing</i> &mdash; their
+                     coordinate systems differ by a factor of a hundred, so one setting was far too
+                     coarse for the signatures and absurdly fine for the portraits. Each now carries
+                     about 0.15&nbsp;px of error at the size a 3&times; phone renders it. Home page
+                     images: <b>370&nbsp;KB &rarr; 286&nbsp;KB</b>. Checked by rasterizing all 54
+                     before and after at three sizes and comparing pixel by pixel; the worst file is
+                     indistinguishable from the original at 4&times; magnification. Run in the build,
+                     so <span class="path">static/</span> keeps the originals untouched.` },
             { id: 'p7-lazy', done: true, label: 'Tried, measured, and <b>put back</b>: lazy-loading the home page grid',
               note: `It looked like the big win &mdash; React preloads all 36 portraits at top
                      priority. Rendering it under throttling said otherwise: lazy defers nothing
@@ -316,9 +327,13 @@ const PHASES = [
 ];
 
 const BLOCKING = [
-    { tag: 'Check', body: `<b>Phase 7 &mdash; two curl commands on the deploy preview.</b> Everything
-        else in the phase is done and measured; the cache headers are the one thing that cannot be
-        tested until it is deployed, because Netlify's own matcher decides whether they apply.` },
+    { tag: 'Optional', body: `<b>Phase 7 &mdash; simplify the drawings?</b> They hold about a
+        hundred times more geometry than a 200&nbsp;px render can use, and that is the last real
+        lever on page weight. It would change Marusya's linework, not just its file size, so it
+        needs your eyes rather than my judgement.` },
+    { tag: 'Check', body: `<b>Phase 7 &mdash; two curl commands on the deploy preview.</b> The cache
+        headers are the one thing that cannot be tested until it is deployed, because Netlify's own
+        matcher decides whether they apply.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];
