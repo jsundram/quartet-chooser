@@ -566,9 +566,19 @@ Measured against `dist/` and against production headers, worst first:
       nine paths.
 
       svgo's `floatPrecision` counts *decimal places*, which is the wrong unit when the drawings
-      disagree about what a unit is — viewBox heights here run from 49 to 5,179. So each file now
-      gets the precision that puts its error at ~1/4096 of its own height: ~0.15px at a 600px
-      render, finer than a 3x phone resolves at the 200px these are drawn at.
+      disagree about what a unit is — viewBox heights here run from 17 to 5,179. So each file now
+      gets the precision that puts its error at ~1/4096 of its own height.
+
+      **The largest size the site ever draws these is 600 CSS px** — the composer page portrait
+      (`composer.module.css`, above 800px wide), which is **1,800 device pixels on a 3x phone**. Not
+      the home grid's 200px, which is merely the most frequent. Work pages draw 300px, signatures
+      100px. At 1,800px the budget above is 0.44px of error. Verified there and it holds — the worst
+      file is indistinguishable from the authored original side by side — but it is a thinner margin
+      than the arithmetic first suggested, and someone zooming a composer portrait past ~2× would
+      start to see it. If those CSS heights change, this budget changes with them.
+
+      Raising the budget is not worth much: 8192 costs 74 KB of the 84 KB saved, because precision
+      is paid for in digits and most files flip from integers to one decimal at the same threshold.
 
       | | raw | brotli |
       |---|---|---|
@@ -581,10 +591,24 @@ Measured against `dist/` and against production headers, worst first:
       channel by channel — mean 0.6% of pixels differ, worst file 2.7%, all edge antialiasing, and
       the worst case is indistinguishable side by side at 4× magnification.
 
-      **A false start worth recording:** normalizing every drawing into one coordinate space first
-      would reach 178 KB, but 10 of the 54 have `width`/`height` ratios that disagree with their
-      `viewBox` — Grieg by 31% — so they render letterboxed, and rewriting the root element
-      silently restretched them. The per-file approach touches no structure at all.
+      **Two false starts worth recording, both about pre-scaling the drawings into one coordinate
+      space so plain integers would do — which reaches 178 KB with *less* error on paper, and is
+      therefore tempting:**
+      1. Replacing `width`/`height` with the viewBox dimensions restretches 10 of the 54 files,
+         whose `width`/`height` ratios disagree with their `viewBox` — Grieg by 31% — so they are
+         meant to render letterboxed. Scaling the viewBox and the content together instead, and
+         leaving `width`/`height` alone, fixes that.
+      2. But it still fails, for a reason that matters more: **svgo does not actually fold the
+         group transforms into the path data here.** Every output file still carries per-path
+         `transform=` attributes, so rounding happens in each path's *local* space and is then
+         multiplied by scale factors up to 1,900×. Tchaikovsky's signature came out 15% wrong.
+
+      That second fact also qualifies the shipped heuristic: it reads the viewBox, but the rounding
+      does not happen in viewBox units. It is safe here only because Inkscape's local spaces are
+      consistently *larger* than viewBox units, so the heuristic asks for more precision than it
+      computes — luck about how these files were exported, not something the code enforces. The
+      guarantee is the pixel comparison, not the arithmetic. **Do not retry the pre-scaling without
+      first making `applyTransforms` actually apply.**
 - [ ] **Reducing the node count — the real excess, not attempted.** 91,000 points for artwork shown
       at 200px. Simplifying the curves would beat everything above put together, plausibly halving
       the drawings again. But it changes the artwork rather than how it is written down, so it needs

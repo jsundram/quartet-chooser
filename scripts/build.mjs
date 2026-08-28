@@ -52,20 +52,44 @@ async function check_og_cards(dir){
 // win is.
 //
 // Why per file: svgo's floatPrecision counts decimal places, and these
-// drawings do not agree on what a unit is. Their viewBoxes range from 49 units
+// drawings do not agree on what a unit is. Their viewBoxes range from 17 units
 // tall (a signature) to 5,179 (Britten), so a single setting means wildly
-// different accuracy per drawing -- 3 decimals is 500x more precision than
-// anyone can see on Britten and barely enough on a signature. Instead each
-// file gets the precision that puts its error at ~1/4096 of its own height,
-// which is about 0.15px at a 600px render: sharper than a 3x phone can show at
-// the 200px these are drawn at.
+// different accuracy per drawing.
 //
-// Verified rather than assumed, and it is worth re-verifying if these numbers
-// are ever touched: all 54 rasterized before and after at 200, 400 and 600px
-// and compared channel by channel. Mean 0.6% of pixels differ, worst file
-// 2.7%, all of it edge antialiasing -- indistinguishable side by side at 4x
-// magnification. Together this takes the home page's 36 images from 370 KB to
-// 286 KB over the wire.
+// THE BIGGEST SIZE THESE ARE EVER DRAWN is the composer page portrait:
+// `height: 600px` in composer.module.css above 800px wide, which is 1,800
+// device pixels on a 3x phone. Not the home grid's 200px -- that is the most
+// frequent size, not the largest. src/templates/work.js draws 300px (900
+// device px) and the signatures top out at 100px. If those CSS values change,
+// this budget changes with them.
+//
+// Two honest caveats about the heuristic below:
+//
+//  - It reads the viewBox, but svgo does NOT in fact fold the group transforms
+//    into the path data here -- every output file still carries per-path
+//    `transform=` attributes, so the rounding happens in each path's own local
+//    space, not in viewBox units. Inkscape's local spaces are consistently
+//    *larger* than viewBox units (a `scale(0.1)` or similar sits above them),
+//    so decimals there are finer than the same decimals would be in viewBox
+//    units. That makes this conservative -- it asks for more precision than it
+//    computes, never less -- which is the safe direction, but it is luck about
+//    how these files were exported rather than something the code enforces.
+//  - So the real guarantee is empirical, not arithmetic.
+//
+// Verified rather than assumed, and re-verify if these numbers are ever
+// touched: all 54 rasterized against the authored originals at 600, 900 and
+// 1,800px -- the three real sizes above at 3x -- and compared channel by
+// channel. Mean 0.5-0.7% of pixels differ, worst file 3.3%, all of it edge
+// antialiasing; at 1,800px, the largest the site draws, the worst file is
+// indistinguishable from the original side by side. Together this takes the
+// home page's 36 images from 370 KB to 286 KB over the wire.
+//
+// Tried and rejected: pre-scaling every drawing into one coordinate space so
+// integers would do, which reaches 178 KB with less error on paper. It fails
+// for the reason above -- with the transforms unfolded, rounding to integers
+// happens in local space and is then multiplied by scale factors up to 1,900x.
+// Tchaikovsky's signature came out 15% wrong. Do not retry it without first
+// making applyTransforms actually apply.
 //
 // What is deliberately NOT done: reducing the node count. 91,000 points is the
 // real excess and simplifying the curves would beat all of this, but that
@@ -79,8 +103,13 @@ async function check_og_cards(dir){
 // time the artwork changes. That is also why svgo is a real dependency and not
 // a devDependency: `npm run build` needs it, and Netlify runs `npm run build`.
 
-// ~1/4096 of a drawing's height is the error we are willing to accept: about
-// 0.15px where a 3x phone renders these, and finer than the antialiasing.
+// The error budget, in steps across a drawing's own height. 4096 works out to
+// ~0.44px at the largest render on the site (1,800 device px, above) -- which
+// sounds loose and measures fine, because these are flat-filled shapes with no
+// hairlines and the difference lands entirely in antialiasing. Raising it does
+// not buy much: 8192 costs 74 KB of the 84 KB this saves, because precision is
+// paid for in digits and most files flip from integers to one decimal at once.
+// Someone zooming a composer portrait past ~2x would start to see it.
 const SVG_STEPS = 4096;
 
 function svg_precision(source){
