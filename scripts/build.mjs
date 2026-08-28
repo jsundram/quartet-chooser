@@ -5,6 +5,7 @@
 // See docs/simplification-plan.md, Phase 1.
 import * as esbuild from 'esbuild'
 import { optimize as svgo } from 'svgo'
+import svgpath from 'svgpath'
 import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -43,82 +44,113 @@ async function check_og_cards(dir){
 }
 
 // The portraits are Inkscape output and they are the biggest thing the site
-// ships: 2.58 MB across 54 files, 91,000 coordinate pairs, for drawings shown
-// 200px tall. That is roughly a hundred times more geometry than the render
-// can use, and it is where the home page's weight lives.
-//
-// Two things happen here. svgo's usual work -- re-encoding path data, dropping
-// editor cruft -- and a precision chosen per file, which is where most of the
-// win is.
-//
-// Why per file: svgo's floatPrecision counts decimal places, and these
-// drawings do not agree on what a unit is. Their viewBoxes range from 17 units
-// tall (a signature) to 5,179 (Britten), so a single setting means wildly
-// different accuracy per drawing.
+// ships: 2.5 MB as authored, 91,000 coordinate pairs, for drawings shown at
+// most 600 CSS px. This is where the home page's weight lives.
 //
 // THE BIGGEST SIZE THESE ARE EVER DRAWN is the composer page portrait:
 // `height: 600px` in composer.module.css above 800px wide, which is 1,800
 // device pixels on a 3x phone. Not the home grid's 200px -- that is the most
-// frequent size, not the largest. src/templates/work.js draws 300px (900
-// device px) and the signatures top out at 100px. If those CSS values change,
-// this budget changes with them.
+// frequent size, not the largest. work.js draws 300px and the signatures top
+// out at 100px. If those CSS values change, the budget below changes with them.
 //
-// Two honest caveats about the heuristic below:
+// Three steps, and the middle one is the whole trick:
 //
-//  - It reads the viewBox, but svgo does NOT in fact fold the group transforms
-//    into the path data here -- every output file still carries per-path
-//    `transform=` attributes, so the rounding happens in each path's own local
-//    space, not in viewBox units. Inkscape's local spaces are consistently
-//    *larger* than viewBox units (a `scale(0.1)` or similar sits above them),
-//    so decimals there are finer than the same decimals would be in viewBox
-//    units. That makes this conservative -- it asks for more precision than it
-//    computes, never less -- which is the safe direction, but it is luck about
-//    how these files were exported rather than something the code enforces.
-//  - So the real guarantee is empirical, not arithmetic.
+//  1. svgo, to normalise the document and collapse Inkscape's nested groups.
+//     It pushes their transforms down onto each <path> but will NOT fold them
+//     into the coordinates, because these paths contain elliptical arcs and the
+//     matrix reflects -- arc flags would need adjusting and it declines rather
+//     than get that wrong. So every file comes out of svgo with its coordinates
+//     still in a space up to 8x larger than its own viewBox, which costs a
+//     digit or two on each of thousands of numbers, and with a transform
+//     attribute repeated on every path.
 //
-// Verified rather than assumed, and re-verify if these numbers are ever
-// touched: all 54 rasterized against the authored originals at 600, 900 and
-// 1,800px -- the three real sizes above at 3x -- and compared channel by
-// channel. Mean 0.5-0.7% of pixels differ, worst file 3.3%, all of it edge
-// antialiasing; at 1,800px, the largest the site draws, the worst file is
-// indistinguishable from the original side by side. Together this takes the
-// home page's 36 images from 370 KB to 286 KB over the wire.
+//  2. Fold those transforms in ourselves (svgpath knows the arc maths), then
+//     scale every drawing into one coordinate space. Both are visual no-ops.
+//     After this, and only after this, "round to N decimal places" means the
+//     same thing in all 54 files -- before, it meant whatever each file's
+//     leftover transform made it mean.
 //
-// Tried and rejected: pre-scaling every drawing into one coordinate space so
-// integers would do, which reaches 178 KB with less error on paper. It fails
-// for the reason above -- with the transforms unfolded, rounding to integers
-// happens in local space and is then multiplied by scale factors up to 1,900x.
-// Tchaikovsky's signature came out 15% wrong. Do not retry it without first
-// making applyTransforms actually apply.
+//  3. svgo again, now able to round to plain integers.
 //
-// What is deliberately NOT done: reducing the node count. 91,000 points is the
-// real excess and simplifying the curves would beat all of this, but that
-// changes the drawings rather than how they are written down, and it needs
-// Marusya's artwork looked at by a person. See pwa.md Phase 7.
+// Scaling the viewBox and the path data together, and leaving width/height
+// alone, is deliberate: 10 of the 54 files have width/height ratios that
+// disagree with their viewBox, so they are meant to render letterboxed, and
+// rewriting those attributes silently un-letterboxes them (Grieg by 31%).
 //
-// Run here rather than committed, which is the opposite of what the icons and
-// share cards do -- those are committed because Netlify has neither
-// rsvg-convert nor pngquant. svgo is pure JS and runs anywhere, so static/ gets
-// to keep the original drawings and there is no 54-file diff to review every
-// time the artwork changes. That is also why svgo is a real dependency and not
-// a devDependency: `npm run build` needs it, and Netlify runs `npm run build`.
+// Result, over the wire: the 36 images the home page loads go from 436 KB as
+// authored to 219 KB, and all 54 from 855 KB to 405 KB. Error is 1/16384 of
+// each drawing's height, ~0.11px at the 1,800px maximum above -- four times
+// tighter than the previous approach managed at 286 KB.
+//
+// Verified rather than argued, and worth redoing if these numbers are touched:
+// all 54 rasterized against the authored originals at 600, 900 and 1,800px and
+// compared channel by channel. Mean 0.65-0.92% of pixels differ, worst file
+// 3.3%, all of it edge antialiasing, and the worst case is indistinguishable
+// side by side at 6x magnification.
+//
+// Run here rather than committed, unlike the icons and share cards -- those are
+// committed because Netlify has neither rsvg-convert nor pngquant, whereas svgo
+// and svgpath are pure JS. So static/ keeps the original drawings and there is
+// no 54-file diff whenever the artwork changes. Both are real dependencies, not
+// devDependencies: `npm run build` needs them and Netlify runs `npm run build`.
 
-// The error budget, in steps across a drawing's own height. 4096 works out to
-// ~0.44px at the largest render on the site (1,800 device px, above) -- which
-// sounds loose and measures fine, because these are flat-filled shapes with no
-// hairlines and the difference lands entirely in antialiasing. Raising it does
-// not buy much: 8192 costs 74 KB of the 84 KB this saves, because precision is
-// paid for in digits and most files flip from integers to one decimal at once.
-// Someone zooming a composer portrait past ~2x would start to see it.
-const SVG_STEPS = 4096;
+// One coordinate space for every drawing, tall enough that integer coordinates
+// land well inside a pixel at the largest size the site draws (1,800 device px
+// / 16384 = 0.11 px).
+const SVG_UNITS = 16384;
 
-function svg_precision(source){
-    const vb = /viewBox="\s*[-\d.eE]+\s+[-\d.eE]+\s+[-\d.eE]+\s+([-\d.eE]+)/.exec(source);
-    // no viewBox is not a case these files have, but guessing small is the
-    // safe direction: it asks for more precision, not less
-    const height = vb ? Math.abs(parseFloat(vb[1])) : 0;
-    if (!(height > 0)) return 3;
-    return Math.min(4, Math.max(0, Math.ceil(Math.log10(SVG_STEPS / height))));
+const VIEWBOX = /viewBox\s*=\s*"\s*([-\d.eE]+)[,\s]+([-\d.eE]+)[,\s]+([-\d.eE]+)[,\s]+([-\d.eE]+)\s*"/;
+const PATH_TAG = /<path\b[^>]*>/g;
+
+// Fold each path's transform into its own coordinates, then put every drawing
+// in an SVG_UNITS-tall space. Both leave the rendering identical.
+function normalize_svg(text, name){
+    const vb = VIEWBOX.exec(text);
+    if (!vb) throw new Error(`${name} has no viewBox to normalize against`);
+    const [, x, y, w, h] = vb.map(Number);
+    const k = SVG_UNITS / Math.abs(h);
+
+    let untouched = 0;
+    text = text.replace(PATH_TAG, tag => {
+        const d = /\sd="([^"]*)"/.exec(tag);
+        if (!d) return tag;
+        const t = /\stransform="([^"]*)"/.exec(tag);
+        let p = svgpath(d[1]);
+        // .transform() understands the SVG transform grammar, and its arc
+        // handling is why this is not hand-rolled: under a reflection the
+        // sweep flag has to flip, and under a non-uniform scale the arc has
+        // to become curves. Getting either wrong is silent and ugly.
+        if (t) p = p.transform(t[1]);
+        else untouched++;
+        const folded = p.scale(k).abs().round(4).toString();
+        const out = t ? tag.slice(0, t.index) + tag.slice(t.index + t[0].length) : tag;
+        const d2 = /\sd="([^"]*)"/.exec(out);
+        return out.slice(0, d2.index + d2[0].indexOf('"') + 1) + folded
+             + out.slice(d2.index + d2[0].length - 1);
+    });
+
+    if (PATH_TAG.test(text) && /<path\b[^>]*\stransform=/.test(text)){
+        // svgpath declined one -- almost certainly a transform shape it does
+        // not treat as safe. Better to stop than to ship a reshaped portrait.
+        throw new Error(`${name} still has a transform on a path after folding`);
+    }
+    const scaled = `viewBox="${(x*k).toFixed(4)} ${(y*k).toFixed(4)} `
+                 + `${(w*k).toFixed(4)} ${(h*k).toFixed(4)}"`;
+    return text.slice(0, vb.index) + scaled + text.slice(vb.index + vb[0].length);
+}
+
+function svgo_pass(source, file, digits){
+    return svgo(source, {
+        path: file,
+        multipass: true, // one pass leaves work on the table on files this shape
+        plugins: [{ name: 'preset-default', params: { overrides: {
+            convertPathData: { floatPrecision: digits, transformPrecision: 5,
+                               applyTransforms: true },
+            // never 0: this rounds things like stroke-width, where an integer
+            // can visibly fatten a hairline
+            cleanupNumericValues: { floatPrecision: Math.max(digits, 2) },
+        } } }],
+    }).data;
 }
 
 async function minify_svgs(dir){
@@ -127,22 +159,10 @@ async function minify_svgs(dir){
     for (const name of files){
         const file = path.join(dir, name);
         const source = await readFile(file, 'utf8');
-        const digits = svg_precision(source);
-        const { data } = svgo(source, {
-            path: file,
-            multipass: true, // one pass leaves work on the table on files this shape
-            plugins: [{ name: 'preset-default', params: { overrides: {
-                // applyTransforms folds the group transforms Inkscape leaves
-                // behind into the path data, which is what puts every
-                // coordinate in viewBox units and makes `digits` mean one
-                // thing across all 54 files
-                convertPathData: { floatPrecision: digits, transformPrecision: 5,
-                                   applyTransforms: true },
-                // never 0 here: this rounds things like stroke-width, where
-                // dropping to an integer can visibly fatten a hairline
-                cleanupNumericValues: { floatPrecision: Math.max(digits, 1) },
-            } } }],
-        });
+
+        const collapsed = svgo_pass(source, file, 4);   // structure, not size
+        const data = svgo_pass(normalize_svg(collapsed, name), file, 0);
+
         // A plugin that drops viewBox turns an <img> sized by CSS height into
         // one that ignores its aspect ratio. preset-default does not, today --
         // this is here so that a future svgo has to fail the build rather than

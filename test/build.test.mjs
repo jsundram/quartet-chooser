@@ -858,10 +858,34 @@ describe('link integrity', () => {
             if (src.includes('viewBox')) assert.match(out, /viewBox/, `${name} lost its viewBox`);
             before += src.length; after += out.length;
         }
-        // measured at ~19%; a floor well under it catches the step being
+        // measured at ~60%; a floor well under it catches the step being
         // dropped or silently no-oping, without failing on svgo's next release
-        assert.ok(after < before * 0.9,
+        assert.ok(after < before * 0.75,
             `only ${(100 - 100 * after / before).toFixed(1)}% smaller overall`);
+    });
+
+    test('no shipped drawing carries a transform', () => {
+        // The Phase 7 win is folding Inkscape's group transforms into the
+        // coordinates -- svgo pushes them down onto every path but will not
+        // fold them, because these paths have arcs and the matrix reflects.
+        // A transform surviving into dist/ means the fold silently declined
+        // and the file is carrying coordinates in a space up to 8x too large.
+        for (const name of readdirSync(dist).filter(f => f.endsWith('.svg'))){
+            const svg = readFileSync(path.join(dist, name), 'utf8');
+            assert.ok(!/<path\b[^>]*\stransform=/.test(svg), `${name} still has a path transform`);
+        }
+    });
+
+    test('every drawing is normalized to the same coordinate space', () => {
+        // what makes "round to N places" mean one thing across all 54 files;
+        // see SVG_UNITS in scripts/build.mjs
+        for (const name of readdirSync(dist).filter(f => f.endsWith('.svg'))){
+            const svg = readFileSync(path.join(dist, name), 'utf8');
+            const vb = /viewBox="\s*[-\d.eE]+[,\s]+[-\d.eE]+[,\s]+[-\d.eE]+[,\s]+([-\d.eE]+)/.exec(svg);
+            assert.ok(vb, `${name} has no viewBox`);
+            assert.equal(Math.round(Math.abs(Number(vb[1]))), 16384,
+                `${name} viewBox height is ${vb[1]}, not the normalized space`);
+        }
     });
 
     test('static assets copied through', () => {
