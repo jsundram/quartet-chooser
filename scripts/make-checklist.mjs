@@ -199,16 +199,54 @@ const PHASES = [
         },
     },
     {
-        n: 'Phase 5', title: 'Offline &amp; service worker', chip: 'waiting-c', status: 'Decision gate',
-        blurb: `I will not start this without an explicit yes. If the answer is no, that gets recorded
-                in <span class="path">pwa.md</span> with the date and the phase closes &mdash; which is
-                a perfectly good outcome.`,
+        n: 'Phase 5', title: 'Offline &amp; service worker', chip: 'idle', status: 'Decided &middot; yes',
+        blurb: `Decided 28&nbsp;Aug: yes. I read your framing as a priority order &mdash; every page
+                complete without the network first, never waiting on the network for something
+                already cached second, and playback allowed to need the network last. Nothing for you
+                to do here until it is built.`,
         tasks: [
-            { id: 'p5-decide', label: '<b>Say yes or no</b>',
-              note: `For: the works and movements data is all static, ~280 routes, and genuinely useful
-                     offline; an iOS install with no service worker opens to a blank error with no
-                     network. Against: the core content is Spotify embeds and outbound links, useless
-                     offline anyway, and Chrome no longer requires a service worker for installability.` },
+            { id: 'p5-decide', done: true, label: '<b>Decision made &mdash; yes, and lie-fi is the target</b>',
+              note: `Not airplane mode: a phone with two bars that hangs for twenty seconds. That
+                     rules out network-first and network-with-timeout &mdash; a cached page has to
+                     render immediately.` },
+            { id: 'p5-scope', done: true, label: 'Scope settled: <b>precache all static content</b>, not a shell',
+              note: `7.7&nbsp;MB and 368 files today, which is too much to fetch on the connection
+                     this is meant to survive &mdash; so Phase 7 runs first and roughly halves it.
+                     Then a small install-time precache, and the ~280 routes warmed in the background
+                     afterwards.` },
+            { id: 'p5-offline-check', label: '<b>Airplane mode, installed, cold: open a few work pages</b>',
+              note: `The real check, once it ships. Portrait and movement table present on every one;
+                     only the Spotify embeds missing. Batch it with the rest of the device pass.` },
+        ],
+    },
+    {
+        n: 'Phase 7', title: 'Page load performance', chip: 'idle', status: 'Next up',
+        blurb: `You said the site feels slower than it should, and you were right &mdash; it is not
+                subtle. Nothing here needs a decision from you except the last one; the findings are
+                listed so you can see what is coming and push back on any of it.`,
+        tasks: [
+            { id: 'p7-preload', done: true, label: 'Found: the home page <b>preloads 1.31&nbsp;MB of portraits</b> (447&nbsp;KB brotli) at top priority',
+              note: `React&nbsp;19 emits a preload link for every eager image it renders, and the home
+                     page renders 36 portraits and signatures with nothing marked lazy. They all
+                     compete with the HTML for bandwidth. Marking them lazy suppresses the preload and
+                     defers the fetch &mdash; both verified against the React version we ship.` },
+            { id: 'p7-icon', done: true, label: 'Found: the header icon is a <b>105&nbsp;KB, 512&times;512, 16-bit PNG drawn at 25&nbsp;px</b>',
+              note: `On every page on the site, and preloaded. The 48&times;48 icon we already ship is
+                     2,368 bytes. <span class="path">play.png</span> is the same bug, smaller, on all
+                     256 work pages.` },
+            { id: 'p7-headers', done: true, label: 'Found: <b>every asset revalidates on every navigation</b> in production',
+              note: `Netlify&rsquo;s default is
+                     <span class="path">cache-control: public,max-age=0,must-revalidate</span> for
+                     HTML, SVG, PNG and JS alike &mdash; I checked quartetroulette.com directly. That
+                     is six-plus round trips per work page even when your phone already has every
+                     byte. This is the one that makes a weak connection feel broken.` },
+            { id: 'p7-spotify', label: '<b>Opinion wanted: click-to-play on desktop too?</b>',
+              note: `Work pages build up to seven Spotify iframes, and on phones
+                     <span class="path">work.js</span> then throws every one of them away and puts a
+                     play link there instead. Rendering the link and upgrading to a player only where
+                     it is wanted is faster everywhere, and it is what makes work pages work offline.
+                     The question is only whether desktop keeps inline players by default, or also
+                     gets a link that swaps the player in when you click it.` },
         ],
     },
     {
@@ -240,10 +278,10 @@ const PHASES = [
 ];
 
 const BLOCKING = [
-    { tag: 'Decide', body: `<b>Phase 5 &mdash; service worker: yes or no?</b> The honest case against is
-        in <span class="path">pwa.md</span>: the core content is Spotify embeds and outbound links,
-        which are useless offline anyway. The case for is that an iOS home-screen install with no
-        service worker opens to a blank error on a plane.` },
+    { tag: 'Opinion', body: `<b>Phase 7 &mdash; click-to-play on desktop too?</b> Phones already get a
+        play link instead of an inline Spotify player; the question is whether desktop should as
+        well. It is the difference between a work page loading seven third-party frames you may not
+        want and loading none until you ask.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];
@@ -541,7 +579,7 @@ details.more summary:focus-visible { outline: 2px solid var(--cyan); outline-off
 </header>
 
 <section class="waiting">
-  <h2 class="kicker">Blocking &mdash; nothing moves until you answer</h2>
+  <h2 class="kicker">Waiting on you &mdash; one opinion, one gate</h2>
   <ul>${blocking}</ul>
 </section>
 

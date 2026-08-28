@@ -638,19 +638,44 @@ describe('🔀 shuffle links', () => {
     // missing from dist/, so drift from the real route set still fails
     const data = JSON.parse(readFileSync(path.join(root, 'src', 'data', 'data.json'), 'utf8'));
     const composer_routes = data.composers.map(c => '/' + c.name.toLowerCase() + '/');
+    // data-shuffle is now only the composer pages' per-group links; the two
+    // nav lists moved into shuffle.js (pwa.md Phase 7), so nothing on a page
+    // carries them any more.
     const shuffles = html => [...html.matchAll(/data-shuffle="([^"]*)"/g)].map(m => m[1].split(' '));
-    // the nav renders first, so on every page lists[0] is the Quartet 🔀
-    // candidates and lists[1] the Composer 🔀 candidates
-    const nav_lists = () => shuffles(read('/')).slice(0, 2);
 
-    test('every page carries the nav shuffle lists and loads shuffle.js', () => {
-        const nav = nav_lists();
+    // Both nav lists are baked into shuffle.js as array literals of route
+    // slugs, in the order random_targets() returns them: quartets, composers.
+    // Nothing else in that file is an array of quoted absolute paths.
+    const nav_lists = () => {
+        const js = readFileSync(path.join(dist, 'js', 'shuffle.js'), 'utf8');
+        const lists = [...js.matchAll(/\[(?:"\/[^"]*",)*"\/[^"]*"\]/g)].map(m => JSON.parse(m[0]));
+        assert.equal(lists.length, 2, 'shuffle.js carries exactly the two nav lists');
+        return lists;
+    };
+
+    test('every page names the nav shuffle lists and loads shuffle.js', () => {
         for (const route of routes_in(dist)){
             if (route === '/random/' || route === '/random-composer/') continue;
             const html = read(route);
-            assert.deepEqual(shuffles(html).slice(0, 2), nav, route + ' has the nav 🔀 lists');
+            // the key, not the list: the whole point of the change is that
+            // 4 KB of route paths is no longer in the markup of every page
+            assert.ok(html.includes('data-shuffle-key="random"'), route + ' has the Quartet 🔀');
+            assert.ok(html.includes('data-shuffle-key="random-composer"'), route + ' has the Composer 🔀');
+            assert.ok(!/data-shuffle="\/random/.test(html), route + ' does not inline the nav lists');
             assert.ok(html.includes('<script src="/js/shuffle.js">'), route + ' loads shuffle.js');
         }
+    });
+
+    test('the nav lists are in shuffle.js, not in the pages', () => {
+        // the regression this guards: putting the lists back in the markup
+        // would not break anything visible, it would just quietly re-add
+        // ~4 KB to all 279 pages
+        const [quartets] = nav_lists();
+        const home = read('/');
+        assert.ok(!home.includes(quartets[0] + ' ' + quartets[1]),
+            'the home page does not carry the quartet list');
+        assert.ok(readFileSync(path.join(dist, 'js', 'shuffle.js'), 'utf8').includes(quartets[0]),
+            'shuffle.js does');
     });
 
     test('nav shuffle targets are real routes; HIDDEN quartets excluded, composers not', () => {
@@ -668,7 +693,7 @@ describe('🔀 shuffle links', () => {
         const routes = new Set(fixtures('routes.json'));
         for (const route of composer_routes){
             const composer = route.replaceAll('/', '');
-            for (const list of shuffles(read(route)).slice(2)){ // beyond the nav pair
+            for (const list of shuffles(read(route))){ // the nav pair is not in the markup
                 // deliberate tripwire: composer.js only emits a 🔀 when there
                 // is a real choice (works.length > 1 / group.length > 1), so a
                 // one-option list means the template and this suite drifted —
@@ -681,10 +706,10 @@ describe('🔀 shuffle links', () => {
                 }
             }
         }
-        // spot-check: Haydn groups by opus; Bach's single work gets no 🔀
-        // beyond the nav pair
-        assert.ok(shuffles(read('/haydn/')).length > 3);
-        assert.equal(shuffles(read('/bach/')).length, 2);
+        // spot-check: Haydn groups by opus; Bach's single work gets no 🔀 at
+        // all, now that the nav pair is not in the markup to be counted
+        assert.ok(shuffles(read('/haydn/')).length > 1);
+        assert.equal(shuffles(read('/bach/')).length, 0);
     });
 });
 

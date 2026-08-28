@@ -193,6 +193,11 @@ async function build(){
 
     // 3. Client scripts: the touch-device player swap for work pages and
     // the 🔀-link randomizer, which every page loads for its nav links.
+    //
+    // The nav's two 🔀 lists are baked into shuffle.js rather than into every
+    // page's markup -- see src/client/shuffle.js. Same random_targets() the
+    // redirect pages below use, so the two can't disagree.
+    const targets = random_targets();
     await esbuild.build({
         entryPoints: [
             path.join(root, 'src', 'client', 'work.js'),
@@ -205,6 +210,7 @@ async function build(){
             TABLE_MOBILE: script_json(CLASS_NAMES.tableMobile),
             PLAY_ICON: script_json(CLASS_NAMES.playIcon),
             PLAY_EVENT: script_json(GC_PLAY_EVENT),
+            SHUFFLE_TARGETS: script_json(targets),
         },
         outdir: path.join(dist, 'js'),
     });
@@ -215,7 +221,6 @@ async function build(){
     // no analytics tag either: fetching count.js to count a page that replaces
     // itself in the same tick would slow down the only thing these do, and the
     // page they land on counts the visit a moment later anyway.
-    const targets = random_targets();
     const redirects = [
         { path: '/random', title: 'Random Quartet', slugs: targets['random'] },
         { path: '/random-composer', title: 'Random Composer', slugs: targets['random-composer'] },
