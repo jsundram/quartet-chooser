@@ -36,8 +36,16 @@ const Layout = ({ children }) => {
     <>
       <a className={siteTitle} href="/" aria-current={current('/')}>{SITE_TITLE}</a>
       {/* decorative: it repeats the wordmark next to it, so alt="" keeps a
-          screen reader from reading the site's name twice */}
-      &nbsp;&nbsp;<img src="/icon.png" alt="" className={siteIcon}/>
+          screen reader from reading the site's name twice.
+
+          NOT /icon.png, which is the 512x512 16-bit RGBA master that
+          make-icons.mjs and make-og.mjs rasterize from: 105 KB, on every page
+          on the site, to draw 25 CSS pixels -- and React preloads it, so it
+          competed with the HTML for the connection. This is the same artwork
+          from the generated set, at 4.4 KB, big enough to stay crisp at 35 px
+          on a 2x screen. width/height are the intrinsic size, so the header
+          reserves the box before the file lands (the CSS height still wins). */}
+      &nbsp;&nbsp;<img src="/icons/icon-96x96.png" alt="" width="96" height="96" className={siteIcon}/>
     </>
   );
 

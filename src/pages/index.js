@@ -13,6 +13,21 @@ import {
     composer_box
 } from './index.module.css'
 
+// loading="lazy" on the grid is a performance fix, not a preference, and it is
+// load-bearing twice over (pwa.md Phase 7):
+//
+//  1. React 19 emits a <link rel="preload" as="image"> for every *eager* image
+//     it server-renders. Thirty-six portraits and signatures meant 1.31 MB
+//     (447 KB brotli) of top-priority preloads racing the HTML on the one page
+//     everybody lands on first. loading="lazy" suppresses the preload.
+//  2. It also defers the fetch for everything below the fold. In-viewport
+//     images still load immediately -- the lazy threshold does not delay what
+//     is on screen -- so nothing visible arrives later than it used to.
+//
+// Do not "optimize" this back to eager. Composer and work pages keep their one
+// portrait eager on purpose: there it is the LCP element and it is above the
+// fold, which is exactly when a preload earns its priority.
+
 // markup
 const IndexPage = () => {
     return (
@@ -26,11 +41,14 @@ const IndexPage = () => {
                             src={get_portrait(composer)}
                             key={composer}
                             className={image}
+                            loading="lazy"
+                            decoding="async"
                         />
 
                         {/* decorative: the portrait above it, inside the same link, already
                             names the composer */}
-                        <img src={get_signature(composer)} alt="" className={signature} />
+                        <img src={get_signature(composer)} alt="" className={signature}
+                             loading="lazy" decoding="async" />
                     </a>
                 ))
             }
