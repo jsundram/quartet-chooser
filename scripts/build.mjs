@@ -92,15 +92,33 @@ function script_json(value){
 // after the site's own scripts have run -- analytics never sits on the critical
 // path, and a slow or unreachable gc.zgo.at delays nothing.
 //
-// count.js declines to count from localhost and from file:// on its own, so
-// `npm run serve` and a build opened off disk stay out of the dashboard without
-// a build-time switch here. Netlify deploy previews do NOT get that for free:
-// they are a real host, and their hits land in the same dashboard as
-// production's. Visiting any page with #toggle-goatcounter turns counting off
-// for that browser (GoatCounter stores a flag in localStorage), which is the
-// intended fix for both preview traffic and Jason's own visits.
+// count.js declines to count from localhost, from file:// and from RFC-1918
+// addresses on its own, so `npm run serve` and a build opened off disk stay out
+// of the dashboard for free. A Netlify deploy preview does not: it is a real
+// host on a real domain, and its hits would land in the same dashboard as
+// production's, permanently and with no field to filter them out by. So the
+// preview builds the tag out entirely -- see counts_hits() below.
+//
+// (Visiting any page with #toggle-goatcounter opts one browser out for good,
+// which is how to keep your own production visits out of your own numbers. It
+// is not a fix for preview traffic: it only covers a browser someone remembers
+// to do it in, and a preview URL gets opened by reviewers, by link unfurlers in
+// Slack or iMessage, and by whatever crawls it.)
 function analytics_tag(endpoint, src){
     return `<script data-goatcounter="${xml_escape(endpoint)}" async src="${xml_escape(src)}"></script>`;
+}
+
+// Netlify sets CONTEXT on every build it runs: `production`, `deploy-preview`,
+// `branch-deploy`. Only production counts.
+//
+// Unset means a local build -- `npm run build`, `npm test` -- which keeps the
+// tag, so the tests see exactly the markup production ships and a local build
+// is not a special case. Nothing is lost by that: count.js ignores localhost
+// anyway. The failure mode of a wrong CONTEXT is also the safe direction, in
+// both senses: an unset one counts, and a wrong one shows up immediately as an
+// empty dashboard, which is the first thing Phase 4's verification looks at.
+function counts_hits(env){
+    return !env.CONTEXT || env.CONTEXT === 'production';
 }
 
 function page_html({ head, body, scripts }, css, app, analytics){
@@ -172,7 +190,8 @@ async function build(){
             random_targets, render_pages } =
         await import(pathToFileURL(path.join(ssr, 'render.mjs')));
 
-    const analytics = analytics_tag(GC_ENDPOINT, GC_SCRIPT);
+    const counted = counts_hits(process.env);
+    const analytics = counted ? analytics_tag(GC_ENDPOINT, GC_SCRIPT) : '';
 
     // 2. The bundle's CSS output (all modules' styles) gets inlined into
     // every page, as Gatsby did.
@@ -262,7 +281,10 @@ async function build(){
 
     await rm(ssr, { recursive: true, force: true });
     console.log(`built ${pages.length + redirects.length} pages to dist/`
-        + ` (${card_count} share cards under ${OG_MAX_BYTES.toLocaleString()} bytes)`);
+        + ` (${card_count} share cards under ${OG_MAX_BYTES.toLocaleString()} bytes)`
+        // said out loud in Netlify's build log, because "why is the dashboard
+        // empty" and "why is the preview counting" are both answered here
+        + (counted ? '' : `, analytics off (CONTEXT=${process.env.CONTEXT})`));
 }
 
 await build();

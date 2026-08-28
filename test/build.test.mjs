@@ -570,9 +570,18 @@ describe('analytics (pwa.md Phase 4)', () => {
         // window.goatcounter is undefined whenever count.js is blocked, offline
         // or simply not loaded yet -- all three have to be a no-op, not a throw
         assert.match(js, /typeof\s+\w+\.count\s*!=/, 'guards on count being a function');
+        // and count() itself can throw even when it exists: it reads
+        // localStorage through goatcounter.filter(), which is a SecurityError in
+        // a browser blocking all site data. An uncaught one would land in the
+        // console on every tap.
+        assert.match(js, /try\s*\{[^}]*\.count\(/, 'the count() call sits in a try');
         for (const event of ['click', 'auxclick']){
             assert.ok(js.includes(`"${event}"`), `binds ${event}`);
         }
+        // auxclick fires for every non-primary button, so an unfiltered handler
+        // counts a right-click-to-copy-address as a play. Only the middle button
+        // (1) is an open-in-new-tab.
+        assert.match(js, /auxclick"[\s\S]{0,80}?\.button\s*===?\s*1/, 'auxclick is middle-button only');
     });
 
     test('no page depends on the analytics host for anything else', () => {
@@ -776,5 +785,40 @@ describe('link integrity', () => {
                          'icons/icon-512x512.png']){
             assert.ok(files.has(f), f);
         }
+    });
+});
+
+// Last in the file on purpose: it rebuilds dist/ as a Netlify deploy preview to
+// see what that build really ships, then rebuilds it back. Every describe above
+// reads the normal build, so this one has to come after all of them.
+describe('deploy previews do not count (pwa.md Phase 4)', () => {
+    const build_with = context => {
+        const env = { ...process.env };
+        if (context) env.CONTEXT = context; else delete env.CONTEXT;
+        execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs')], { env, stdio: 'ignore' });
+    };
+    const sample = ['/', '/haydn/', '/haydn-opus-76-3/', '/about/', '/404/'];
+
+    test('a preview build is the production page minus the tag', () => {
+        // not "has no tag": the point is that a preview is otherwise the same
+        // document, so what gets reviewed on a preview URL is what ships
+        const counted = sample.map(read);
+        try {
+            build_with('deploy-preview');
+            sample.forEach((route, i) => {
+                const preview = read(route);
+                assert.ok(!preview.includes('data-goatcounter'), route + ' counts on a preview');
+                const tag = counted[i].match(/<script[^>]*\bdata-goatcounter=[^>]*><\/script>/)[0];
+                assert.equal(preview, counted[i].replace(tag, ''), route + ' differs beyond the tag');
+            });
+
+            // a branch deploy is not production either; an unset CONTEXT is a
+            // local build and keeps the tag, which is what every test above sees
+            build_with('branch-deploy');
+            assert.ok(!read('/').includes('data-goatcounter'), 'branch deploy counts');
+        } finally {
+            build_with(null); // leave dist/ as the rest of the suite found it
+        }
+        assert.equal(read('/'), counted[0], 'the restored build matches production');
     });
 });
