@@ -228,15 +228,34 @@ const PHASES = [
                 been quoting are all a deliberately awful two-bar connection. The drawings are now
                 half their original weight with no visible change.`,
         tasks: [
+            { id: 'p7-whiterect', label: '<b>Six work-page portraits have a white background baked in</b> &mdash; fix before dark mode',
+              note: `Bartok, Boccherini, Britten, Debussy, Mendelssohn and Schumann &mdash; the
+                     <span class="path">-Original</span> files, the ones work pages use &mdash; each
+                     start with a full-canvas white rectangle. The other twelve, and all eighteen on
+                     the home page, are transparent. You cannot see it today: removing it changes
+                     <b>0.0%</b> of the pixels on a white page. On a dark one it changes <b>88%</b>.
+                     So Phase&nbsp;6 would put six white boxes on six pages. Ninety-eight bytes, so
+                     this is about correctness, not weight &mdash; but it wants deciding before dark
+                     mode, not during.` },
+            { id: 'p7-letterbox', label: 'Ten drawings <b>letterbox themselves</b> &mdash; a conversion artifact worth correcting at source',
+              note: `Dvorak, Grieg, Haydn, Mendelssohn, Mozart, Prokofiev, Ravel, Schubert, Schumann
+                     and Shostakovich declare a width/height ratio that disagrees with their
+                     viewBox, so they render with dead space at the sides &mdash; Grieg and Ravel by
+                     about a third. Mostly harmless: I measured the home grid and every portrait's
+                     ink is a uniform 200&nbsp;px tall. But Schubert ends up 204&nbsp;px wide in a
+                     200&nbsp;px cell and gets shrunk slightly below its neighbours, and the
+                     inconsistency broke two of my attempts to optimise these files.` },
             { id: 'p7-nodes', label: '<b>Simplify the drawings themselves? A yes/no &mdash; and it needs your eyes.</b>',
-              note: `The last lever, and the only one that would change the artwork rather than how
-                     it is written down. The 36 drawings on the home page hold about <b>91,000
-                     points</b>, for pictures shown at most 600&nbsp;px &mdash; far more than any
-                     screen can draw. Refitting the curves with fewer points could plausibly halve
-                     them again, but it is Marusya's linework being altered, not just its file
-                     format, so someone has to look at the result and say whether it still reads.
-                     <b>I have not started it</b>, and everything else on this list is done without
-                     it.` },
+              note: `The last lever on weight, and the only one that changes the artwork rather than
+                     how it is written down. The 36 drawings on the home page hold about <b>91,000
+                     points</b>, for pictures shown at most 600&nbsp;px. Refitting the curves with
+                     fewer points could plausibly halve them again. <b>I have not started it.</b>
+                     Worth knowing: <span class="path">static/</span> is not really your original
+                     &mdash; those files are machine conversions (no Inkscape layers or labels
+                     anywhere, and most carry a PDF-import signature). If Marusya's actual source
+                     files exist, re-exporting from those would fix the node count, the white
+                     rectangles and the letterboxing in one go, and more honestly than patching the
+                     conversions.` },
             { id: 'p7-portraits', done: true, label: 'Answered: <b>rasterizing the portraits would make the site slower</b>, not faster',
               note: `You were right that the SVGs hold up at any scale &mdash; and they are also the
                      cheap option, which is the opposite of what I first told you. Rendered all 36
