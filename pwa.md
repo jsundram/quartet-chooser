@@ -42,6 +42,11 @@ load performance**, which was missing from the plan entirely. Phase 7 runs first
 online for reasons caching would not fix, and its precache list is a performance budget. So the
 remaining order is **7, then 5**, with Phase 6 still an open gate.
 
+Phase 7 implemented 2026-08-28 in `a5ad2b9`, `c1d1a02`, `d70f2ec` and `91974e0`, on the branch
+`phase-7-performance`. **Not merged.** Nothing in it has been looked at in a browser yet — a
+headless browser would not run where it was built — and the two `netlify.toml` extension globs
+cannot be checked until it is deployed. Both are the first items on the deploy preview.
+
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
 
@@ -59,7 +64,8 @@ template in `scripts/build.mjs`; per-page tags come from each page/template's `H
 |---|---|---|
 | Analytics: **GoatCounter (hosted)** | **Decided 2026-08-20**, shipped 2026-08-27 | See Phase 4 rationale. Supersedes the "self-hosted, AKM-style" wording in TODO.md — revisit only if hosted GoatCounter proves inadequate. Site: <https://quartet-roulette.goatcounter.com/>. |
 | Service worker / offline | **Decided 2026-08-28: yes** | Offline matters; a functional site on lie-fi outranks playback; precache all static content. See Phase 5. |
-| Page load performance | **Added 2026-08-28** | Was missing from the plan. Now Phase 7, and it runs *before* Phase 5 — the precache list is a performance budget. |
+| Page load performance | **Added 2026-08-28**, implemented same day | Now Phase 7, and it runs *before* Phase 5 — the precache list is a performance budget. Unmerged; nothing has been looked at by eye yet. |
+| Spotify: click-to-play everywhere | **Decided 2026-08-28** | Desktop gets a play control too, not seven eager iframes. Costs one click before playback; makes work pages offline-capable. |
 | Dark mode | **Open — decide at Phase 6** | Real design work (theme colors derive from portrait SVGs). Explicitly optional. |
 
 ---
@@ -479,62 +485,102 @@ in both modes, second `theme-color` meta (one per scheme), flip `color-scheme` m
 
 ---
 
-## Phase 7 — Page load performance  ⚠️ do this before Phase 5
+## Phase 7 — Page load performance  ✅ implemented, unmerged
 
 Added 2026-08-28: "page load time … should be part of any of these phases … the site feels slower
 than it should." It wasn't in the plan; it is now. It runs **before** Phase 5 for two reasons: the
 precache list is a performance budget (Phase 5's table above), and caching a page does nothing about
 the 1.3 MB it asks for on the first visit.
 
-Measured 2026-08-28 against `dist/` and against production headers, worst first:
+Implemented 2026-08-28 on `phase-7-performance` in `a5ad2b9`, `c1d1a02`, `d70f2ec` and `91974e0`.
+All 54 tests pass. **Not merged, and two things are unverified** — see the end of this section.
 
-- [ ] **The home page preloads 1.31 MB of SVG (447 KB brotli) at highest priority.** React 19 emits
-      a `<link rel="preload" as="image">` for every eager `<img>` it renders — verified locally
-      against react-dom 19.2.8 — and `src/pages/index.js` renders 36 portraits and signatures with
-      no `loading`. So all 36 land in `<head>`-priority preloads and compete with the HTML, ahead of
-      anything below the fold. Adding `loading="lazy"` suppresses React's preload *and* defers the
-      fetch; also verified. Keep the above-the-fold portrait on composer/work pages eager — it's the
-      LCP element.
-- [ ] **`/icon.png` is a 512×512 16-bit RGBA PNG, 105 KB, drawn at 25–35 px** in the header of every
-      page — and preloaded, so it competes with the HTML too. `static/icons/icon-48x48.png` is
-      2,368 bytes: a 44× cut on every page on the site. `play.png` is the same bug in miniature
-      (512×512, 13 KB, drawn small) on all 256 work pages.
-- [ ] **Everything on production revalidates on every navigation.** Netlify's default,
-      `cache-control: public,max-age=0,must-revalidate`, is served for HTML, SVG, PNG and JS alike —
+Measured against `dist/` and against production headers, worst first:
+
+- [x] **The home page preloaded 1.31 MB of SVG (447 KB brotli) at highest priority.** `a5ad2b9`.
+      React 19 emits a `<link rel="preload" as="image">` for every eager `<img>` it renders —
+      verified locally against react-dom 19.2.8 — and `src/pages/index.js` rendered 36 portraits and
+      signatures with no `loading`. So all 36 landed in `<head>`-priority preloads and competed with
+      the HTML, ahead of anything below the fold. `loading="lazy"` suppresses React's preload *and*
+      defers the fetch; also verified. The above-the-fold portrait on composer and work pages stays
+      eager — it's the LCP element. **Home page preloads: 36 links / 1.42 MB → 1 link / 4.4 KB.**
+- [x] **`/icon.png` was a 512×512 16-bit RGBA PNG, 105 KB, drawn at 25–35 px** in the header of
+      every page — and preloaded, so it competed with the HTML too. Now `/icons/icon-96x96.png`,
+      4,424 bytes, from the set `npm run icons` already generates: **24× smaller, on every page.**
+      The master stays in `static/` because `make-icons.mjs` and `make-og.mjs` rasterize from it.
+- [x] **Everything on production revalidated on every navigation.** `c1d1a02`. Netlify's default,
+      `cache-control: public,max-age=0,must-revalidate`, was served for HTML, SVG, PNG and JS alike —
       confirmed against quartetroulette.com on 2026-08-28. That is a conditional round trip per
       asset per page view: six or more on a work page, all of them 304s, all of them RTT-bound on a
-      bad connection. Add `[[headers]]` to `netlify.toml`: long immutable `max-age` for `/icons/*`,
-      `/js/*`, `*.svg` and `*.png`, short + `stale-while-revalidate` for HTML. Immutable needs
-      stable content per URL, so either hash the JS filenames in `scripts/build.mjs` or accept that
-      a JS change waits out the TTL — decide as part of the phase.
-- [ ] **The shuffle route list is inlined twice in every page.** Each `data-shuffle` attribute is
-      ~3.9 KB of route paths, and there are two per page (quartet, composer) — more than half of a
-      10–14 KB page, ~2 MB across the 280. It gzips well, so this is worth little over the wire, but
-      it is 2 MB of the Phase 5 precache and it is on the critical path of every parse. Move the
-      list into `js/shuffle.js`, fetched once and cached.
-- [ ] **Work pages build up to seven Spotify iframes, then throw them away on phones.**
-      `src/client/work.js` replaces every `<iframe>` with a play link on any touch device — after
-      the iframes are already in the DOM and the ones in view have begun loading. Render the link
-      server-side and *upgrade* to an iframe where it's wanted, rather than shipping iframes and
-      deleting them. This is also what makes work pages work offline (Phase 5, priority 3), so the
-      two phases want the same change. **Open question for Jason: click-to-play on desktop too?**
-- [ ] **Portraits are unminified SVG** — `Britten-Original.svg` is 122 KB (43 KB brotli). An svgo
-      pass in `scripts/build.mjs` (or committed, like the share cards) cuts both the wire cost and
-      the precache.
-- [ ] **GoatCounter's `count.js` must not be able to delay a load.** It is `async` today, which is
-      right; confirm nothing later makes it render-blocking, and that a hung `gc.zgo.at` is
-      invisible to the page.
+      bad connection. `netlify.toml` now has `[[headers]]` per asset class, using
+      `stale-while-revalidate` rather than `immutable` because nothing is content-hashed. HTML is
+      deliberately left on the default. **JS filenames are deliberately not hashed** — that was the
+      phase's open question, and the answer is no: the two scripts total ~1 KB, so the whole cost
+      was the round trip that `max-age` already removes, and hashing would put a build manifest
+      between the generator, the tests and Phase 5's precache list for nothing measurable.
+- [x] **The shuffle route list was inlined twice in every page.** `d70f2ec`. Each `data-shuffle`
+      attribute was ~3.9 KB of route paths, in the nav of all 279 pages. The lists now live in
+      `js/shuffle.js`, injected by the build from the same `random_targets()` the redirect pages
+      use; markup carries `data-shuffle-key` instead. Composer pages keep inline `data-shuffle` for
+      their per-group links — different on every page, a handful of slugs each, nothing to share.
+      **Total HTML 3.16 MB → 2.35 MB.** No-JS behaviour unchanged: `/random` is still a real page.
+- [x] **Work pages built up to seven Spotify iframes, then threw them away on phones.** `91974e0`.
+      `src/client/work.js` replaced every `<iframe>` with a play link on any touch device — after
+      the iframes were in the DOM and the ones in view had begun loading. Now every recording renders
+      as a play control on every device and **nothing cross-origin is embedded until someone clicks
+      one**; Jason chose click-to-play everywhere on 2026-08-28 over keeping inline players on
+      desktop. Touch still opens the Spotify app. Desktop swaps the control for the embed in place,
+      which costs a second click to start playback. `play.png` (13 KB, 512×512, drawn at 24 px) is
+      gone — the glyph is inline SVG. `tableMobile`/`tableBig` are now `tableRest`/`tablePlaying`:
+      neither is about the device any more, only about whether a player is in the column.
+      **This is also what makes work pages work offline, so Phase 5 depends on it.**
+- [x] **Portraits are unminified SVG, and it does not matter as much as it looks.** Measured, not
+      assumed: stripping the Inkscape formatting and rounding coordinates to two decimals across all
+      54 files gives **5%**, raw and brotli alike (875 KB → 829 KB brotli site-wide). They are
+      almost entirely irreducible path data. **Deliberately not done here**: a real `svgo` pass would
+      likely beat 5% (it re-encodes `d`, collapses transforms, drops hidden elements), but svgo is
+      not a dependency and could not be installed in this environment, and hand-rolling coordinate
+      rounding on artwork without being able to render it is not a trade worth making. If it is
+      wanted: add `svgo` as a devDependency and an `npm run svg` script that writes back to
+      `static/`, run it locally and commit the result — the same pattern as `npm run icons`, since
+      Netlify cannot run it either. Eyeball the diff on one portrait before committing 54.
+- [x] **GoatCounter's `count.js` cannot delay a load.** Checked: still `async`, still last in
+      `<body>`, and `src/client/work.js` reads `window.goatcounter` behind a guard, so a hung
+      `gc.zgo.at` is invisible to the page.
+
+### Where it ended up
+
+| | before | after |
+|---|---|---|
+| Home page, first paint blocked on | 14.8 KB HTML + 1.42 MB of preloads | 11.0 KB HTML + 4.4 KB icon |
+| Work page HTML | 13,156 B (2,716 brotli) | 11,591 B (2,411 brotli) |
+| Work page third-party frames | up to 7, unasked | 0 until clicked |
+| Site HTML total | 3.16 MB | 2.54 MB |
+| Revalidation round trips per navigation | one per asset | none while fresh |
+
+### Still open
+
+- [ ] **Nobody has looked at it.** A headless browser would not run in the environment this was
+      built in, so the desktop play control, the narrow Recording column at rest, and the widening
+      when a player opens are all unverified by eye. First thing to check on the deploy preview.
+- [ ] **The `/*.svg` and `/*.png` header globs are unverified.** Netlify's path matcher is well
+      documented for directory splats like `/icons/*` and much less so for extension globs;
+      `netlify.toml` says so and names the curl to run against the preview. If they don't match, the
+      fallback is to serve the portraits from a directory and glob that.
+- [ ] **Lighthouse before/after**, on `/` and on a work page, recorded here. The acceptance criteria
+      below are all met by construction and by test; this phase should still end with a number.
 
 ### Acceptance criteria
 
 - Home page: no `<link rel="preload" as="image">` for a below-the-fold portrait; the preload set is
-  the LCP image and nothing else.
-- No page requests `/icon.png`; the header icon is served at a size near its rendered size.
+  the LCP image and nothing else. ✅ `dist/index.html` has exactly one, the header icon.
+- No page requests `/icon.png`; the header icon is served at a size near its rendered size. ✅
 - `curl -I` against production returns a long `max-age` for a versioned static asset and a
-  revalidating policy for HTML.
+  revalidating policy for HTML. ⚠️ written, unverified until deployed.
 - A work page on a phone issues zero requests to `open.spotify.com` until something is tapped.
+  ✅ enforced by test: no page in `dist/` ships an `<iframe>` at all.
 - Lighthouse mobile on `/` and on a work page, before and after, recorded here — this phase gets a
-  number, not an impression.
+  number, not an impression. ❌ outstanding.
 
 ## Already done (baseline ✅ — don't redo)
 
