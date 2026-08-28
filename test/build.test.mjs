@@ -3,7 +3,7 @@
 // Run with: npm test (builds dist/ first, then node --test).
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { before, describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
@@ -840,6 +840,28 @@ describe('link integrity', () => {
         }
         // home + 18 composers + every work page carry one
         assert.ok(found >= 200, `found ${found} og:image tags`);
+    });
+
+    test('the portraits ship minified, and keep their viewBox', () => {
+        // pwa.md Phase 7: the build runs svgo over dist/*.svg. static/ keeps
+        // the original drawings, so this compares the two. The viewBox check
+        // is the one that matters -- an <img> sized by CSS height and no
+        // viewBox ignores its aspect ratio, and 54 reshaped portraits would
+        // not fail any other assertion here.
+        const svgs = readdirSync(path.join(root, 'static')).filter(f => f.endsWith('.svg'));
+        assert.ok(svgs.length > 40, `${svgs.length} portraits`);
+        let before = 0, after = 0;
+        for (const name of svgs){
+            const src = readFileSync(path.join(root, 'static', name), 'utf8');
+            const out = readFileSync(path.join(dist, name), 'utf8');
+            assert.ok(out.length <= src.length, `${name} got bigger`);
+            if (src.includes('viewBox')) assert.match(out, /viewBox/, `${name} lost its viewBox`);
+            before += src.length; after += out.length;
+        }
+        // measured at ~19%; a floor well under it catches the step being
+        // dropped or silently no-oping, without failing on svgo's next release
+        assert.ok(after < before * 0.9,
+            `only ${(100 - 100 * after / before).toFixed(1)}% smaller overall`);
     });
 
     test('static assets copied through', () => {
