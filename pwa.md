@@ -482,6 +482,12 @@ reason the page is slow online, which no amount of caching would have fixed. The
 
 ## Phase 6 — Dark mode  ⚠️ decision gate
 
+**Prerequisite found during Phase 7:** six of the eighteen work-page portraits carry an opaque white
+background rectangle (`Bartok-Original`, `Boccherini-Original`, `Britten-Original`,
+`Debussy-Original`, `Mendelssohn-Original`, `Schumann-Original`). Invisible on today's white page —
+0.0% of pixels change if it is removed — and 87.9% different on a dark one. Dark mode without
+fixing these puts six white boxes on six work pages. See Phase 7's "What belongs in the drawings".
+
 Optional; real design work since theme colors are extracted from the portrait SVGs. If pursued:
 `@media (prefers-color-scheme: dark)` overrides, a `.dark` class mirror for testing, contrast AA
 in both modes, second `theme-color` meta (one per scheme), flip `color-scheme` meta to
@@ -600,6 +606,50 @@ Measured against `dist/` and against production headers, worst first:
       And doing the rescale *before* folding is worse than useless: the rounding then happens in
       local space and gets multiplied by the leftover transform, up to 1,900×. Tchaikovsky's
       signature came out 15% wrong that way.
+### What belongs in the drawings rather than the pipeline
+
+Asked on 2026-08-28: is the build pipeline the right place for all of this, or do some fixes belong
+in the source files? Audited, and the answer separates cleanly.
+
+**First, `static/*.svg` is not the original.** No Inkscape editing metadata in any of the 54 — no
+`sodipodi:namedview`, no layers, no labels, only auto-generated ids (`g8`, `path12`) — and 36 of
+them carry the classic PDF→SVG conversion signature: a `matrix(1.3333 0 0 -1.3333 …)` y-flip (96/72
+dpi) wrapping a `scale(0.1)` group. These are machine conversions of something upstream. So "keep
+the originals untouched" is protecting a derived artifact; the real originals are wherever Marusya's
+artwork lives, and a re-export from those would be the most legitimate place to fix everything below
+at once.
+
+**Rightly in the pipeline** — folding, normalizing, rounding. Every one of them encodes a *display*
+decision (the largest size the site draws these, 1,800 device px) which is a property of the site,
+not the artwork. If a future layout shows portraits at 1,200px the budget changes, and the source
+should not have to. They are also deterministic and lossless-to-reproduce, so nothing is given up by
+doing them late.
+
+**Rightly in the drawings**, and neither is about weight:
+
+- [ ] **Six of the eighteen work-page portraits have an opaque white background.**
+      `Bartok-Original`, `Boccherini-Original`, `Britten-Original`, `Debussy-Original`,
+      `Mendelssohn-Original`, `Schumann-Original` each open with a full-canvas
+      `<path d="M…H0V0h…Z" fill="#fff"/>`. The other twelve, and all eighteen of the `X.svg` used on
+      the home page, are transparent. Measured: removing that rectangle changes **0.0%** of pixels
+      on a white page and **87.9%** on a dark one. So it is invisible today and it is a **Phase 6
+      blocker** — dark mode would put six white boxes on six work pages. It costs 98 bytes, so this
+      is a correctness fix, not a size one. Fix in the data (or strip it in the build), but decide
+      before Phase 6 rather than discovering it there.
+- [ ] **Ten drawings letterbox themselves.** `Dvorak`, `Grieg`, `Haydn`, `Mendelssohn`, `Mozart`,
+      `Prokofiev`, `Ravel`, `Schubert`, `Schumann`, `Shostakovich` have `width`/`height` ratios that
+      disagree with their `viewBox` — Grieg and Ravel by ~31% — so they render with dead space at
+      the sides. Measured in the home grid: ink *height* is a uniform 200px across all 18, so it is
+      not the visible defect it might have been, but Ravel, Grieg and Schubert carry 23–24% side
+      padding, and Schubert's element comes out 204px wide in a 200px cell, so `max-width: 100%`
+      shrinks it slightly below its neighbours. It is also a trap: it broke two attempts at
+      normalizing the coordinate space. A conversion artifact worth correcting at source.
+- Not a defect: 26 files have a non-zero `viewBox` origin. That is just a viewBox cropped to the
+  content. Leave it.
+
+**Fixable in neither** — the node count. ~91,000 points is a property of how the conversion was
+made, upstream of `static/`. That is the item below, and it is the one that needs a person.
+
 - [ ] **Reducing the node count — the last lever, not attempted.** ~91,000 points for artwork shown
       at most 600 CSS px. Everything above changes only how the geometry is *written down*;
       simplifying the curves would remove geometry, and could plausibly halve the drawings again.
