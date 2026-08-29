@@ -4,8 +4,6 @@
 // sitemap and 404.html, generates the client scripts, and copies static/.
 // See docs/simplification-plan.md, Phase 1.
 import * as esbuild from 'esbuild'
-import { optimize as svgo } from 'svgo'
-import svgpath from 'svgpath'
 import { createHash } from 'node:crypto'
 import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -144,6 +142,14 @@ function normalize_svg(text, name){
     return text.slice(0, vb.index) + scaled + text.slice(vb.index + vb[0].length);
 }
 
+// svgo costs ~170ms just to import, which is a third of a warm build, and a
+// warm build never calls it. Loaded on first use instead.
+let svgo, svgpath;
+async function load_svg_tools(){
+    if (!svgo) ({ optimize: svgo } = await import('svgo'));
+    if (!svgpath) ({ default: svgpath } = await import('svgpath'));
+}
+
 function svgo_pass(source, file, digits){
     return svgo(source, {
         path: file,
@@ -176,6 +182,7 @@ async function cached_svg(source, name, transform){
     try {
         return await readFile(hit, 'utf8');
     } catch {
+        await load_svg_tools();
         const data = transform();
         await mkdir(svg_cache, { recursive: true });
         await writeFile(hit, data);

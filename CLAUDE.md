@@ -24,7 +24,7 @@ modules + `data.json`) for Node, React renders every route in `src/lib/routes.js
   other's output. Don't run a build and the tests against the same tree at once.
 - The optimized drawings are cached in `.cache/svg/`, keyed on each drawing's bytes plus
   `scripts/build.mjs` itself, so editing the build invalidates them automatically. A cold build is
-  ~4.7s and a warm one ~1.0s. Deleting `.cache/` only costs one slow build.
+  ~4.7s and a warm one ~0.9s. Deleting `.cache/` only costs one slow build.
 
 ## Assets: what is committed and what the build generates
 
