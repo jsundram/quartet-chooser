@@ -44,7 +44,8 @@ remaining order is **7, then 5**, with Phase 6 still an open gate.
 
 Phase 7 implemented 2026-08-28 on the branch `phase-7-performance`, 23 commits, open for review as
 **[PR #44](https://github.com/jsundram/quartet-chooser/pull/44)** — remember `--ff-only`, since this
-file cites those hashes.
+file cites those hashes. Reviewed 2026-08-29: eight findings, all addressed in `3c47a4e`; two were
+real holes in the fold guards (they checked `<path>` when the risk lives anywhere in the document).
 Rendered and driven under headless Chrome with throttling, which reversed one of its findings and
 sized the rest. On Slow 3G at phone density, served the way Netlify serves it: **work pages went
 from 3.8s and 7 third-party frames to 1.5s and none; the home page from 5.2s to 4.6s and 550 KB to
@@ -750,10 +751,12 @@ densities.
 
 - [x] **Rasterizing the home page portraits: settled, and the answer is no** — see the bullet
       above. Raster is only smaller on a 1x screen and is more than twice as slow at 3x.
-- [ ] **The `/*.svg` and `/*.png` header globs are unverified.** Netlify's path matcher is well
-      documented for directory splats like `/icons/*` and much less so for extension globs;
-      `netlify.toml` says so and names the curl to run against the preview. If they don't match, the
-      fallback is to serve the portraits from a directory and glob that.
+- [x] **The header globs work** — verified against deploy preview 44 on 2026-08-29:
+      `/Bach.svg` → `max-age=604800`, `/` → `max-age=0, must-revalidate`, `/js/shuffle.js` →
+      `max-age=300`. Netlify honours extension globs as well as directory splats, and returns one
+      `Cache-Control` per file rather than one per matching rule, so the overlapping `/icons/*` and
+      `/og/*` rules are redundant but harmless. They stay: identical values, and nothing establishes
+      that `/*.png` reaches into a subdirectory.
 - [x] **Rendered and checked by eye and by script**, headless Chrome over the built `dist/`: the
       play control at rest and with one and two players open, desktop and phone; keyboard focus and
       Enter opening a player; cmd-click *not* opening one; a tap on touch navigating to Spotify
@@ -767,8 +770,8 @@ densities.
   measured, and the preloads are load-bearing — see the first bullet above. The page emits 37, one
   per image plus the header icon, on purpose.
 - No page requests `/icon.png`; the header icon is served at a size near its rendered size. ✅
-- `curl -I` against production returns a long `max-age` for a versioned static asset and a
-  revalidating policy for HTML. ⚠️ written, unverified until deployed.
+- `curl -I` returns a long `max-age` for a static asset and a revalidating policy for HTML.
+  ✅ verified on deploy preview 44.
 - A work page on a phone issues zero requests to `open.spotify.com` until something is tapped.
   ✅ enforced by test: no page in `dist/` ships an `<iframe>` at all.
 - Numbers, before and after, rather than an impression. ✅ the table above. Lighthouse on the
