@@ -904,7 +904,7 @@ describe('link integrity', () => {
 // above reads the normal build, so this one has to come after all of them.
 describe('the build is not host-aware (pwa.md Phase 4)', () => {
     // Shells out to a real build, four times, so this is the slow test in the
-    // suite (~20s). It is also the one that breaks if anything else builds at
+    // suite. It is also the one that breaks if anything else builds at
     // the same moment: build.mjs opens with `rm -rf dist`, so two concurrent
     // builds delete each other's output and one dies on ENOENT. Don't run two
     // `npm test`s, or a `npm run build`, against this working tree at once.

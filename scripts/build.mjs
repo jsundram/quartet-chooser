@@ -6,14 +6,19 @@
 import * as esbuild from 'esbuild'
 import { optimize as svgo } from 'svgo'
 import svgpath from 'svgpath'
+import { createHash } from 'node:crypto'
 import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+// this file's own bytes, so the SVG cache invalidates whenever the pipeline
+// that filled it changes
+const BUILD_SOURCE = await readFile(fileURLToPath(import.meta.url), 'utf8');
 const dist = path.join(root, 'dist');
 const cache = path.join(root, '.cache'); // gitignored; may hold stale Gatsby output
 const ssr = path.join(cache, 'ssg');
+const svg_cache = path.join(cache, 'svg');
 
 // what ships to browsers (client JS + CSS); explicit so syntax lowering and
 // CSS prefixing (e.g. -webkit-sticky for Safari <= 12) are a choice, not an
@@ -153,6 +158,31 @@ function svgo_pass(source, file, digits){
     }).data;
 }
 
+// Two full svgo passes over 54 drawings costs ~3.3s, which turned a 0.5s build
+// into a 5s one -- and `npm test` shells out to four builds, so it felt like
+// five seconds turning into forty. The work is worth it (structure-only pass 1
+// was tried: 1.8s cheaper and 32% *bigger* over the wire, because pass 1's path
+// re-encoding is what lets pass 2 pack well), so it is cached rather than cut.
+//
+// Keyed on the drawing's own bytes plus scripts/build.mjs itself. Hashing this
+// file is deliberately over-eager -- any edit here busts every entry -- but it
+// means nobody has to remember to bump a version constant after changing the
+// pipeline, which is exactly the mistake that would ship stale artwork.
+async function cached_svg(source, name, transform){
+    const key = createHash('sha256')
+        .update(BUILD_SOURCE).update('\0').update(source)
+        .digest('hex').slice(0, 32);
+    const hit = path.join(svg_cache, `${key}.svg`);
+    try {
+        return await readFile(hit, 'utf8');
+    } catch {
+        const data = transform();
+        await mkdir(svg_cache, { recursive: true });
+        await writeFile(hit, data);
+        return data;
+    }
+}
+
 async function minify_svgs(dir){
     const files = (await readdir(dir)).filter(f => f.endsWith('.svg'));
     let before = 0, after = 0;
@@ -160,8 +190,10 @@ async function minify_svgs(dir){
         const file = path.join(dir, name);
         const source = await readFile(file, 'utf8');
 
-        const collapsed = svgo_pass(source, file, 4);   // structure, not size
-        const data = svgo_pass(normalize_svg(collapsed, name), file, 0);
+        const data = await cached_svg(source, name, () => {
+            const collapsed = svgo_pass(source, file, 4);   // structure, not size
+            return svgo_pass(normalize_svg(collapsed, name), file, 0);
+        });
 
         // A plugin that drops viewBox turns an <img> sized by CSS height into
         // one that ignores its aspect ratio. preset-default does not, today --
@@ -291,7 +323,9 @@ function sitemap_xml(site_url, paths){
 
 async function build(){
     await rm(dist, { recursive: true, force: true });
-    await rm(cache, { recursive: true, force: true });
+    // not the whole of .cache: svg/ is a content-addressed cache worth keeping
+    // between builds (see minify_svgs). ssg/ is scratch and goes.
+    await rm(ssr, { recursive: true, force: true });
 
     // install metadata + the apple-touch-icon link, derived from the manifest
     // so there is one source of truth for the icon set and the theme colour

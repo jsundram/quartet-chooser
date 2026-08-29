@@ -18,7 +18,13 @@ modules + `data.json`) for Node, React renders every route in `src/lib/routes.js
   through esbuild `define` — see `CLASS_NAMES` in `scripts/render.js`.
 - Site-wide constants (URL, title, share cards, GoatCounter endpoint and event name) live in
   `src/lib/site.js`. Change them there, not at the use sites.
-- `npm test` runs `test/*.test.mjs` against a real `dist/`. It is fast; run it.
+- `npm test` runs `test/*.test.mjs` against a real `dist/`. It is fast (~5s); run it. One test
+  shells out to four full builds, so it dominates the runtime, and it breaks if anything else builds
+  at the same moment — `build.mjs` opens with `rm -rf dist`, so two concurrent builds delete each
+  other's output. Don't run a build and the tests against the same tree at once.
+- The optimized drawings are cached in `.cache/svg/`, keyed on each drawing's bytes plus
+  `scripts/build.mjs` itself, so editing the build invalidates them automatically. A cold build is
+  ~4.7s and a warm one ~1.0s. Deleting `.cache/` only costs one slow build.
 
 ## Assets: what is committed and what the build generates
 
