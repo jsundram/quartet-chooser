@@ -13,7 +13,8 @@
     "og": "node scripts/make-og.mjs",
     "serve": "npx serve dist",
     "test": "node --test \"test/*.test.mjs\"",
-    "test:update": "node scripts/build.mjs && node scripts/update-fixtures.mjs"
+    "test:update": "node scripts/build.mjs && node scripts/update-fixtures.mjs",
+    "svg-diff": "node scripts/svg-diff.mjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

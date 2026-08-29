@@ -77,10 +77,13 @@ Two traps, both of which have already cost real time:
 2. Never rescale **before** folding. The rounding then happens in each path's local space and gets
    multiplied by the leftover transform — up to 1,900×.
 
-Changes to any of this must be verified by rendering, not by reading the diff: rasterize all 54
-against the authored originals at 600, 900 and 1,800px and compare channel by channel. The bar met
-today is mean 0.5–0.7% of pixels differing, none over 3%, all of it edge antialiasing. Two tests
-guard the mechanism — no path in `dist/` may carry a transform, and every drawing must land in the
+Changes to any of this must be verified by rendering, not by reading the diff. **`npm run svg-diff`**
+writes `svg-diff.html`: every drawing as authored, as shipped, and the two stacked with a difference
+blend, with a size slider (push it to 600px+, where rounding error is largest). Black means
+identical; a faint edge outline everywhere is antialiasing and is what the whole set should look
+like; a solid bright shape means something moved. It reads `static/` and `dist/` live, so rebuild
+and refresh. The bar met today is mean 0.5–0.7% of pixels differing, none over 3%. Two tests guard
+the mechanism — no path in `dist/` may carry a transform, and every drawing must land in the
 normalized space — but they cannot tell you it still *looks* right.
 
 ### Known data defects, upstream of the build

@@ -100,6 +100,11 @@ a {
 
     .siteIcon {
         height: 35px;
+        /* the <img> carries width/height attributes so the header
+           reserves this box before the file lands; without width:auto
+           that 96px width becomes the used width and squashes a
+           square logo into a 35px-tall letterbox */
+        width: auto;
     }
 }
 
@@ -123,6 +128,11 @@ a {
 
     .siteIcon {
         height: 25px;
+        /* the <img> carries width/height attributes so the header
+           reserves this box before the file lands; without width:auto
+           that 96px width becomes the used width and squashes a
+           square logo into a 25px-tall letterbox */
+        width: auto;
     }
 }
 
@@ -145,5 +155,10 @@ a {
 
     .siteIcon {
         height: 25px;
+        /* the <img> carries width/height attributes so the header
+           reserves this box before the file lands; without width:auto
+           that 96px width becomes the used width and squashes a
+           square logo into a 25px-tall letterbox */
+        width: auto;
     }
 }

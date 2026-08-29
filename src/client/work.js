@@ -64,7 +64,20 @@
         }
     }
 
+    // At most one player is open at a time. Letting them accumulate meant a
+    // table where some rows had an 80px Spotify frame and others a 24px glyph,
+    // for no reason a reader could see -- it recorded which rows you had
+    // happened to click, which is not information anybody wants. One open
+    // player reads as "this is the one playing", which is.
+    var open = null; // { frame, link } -- the link is kept to put back
+    function close_open(){
+        if (!open) return;
+        open.frame.parentNode.replaceChild(open.link, open.frame);
+        open = null;
+    }
+
     function embed(link){
+        close_open();
         var frame = document.createElement('iframe');
         frame.src = link.getAttribute('data-embed');
         // the control's accessible name is "Play <movement>"; the frame that
@@ -83,6 +96,7 @@
         if (table) table.className = TABLE_PLAYING;
 
         link.parentNode.replaceChild(frame, link);
+        open = { frame: frame, link: link };
         // the click that summoned it was on the link, so focus went nowhere a
         // keyboard user can find; the frame is the thing they asked for
         frame.focus();
