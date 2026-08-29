@@ -64,17 +64,22 @@
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
 
-# Client scripts. Shorter than the assets above, and deliberately so: since
-# the nav's route lists moved out of the markup and into shuffle.js, this file
-# is data as well as code. The HTML on a page is always revalidated, so a
-# long-lived shuffle.js could have a visitor running a week-old route list on
-# an otherwise current page -- and a retired or renamed quartet would then make
-# the 🔀 link a 404. Five minutes still covers the round trips that mattered
-# (they were per-navigation, within a session), and bounds that window.
+# Client scripts. Shorter than the assets above, and with no
+# stale-while-revalidate, both deliberately: since the nav's route lists moved
+# out of the markup and into shuffle.js, this file is data as well as code. The
+# HTML on a page is always revalidated, so a long-lived shuffle.js could have a
+# visitor running an old route list on an otherwise current page -- and a
+# retired or renamed quartet would then make the 🔀 link a 404.
+#
+# SWR would undo the bound rather than shorten it: it serves the stale copy for
+# its whole window and only applies the refresh to the navigation after that, so
+# 300 + 3600 would mean a route list up to ~65 minutes old, not 5. The round
+# trips this rule exists to remove are per-navigation and within a session,
+# which max-age alone already covers, so there is nothing for SWR to buy here.
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
+    Cache-Control = "public, max-age=300"
 
 # The portraits and signatures, which live at the root because that is where
 # static/ copies them. The single biggest asset class on the site.

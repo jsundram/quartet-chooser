@@ -9,7 +9,9 @@
 // to emit the apple-touch-icon link and the install metas. Add a size here and
 // in the manifest together.
 //
-// Source: static/icon.svg if it exists, else static/icon.png. The PNG is the
+// Source: assets/icon.svg if it exists, else assets/icon.png. These live in
+// assets/ rather than static/ because they are inputs to this script, not
+// files the site serves -- static/ is copied to the deploy. The PNG is the
 // 512x512 original from flaticon (their largest), so every size below is a
 // downscale -- nothing is ever upscaled. Drop an SVG in and it wins
 // automatically, which is the only reason to bother getting one.
@@ -34,6 +36,8 @@ import { quantize, rasterize_svg, require_tools } from './png-tools.mjs'
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const static_dir = path.join(root, 'static');
 const out_dir = path.join(static_dir, 'icons');
+// build-time sources, deliberately outside static/ so they are not deployed
+const assets_dir = path.join(root, 'assets');
 
 // must match background_color in the manifest: this is what shows through
 // behind a transparent corner or inside a maskable icon's padding
@@ -55,25 +59,25 @@ async function exists(p){
 // Both branches end up as one vector document rasterized in a single pass, so
 // the SVG and PNG sources go through identical code below.
 async function load_source(){
-    const svg = path.join(static_dir, 'icon.svg');
+    const svg = path.join(assets_dir, 'icon.svg');
     if (await exists(svg)){
         const src = await readFile(svg, 'utf8');
         const view_box = src.match(/viewBox="([^"]*)"/);
-        if (!view_box) throw new Error('static/icon.svg has no viewBox');
+        if (!view_box) throw new Error('assets/icon.svg has no viewBox');
         const open = src.indexOf('>', src.indexOf('<svg'));
         const body = src.slice(open + 1, src.lastIndexOf('</svg>'));
         return {
-            name: 'static/icon.svg',
+            name: 'assets/icon.svg',
             place: (x, y, w, h) => `<svg x="${x}" y="${y}" width="${w}" height="${h}"`
                 + ` viewBox="${view_box[1]}" preserveAspectRatio="xMidYMid meet">${body}</svg>`,
         };
     }
 
-    const png = path.join(static_dir, 'icon.png');
-    if (!await exists(png)) throw new Error('need static/icon.svg or static/icon.png');
+    const png = path.join(assets_dir, 'icon.png');
+    if (!await exists(png)) throw new Error('need assets/icon.svg or assets/icon.png');
     const uri = `data:image/png;base64,${(await readFile(png)).toString('base64')}`;
     return {
-        name: 'static/icon.png',
+        name: 'assets/icon.png',
         place: (x, y, w, h) => `<image x="${x}" y="${y}" width="${w}" height="${h}"`
             + ` href="${uri}" preserveAspectRatio="xMidYMid meet"/>`,
     };

@@ -912,10 +912,22 @@ describe('link integrity', () => {
         }
     });
 
+    test('the icon master is a build-time source, not a shipped file', () => {
+        // scripts/make-icons.mjs and scripts/make-og.mjs read it from assets/;
+        // nothing on the site references it, so it must not be deployed
+        assert.ok(!files.has('icon.png'), 'icon.png is being copied into dist/');
+        for (const route of routes_in(dist)){
+            assert.ok(!read(route).includes('/icon.png'), route + ' links to /icon.png');
+        }
+    });
+
     test('static assets copied through', () => {
         // play.png is deliberately absent: the play glyph is inline SVG now
-        // (pwa.md Phase 7), so it costs no request and no 13 KB.
-        for (const f of ['icon.png', 'favicon-32x32.png', 'manifest.webmanifest',
+        // (pwa.md Phase 7), so it costs no request and no 13 KB. So is
+        // icon.png -- it moved to assets/, because nothing on the site links
+        // to it and shipping the 105 KB master would put it in Phase 5's
+        // offline budget for nothing.
+        for (const f of ['favicon-32x32.png', 'manifest.webmanifest',
                          'Haydn.svg', 'Haydn-Signature.svg', 'Haydn-Original.svg',
                          'icons/icon-512x512.png']){
             assert.ok(files.has(f), f);

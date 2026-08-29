@@ -5,7 +5,9 @@
 // See docs/simplification-plan.md, Phase 1.
 import * as esbuild from 'esbuild'
 import { createHash } from 'node:crypto'
-import { cp, mkdir, readFile, readdir, rm, stat, unlink, writeFile } from 'node:fs/promises'
+import { realpathSync as fs_realpath } from 'node:fs'
+import os from 'node:os'
+import { cp, mkdir, readFile, readdir, rename, rm, stat, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -13,10 +15,72 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // this file's own bytes, so the SVG cache invalidates whenever the pipeline
 // that filled it changes
 const BUILD_SOURCE = await readFile(fileURLToPath(import.meta.url), 'utf8');
+// ... and the versions of the two libraries that actually do the work. They
+// are pinned exactly in package.json, so upgrading one is a package.json edit
+// rather than a build.mjs edit -- without this, every cache key would stay
+// valid across the upgrade and the build would keep emitting the old svgo's
+// output forever, which is precisely the silent-staleness this cache is
+// otherwise designed to avoid.
+// read off disk rather than require()'d: svgo does not export its own
+// package.json, so `require('svgo/package.json')` throws
+// ERR_PACKAGE_PATH_NOT_EXPORTED. Falling back to the range declared in our
+// package.json keeps this working in an install layout where node_modules is
+// hoisted somewhere else -- it is a weaker key, but never a wrong one.
+async function tool_version(name){
+    for (const p of [path.join(root, 'node_modules', name, 'package.json'),
+                     path.join(root, 'package.json')]){
+        try {
+            const pkg = JSON.parse(await readFile(p, 'utf8'));
+            const v = p.endsWith(`${name}/package.json`) ? pkg.version
+                                                         : pkg.dependencies?.[name];
+            if (v) return v;
+        } catch { /* try the next one */ }
+    }
+    return 'unknown';
+}
+const SVG_TOOLS = (await Promise.all(['svgo', 'svgpath']
+    .map(async m => `${m}@${await tool_version(m)}`))).join(' ');
 // Where the site is written. Defaults to dist/, which is what netlify.toml
 // publishes; the argument exists so a test can build somewhere else instead of
 // mutating the tree every other test is reading.
-const dist = process.argv[2] ? path.resolve(process.argv[2]) : path.join(root, 'dist');
+//
+// It is validated because build() opens by recursively removing this path with
+// force: true. Before the argument existed that was a hardcoded gitignored
+// constant; now it is the first argument to a routine command, and
+// `npm run build -- .` would take the repository with it. The only intended
+// callers are the default and the test suite, so: somewhere under the repo, or
+// somewhere under the system temp directory, and nothing else.
+// resolve symlinks as far as the path actually exists, so that comparing two
+// paths compares the same thing. macOS matters here: os.tmpdir() is /var/...,
+// a symlink to /private/var/..., and mkdtemp hands back the unresolved form.
+function real(p){
+    let head = path.resolve(p), tail = '';
+    for (;;){
+        try { return path.join(fs_realpath(head), tail); }
+        catch {
+            const parent = path.dirname(head);
+            if (parent === head) return path.resolve(p); // nothing exists; use it as given
+            tail = path.join(path.basename(head), tail);
+            head = parent;
+        }
+    }
+}
+
+function output_dir(arg){
+    if (!arg) return path.join(root, 'dist');
+    const out = path.resolve(arg);
+    const under = parent => {
+        const rel = path.relative(real(parent), real(out));
+        return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+    };
+    if (!under(root) && !under(os.tmpdir())){
+        throw new Error(`refusing to build into ${out}: the output directory is`
+            + ' deleted before the build, so it must be under the repo or under'
+            + ` ${os.tmpdir()}`);
+    }
+    return out;
+}
+const dist = output_dir(process.argv[2]);
 const cache = path.join(root, '.cache'); // gitignored; may hold stale Gatsby output
 // scratch, namespaced by output, so two builds with different outputs do not
 // overwrite each other's SSR bundle
@@ -118,7 +182,6 @@ function normalize_svg(text, name){
     const [, x, y, w, h] = vb.map(Number);
     const k = SVG_UNITS / Math.abs(h);
 
-    let untouched = 0;
     text = text.replace(PATH_TAG, tag => {
         const d = /\sd="([^"]*)"/.exec(tag);
         if (!d) return tag;
@@ -128,8 +191,10 @@ function normalize_svg(text, name){
         // handling is why this is not hand-rolled: under a reflection the
         // sweep flag has to flip, and under a non-uniform scale the arc has
         // to become curves. Getting either wrong is silent and ugly.
+        // a path may legitimately arrive with no transform of its own; if one
+        // was left on an ancestor instead, the whole-document check below
+        // catches it, which is why there is no counter here
         if (t) p = p.transform(t[1]);
-        else untouched++;
         const folded = p.scale(k).abs().round(4).toString();
         const out = t ? tag.slice(0, t.index) + tag.slice(t.index + t[0].length) : tag;
         const d2 = /\sd="([^"]*)"/.exec(out);
@@ -200,7 +265,7 @@ function svgo_pass(source, file, digits){
 // pipeline, which is exactly the mistake that would ship stale artwork.
 function cache_key(source){
     return createHash('sha256')
-        .update(BUILD_SOURCE).update('\0').update(source)
+        .update(BUILD_SOURCE).update('\0').update(SVG_TOOLS).update('\0').update(source)
         .digest('hex').slice(0, 32) + '.svg';
 }
 
@@ -223,7 +288,16 @@ async function cached_svg(source, transform){
         await load_svg_tools();
         const data = transform();
         await mkdir(svg_cache, { recursive: true });
-        await writeFile(hit, data);
+        // temp-then-rename, because writeFile truncates and then streams: a
+        // Ctrl-C, crash or full disk in between leaves a short file under a
+        // content-addressed name, and every later build would read that
+        // truncated drawing and ship it. Nothing downstream would notice --
+        // the viewBox is in the first few hundred bytes, so both SVG tests
+        // still pass on a portrait missing half its paths. rename() is atomic
+        // within a filesystem, which also makes a concurrent reader safe.
+        const tmp = `${hit}.${process.pid}.tmp`;
+        await writeFile(tmp, data);
+        await rename(tmp, hit);
         return data;
     }
 }
@@ -242,7 +316,7 @@ async function minify_svgs(src_dir, out_dir){
 
         // Not every SVG at static/'s root is one of the drawings, and this
         // pipeline is only meaningful for something with a viewBox to
-        // normalize against. scripts/make-icons.mjs documents static/icon.svg
+        // normalize against. scripts/make-icons.mjs documents assets/icon.svg
         // as its preferred input, so a file like that landing here must not
         // hard-fail the build (and with it the deploy) -- it ships as authored.
         if (!VIEWBOX.test(source)){
@@ -522,7 +596,9 @@ async function build(){
     await rm(ssr, { recursive: true, force: true });
     console.log(`built ${pages.length + redirects.length} pages to dist/`
         + ` (${card_count} share cards under ${OG_MAX_BYTES.toLocaleString()} bytes;`
-        + ` ${svg.files} SVGs ${(svg.before/1024).toFixed(0)} KB -> ${(svg.after/1024).toFixed(0)} KB)`);
+        + ` ${svg.drawings} drawings ${(svg.before/1024).toFixed(0)} KB`
+        + ` -> ${(svg.after/1024).toFixed(0)} KB`
+        + (svg.copied ? `; ${svg.copied} SVG(s) copied as-is` : '') + ')');
 }
 
 await build();

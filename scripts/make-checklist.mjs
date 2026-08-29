@@ -417,7 +417,7 @@ function icons() {
     return `<div class="proof">
   <h3>What your homescreen tile should change from &rarr; to</h3>
   <div class="tiles">
-    <figure><div class="tile on-black"><img src="${uri('static/icon.png')}" alt="Transparent icon on a black tile"/></div>
+    <figure><div class="tile on-black"><img src="${uri('assets/icon.png')}" alt="Transparent icon on a black tile"/></div>
       <figcaption><b>Before</b> &mdash; transparent icon, which iOS fills with black</figcaption></figure>
     <figure><div class="tile"><img src="${uri('static/icons/icon-180x180.png')}" alt="Flattened icon on an off-white tile"/></div>
       <figcaption><b>After</b> &mdash; flattened onto the site&rsquo;s own off-white</figcaption></figure>
@@ -433,7 +433,7 @@ function icons() {
       <figcaption>Circle crop &mdash; <b>rim survives</b></figcaption></figure>
     <figure><div class="crop checker squircle"><img src="${uri('static/icons/icon-512x512-maskable.png')}" alt="Maskable icon cropped to a squircle"/></div>
       <figcaption>Squircle crop &mdash; <b>rim survives</b></figcaption></figure>
-    <figure><div class="crop checker circle"><img src="${uri('static/icon.png')}" alt="Old icon cropped to a circle, rim clipped"/></div>
+    <figure><div class="crop checker circle"><img src="${uri('assets/icon.png')}" alt="Old icon cropped to a circle, rim clipped"/></div>
       <figcaption>Old icon, same circle crop &mdash; <b>rim and ball marker clipped</b></figcaption></figure>
   </div>
 </div>`;

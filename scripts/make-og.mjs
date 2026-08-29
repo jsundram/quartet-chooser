@@ -66,8 +66,8 @@ async function inline_svg(file, { x, y, width, height, align = 'xMidYMid' }){
         + ` viewBox="${view_box[1]}" preserveAspectRatio="${align} meet">${body}</svg>`;
 }
 
-async function data_uri(file){
-    const bytes = await readFile(path.join(static_dir, file));
+async function data_uri(file, dir = static_dir){
+    const bytes = await readFile(path.join(dir, file));
     return `data:image/png;base64,${bytes.toString('base64')}`;
 }
 
@@ -154,7 +154,8 @@ async function main(){
         .sort();
 
     await mkdir(out_dir, { recursive: true });
-    const icon = await data_uri('icon.png');
+    // from assets/, not static/: it is a build-time source and is not deployed
+    const icon = await data_uri('icon.png', path.join(root, 'assets'));
 
     // Haydn first -- the site's namesake enthusiasts -- then a spread of eras.
     const cards = [['og', await site_card(['Haydn', 'Beethoven', 'Debussy', 'Bartok'], icon)]];

@@ -24,6 +24,9 @@ modules + `data.json`) for Node, React renders every route in `src/lib/routes.js
 - `npm test` runs `test/*.test.mjs` (~2.7s). It builds into a temp directory and **never touches
   `dist/`**, so it is safe to run alongside `npm run build` or another test run. Run `npm run build`
   yourself if you want a `dist/` to serve.
+- **`npm run svg-diff`** writes `svg-diff.html`: every drawing as authored, as shipped, and the two
+  stacked with a difference blend, with size and glow sliders. This is how you check that a change to
+  the SVG pipeline did not alter the artwork — black means identical. See "The portrait SVGs" below.
 - The optimized drawings are cached in `.cache/svg/`, keyed on each drawing's bytes plus
   `scripts/build.mjs` itself, so editing the build invalidates them automatically and each build
   prunes what it did not use. A cold build is ~4.6s and a warm one ~0.8s; deleting `.cache/` only
