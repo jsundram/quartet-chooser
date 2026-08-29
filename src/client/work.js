@@ -5,21 +5,44 @@
 // script does nothing at load: no DOM rewriting, no class swapping, no frames
 // created or destroyed. It attaches one listener and waits.
 //
-// On a touch device the control stays exactly what the markup says it is: a
-// link to the track, which opens the Spotify app. That was already the
-// behaviour, and it is better than an 80px embed on a phone.
+// A tap stays exactly what the markup says it is: a link to the track, which
+// opens the Spotify app. That was already the behaviour, and it is better than
+// an 80px embed on a phone.
 //
-// On anything else, a plain left click swaps the control for the real embed,
-// in place, and widens the Recording column to fit it. That costs a second
-// click to actually start playback -- the embed cannot autoplay from a gesture
-// outside its own frame -- which is the price of not loading seven
-// third-party frames on a page most people open to read.
+// A click swaps the control for the real embed, in place, and widens the
+// Recording column to fit it. That costs a second click to actually start
+// playback -- the embed cannot autoplay from a gesture outside its own frame
+// -- which is the price of not loading seven third-party frames on a page most
+// people open to read.
+//
+// Note "a tap" and "a click", not "a touch device" and "everything else". The
+// capability test below ('ontouchstart' in window || maxTouchPoints > 0) is
+// true of anything with a digitizer, which is most Windows laptops and every
+// 2-in-1 -- and deciding per *device* meant a mouse click on one of those
+// navigated the whole page off to Spotify, losing the work page. The event
+// knows which input made it, so ask the event.
 //
 // TABLE_PLAYING and PLAY_ICON are injected by scripts/build.mjs (esbuild
 // define) with the hashed CSS-module class names; PLAY_EVENT with the
 // GoatCounter event name from src/lib/site.js.
 (function () {
-    var touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    // Whether this *device* could produce a touch. Only used as a fallback,
+    // for browsers with no PointerEvent (Safari before 13), where the old
+    // per-device answer is the best available.
+    var touchable = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // Whether the gesture in progress *is* a touch. pointerdown always
+    // precedes the click it generates, and it is captured so that nothing can
+    // stop it from reaching here first.
+    var pointer = '';
+    if (window.PointerEvent){
+        document.addEventListener('pointerdown', function (e){
+            pointer = e.pointerType;
+        }, true);
+    }
+    function is_tap(){
+        return window.PointerEvent ? pointer === 'touch' : touchable;
+    }
 
     // pwa.md Phase 4: count a click through to a recording as an event.
     //
@@ -111,11 +134,11 @@
 
         count_play();
 
-        // Let the browser do what the markup says for touch (open the app),
+        // Let the browser do what the markup says for a tap (open the app),
         // and for every click that means "somewhere else, please": a new tab,
         // a new window, a download, a middle click. Only a plain left click
         // is ours to take over.
-        if (touch) return;
+        if (is_tap()) return;
         if (e.defaultPrevented || e.button !== 0) return;
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 

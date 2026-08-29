@@ -73,10 +73,18 @@ function output_dir(arg){
         const rel = path.relative(real(parent), real(out));
         return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
     };
-    if (!under(root) && !under(os.tmpdir())){
-        throw new Error(`refusing to build into ${out}: the output directory is`
-            + ' deleted before the build, so it must be under the repo or under'
-            + ` ${os.tmpdir()}`);
+    // An allowlist, not a containment check. "Inside the repo" is far too
+    // wide: `npm run build -- static` would recursively delete the 54
+    // drawings, the icon set and the share cards -- the last two needing
+    // rsvg-convert and pngquant to regenerate -- and `-- .git` is not
+    // recoverable at all. A stray tab-complete reaches both. The only
+    // intended outputs are dist/ and a scratch directory, so say exactly that.
+    const ok = under(os.tmpdir())
+        || (under(root) && path.basename(out).startsWith('dist'));
+    if (!ok){
+        throw new Error(`refusing to build into ${out}: it is deleted before the`
+            + ' build starts, so it must be under ' + os.tmpdir()
+            + ', or inside the repo with a name beginning "dist"');
     }
     return out;
 }
@@ -226,6 +234,25 @@ function normalize_svg(text, name){
                 + ' does not scale; only <path> geometry can be normalized');
         }
     }
+
+    // Same reasoning, for geometry that is not in the `d` attribute at all.
+    // Scaling the path data and the viewBox together is a visual no-op only
+    // for what the path data expresses; stroke-width, stroke-dasharray,
+    // stroke-dashoffset and stroke-miterlimit are in user units *outside* it,
+    // so they would keep their old magnitude in a space up to 966x larger --
+    // a stroke k times too thin, which at these factors means invisible.
+    //
+    // Every drawing is fill-only today (`stroke:none`), so this has never
+    // fired. It is here because the failure is silent and every existing test
+    // would still pass: no transform survives, the viewBox is 16384, the file
+    // is smaller. Scaling the stroke properties alongside the coordinates
+    // would also be correct, and is the right fix if stroked artwork ever
+    // turns up -- refusing is simply the honest version of "not handled".
+    const stroked = /stroke\s*[:=]\s*"?\s*(?!none\b)[^;"'\s]/i.exec(text);
+    if (stroked){
+        throw new Error(`${name} has a stroke (${stroked[0].trim()}...), whose width this`
+            + ' does not scale; only fill-only drawings can be normalized');
+    }
     const scaled = `viewBox="${(x*k).toFixed(4)} ${(y*k).toFixed(4)} `
                  + `${(w*k).toFixed(4)} ${(h*k).toFixed(4)}"`;
     return text.slice(0, vb.index) + scaled + text.slice(vb.index + vb[0].length);
@@ -246,8 +273,11 @@ function svgo_pass(source, file, digits){
         plugins: [{ name: 'preset-default', params: { overrides: {
             convertPathData: { floatPrecision: digits, transformPrecision: 5,
                                applyTransforms: true },
-            // never 0: this rounds things like stroke-width, where an integer
-            // can visibly fatten a hairline
+            // never 0: this rounds numeric attributes outside the path data,
+            // where an integer can visibly change a small value. It is not a
+            // safety net for stroke geometry -- a stroke would already have
+            // been divided by k before reaching here, which is why
+            // normalize_svg refuses one outright.
             cleanupNumericValues: { floatPrecision: Math.max(digits, 2) },
         } } }],
     }).data;
@@ -274,9 +304,23 @@ function cache_key(source){
 // never shrinks -- measured: 54 entries became 162 after two trivial edits.
 // So each build drops whatever it did not use. Nothing here is precious; a
 // wrong prune costs one slow build.
+const TMP_GRACE_MS = 60 * 60 * 1000;
+
 async function prune_svg_cache(keep){
     for (const f of await readdir(svg_cache).catch(() => [])){
-        if (!keep.has(f)) await unlink(path.join(svg_cache, f)).catch(() => {});
+        if (keep.has(f)) continue;
+        // Never young .tmp files: cached_svg writes <key>.svg.<pid>.tmp and
+        // renames it, and `keep` only ever holds final names. Deleting one
+        // mid-flight made the *other* build's rename fail with ENOENT and exit
+        // non-zero -- which is exactly the concurrent case CLAUDE.md now
+        // advertises as safe. Old ones are the debris of a build that died
+        // between write and rename, and those are worth collecting.
+        if (f.endsWith('.tmp')){
+            const age = await stat(path.join(svg_cache, f))
+                .then(s => Date.now() - s.mtimeMs).catch(() => 0);
+            if (age < TMP_GRACE_MS) continue;
+        }
+        await unlink(path.join(svg_cache, f)).catch(() => {});
     }
 }
 
@@ -297,7 +341,9 @@ async function cached_svg(source, transform){
         // within a filesystem, which also makes a concurrent reader safe.
         const tmp = `${hit}.${process.pid}.tmp`;
         await writeFile(tmp, data);
-        await rename(tmp, hit);
+        // the cache is advisory and `data` is already in hand, so losing a
+        // race here costs one recomputation next time, not a failed build
+        await rename(tmp, hit).catch(() => unlink(tmp).catch(() => {}));
         return data;
     }
 }
