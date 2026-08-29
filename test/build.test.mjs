@@ -3,21 +3,31 @@
 // Run with: npm test (builds dist/ first, then node --test).
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { readdirSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { before, describe, test } from 'node:test'
+import { after, before, describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { routes_in, walk } from './routes.mjs'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const dist = path.join(root, 'dist');
+// The suite builds into a temp directory of its own, never into dist/. Two
+// reasons: `npm test` and `npm run build` (or a second `npm test`) can then run
+// against the same working tree without fighting -- build.mjs opens by clearing
+// its output directory, so sharing one was a race that bit twice -- and a test
+// run no longer leaves dist/ in whatever state the last assertion wanted. Run
+// `npm run build` if you want a dist/ to serve.
+const dist = mkdtempSync(path.join(tmpdir(), 'quartet-test-'));
 const fixtures = p => JSON.parse(readFileSync(path.join(root, 'test', 'fixtures', p), 'utf8'));
 
 const read = route => readFileSync(path.join(dist, ...route.split('/').filter(Boolean), 'index.html'), 'utf8');
 
 before(() => {
-    execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs')], { stdio: 'inherit' });
+    execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs'), dist],
+                 { stdio: 'inherit' });
 });
+
+after(() => { rmSync(dist, { recursive: true, force: true }); });
 
 describe('route parity with the Gatsby build', () => {
     test('same 279 routes', () => {
@@ -903,20 +913,22 @@ describe('link integrity', () => {
 // to see what that build really ships, then rebuilds it back. Every describe
 // above reads the normal build, so this one has to come after all of them.
 describe('the build is not host-aware (pwa.md Phase 4)', () => {
-    // Shells out to a real build, four times, so this is the slow test in the
-    // suite. It is also the one that breaks if anything else builds at
-    // the same moment: build.mjs opens with `rm -rf dist`, so two concurrent
-    // builds delete each other's output and one dies on ENOENT. Don't run two
-    // `npm test`s, or a `npm run build`, against this working tree at once.
+    // Shells out to a real build once per context. Each one goes to its own
+    // temp directory: this test used to rebuild the shared dist/ in place --
+    // four times, including a restore build -- which every other test in the
+    // suite is reading from. That was a race, and it bit twice: build.mjs
+    // opens by clearing its output directory, so anything reading dist/ while
+    // this ran could see a half-built tree, and a concurrent build of any kind
+    // would fight it. Now dist/ is only ever read.
     //
-    // stderr is captured rather than discarded because of exactly that: a bare
-    // "Command failed: node scripts/build.mjs" is unreadable, and this failure
+    // stderr is captured rather than discarded, because a bare
+    // "Command failed: node scripts/build.mjs" is unreadable and this failure
     // is rare enough that you do not get a second chance at it cheaply.
-    const build_with = context => {
+    const build_into = (context, out) => {
         const env = { ...process.env };
         if (context) env.CONTEXT = context; else delete env.CONTEXT;
         try {
-            execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs')],
+            execFileSync(process.execPath, [path.join(root, 'scripts', 'build.mjs'), out],
                          { env, stdio: ['ignore', 'ignore', 'pipe'] });
         } catch (e) {
             const why = (e.stderr || '').toString().trim();
@@ -924,6 +936,9 @@ describe('the build is not host-aware (pwa.md Phase 4)', () => {
                 + (why ? `:\n${why}` : ' with no stderr'));
         }
     };
+    const read_from = (dir, route) =>
+        readFileSync(path.join(dir, ...route.split('/').filter(Boolean), 'index.html'), 'utf8');
+
     const sample = ['/', '/haydn/', '/haydn-opus-76-3/', '/about/', '/404/'];
 
     test('a deploy preview ships exactly what production ships, analytics included', () => {
@@ -934,17 +949,22 @@ describe('the build is not host-aware (pwa.md Phase 4)', () => {
         // merge. A CONTEXT gate was written and reverted; this asserts the build
         // output does not depend on the environment at all, so re-adding one is
         // a deliberate act with a failing test attached, not a quiet change.
+        // dist/ is the reference: the suite's own build, with CONTEXT unset,
+        // which is what a production deploy runs.
         const counted = sample.map(read);
+        const built = [];
         try {
             for (const context of ['deploy-preview', 'branch-deploy', 'production']){
-                build_with(context);
+                const out = mkdtempSync(path.join(tmpdir(), 'quartet-build-'));
+                built.push(out);
+                build_into(context, out);
                 sample.forEach((route, i) => {
-                    assert.equal(read(route), counted[i], `${route} differs under CONTEXT=${context}`);
+                    assert.equal(read_from(out, route), counted[i],
+                        `${route} differs under CONTEXT=${context}`);
                 });
             }
         } finally {
-            build_with(null); // leave dist/ as the rest of the suite found it
+            for (const out of built) rmSync(out, { recursive: true, force: true });
         }
-        assert.equal(read('/'), counted[0], 'the restored build matches');
     });
 });

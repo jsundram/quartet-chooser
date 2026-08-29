@@ -13,9 +13,14 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // this file's own bytes, so the SVG cache invalidates whenever the pipeline
 // that filled it changes
 const BUILD_SOURCE = await readFile(fileURLToPath(import.meta.url), 'utf8');
-const dist = path.join(root, 'dist');
+// Where the site is written. Defaults to dist/, which is what netlify.toml
+// publishes; the argument exists so a test can build somewhere else instead of
+// mutating the tree every other test is reading.
+const dist = process.argv[2] ? path.resolve(process.argv[2]) : path.join(root, 'dist');
 const cache = path.join(root, '.cache'); // gitignored; may hold stale Gatsby output
-const ssr = path.join(cache, 'ssg');
+// scratch, namespaced by output, so two builds with different outputs do not
+// overwrite each other's SSR bundle
+const ssr = path.join(cache, 'ssg-' + path.basename(dist).replace(/[^\w.-]/g, '_'));
 const svg_cache = path.join(cache, 'svg');
 
 // what ships to browsers (client JS + CSS); explicit so syntax lowering and
@@ -204,12 +209,16 @@ async function cached_svg(source, transform){
     }
 }
 
-async function minify_svgs(dir){
-    const files = (await readdir(dir)).filter(f => f.endsWith('.svg'));
+// static/*.svg -> dist/*.svg. Reads the source and writes the output, the way
+// esbuild does for JS and CSS -- it used to let cp() copy all 54 drawings and
+// then rewrite them in place, which meant 2.5 MB of copying thrown away, and a
+// step whose input was its own output.
+async function minify_svgs(src_dir, out_dir){
+    const names = (await readdir(src_dir)).filter(f => f.endsWith('.svg'));
     const keep = new Set();
     let before = 0, after = 0;
-    for (const name of files){
-        const file = path.join(dir, name);
+    for (const name of names){
+        const file = path.join(src_dir, name);
         const source = await readFile(file, 'utf8');
 
         keep.add(cache_key(source));
@@ -227,10 +236,10 @@ async function minify_svgs(dir){
         }
         before += Buffer.byteLength(source);
         after += Buffer.byteLength(data);
-        await writeFile(file, data);
+        await writeFile(path.join(out_dir, name), data);
     }
     await prune_svg_cache(keep);
-    return { files: files.length, before, after };
+    return { files: names.length, before, after };
 }
 
 // Everything a browser needs to install the site, derived from the manifest so
@@ -462,11 +471,23 @@ async function build(){
     // 7. Static assets, copied through -- but the share cards get their size
     // checked on the way past, and the portraits get minified.
     const card_count = await check_og_cards(path.join(root, 'static', 'og'));
-    await cp(path.join(root, 'static'), dist, {
+    const static_dir = path.join(root, 'static');
+    await cp(static_dir, dist, {
         recursive: true,
-        filter: src => path.basename(src) !== '.DS_Store',
+        // the drawings are not copied: minify_svgs writes them instead
+        filter: src => path.basename(src) !== '.DS_Store' && !src.endsWith('.svg'),
     });
-    const svg = await minify_svgs(dist);
+    const svg = await minify_svgs(static_dir, dist);
+    // minify_svgs only looks at static/'s top level, which is where all 54
+    // live. A drawing added in a subdirectory would be skipped by the copy
+    // above and never written by minify_svgs -- so it would silently vanish
+    // from the site rather than fail. Count them and complain instead.
+    const all_svgs = (await readdir(static_dir, { recursive: true }))
+        .filter(f => f.endsWith('.svg')).length;
+    if (all_svgs !== svg.files){
+        throw new Error(`${all_svgs - svg.files} SVG(s) live in a subdirectory of static/;`
+            + ' minify_svgs only handles the top level');
+    }
 
     await rm(ssr, { recursive: true, force: true });
     console.log(`built ${pages.length + redirects.length} pages to dist/`

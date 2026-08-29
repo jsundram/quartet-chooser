@@ -18,13 +18,16 @@ modules + `data.json`) for Node, React renders every route in `src/lib/routes.js
   through esbuild `define` — see `CLASS_NAMES` in `scripts/render.js`.
 - Site-wide constants (URL, title, share cards, GoatCounter endpoint and event name) live in
   `src/lib/site.js`. Change them there, not at the use sites.
-- `npm test` runs `test/*.test.mjs` against a real `dist/`. It is fast (~5s); run it. One test
-  shells out to four full builds, so it dominates the runtime, and it breaks if anything else builds
-  at the same moment — `build.mjs` opens with `rm -rf dist`, so two concurrent builds delete each
-  other's output. Don't run a build and the tests against the same tree at once.
+- `build.mjs` takes an optional output directory (`node scripts/build.mjs <dir>`), defaulting to
+  `dist/` — which is what `netlify.toml` publishes. It **clears that directory first**, so two
+  builds writing to the same output will fight; that is why the tests build elsewhere.
+- `npm test` runs `test/*.test.mjs` (~2.7s). It builds into a temp directory and **never touches
+  `dist/`**, so it is safe to run alongside `npm run build` or another test run. Run `npm run build`
+  yourself if you want a `dist/` to serve.
 - The optimized drawings are cached in `.cache/svg/`, keyed on each drawing's bytes plus
-  `scripts/build.mjs` itself, so editing the build invalidates them automatically. A cold build is
-  ~4.7s and a warm one ~0.9s. Deleting `.cache/` only costs one slow build.
+  `scripts/build.mjs` itself, so editing the build invalidates them automatically and each build
+  prunes what it did not use. A cold build is ~4.6s and a warm one ~0.8s; deleting `.cache/` only
+  costs one slow build.
 
 ## Assets: what is committed and what the build generates
 
@@ -34,9 +37,11 @@ Three categories, and the rule is about what Netlify's build image can run, not 
   (`npm run og`). Their tools are `rsvg-convert` and `pngquant`, which Netlify does not have. The
   build re-checks the cards' size on the way past, because a stale or hand-edited oversized card
   would otherwise ship silently and break link previews.
-- **Generated in the build** — the portrait SVGs (below). `svgo` and `svgpath` are pure JS and run
+- **Generated in the build** — the portrait SVGs (below), read from `static/` and written to the
+  output directory the way esbuild handles JS and CSS. `svgo` and `svgpath` are pure JS and run
   anywhere, so `static/` keeps the drawings as delivered and there is no 54-file diff whenever the
-  artwork changes. Both are `dependencies`, not devDependencies, because `npm run build` needs them
+  artwork changes. Note `cp` deliberately skips `.svg`, and the build fails loudly if a drawing
+  turns up in a subdirectory of `static/`, where `minify_svgs` would not see it. Both are `dependencies`, not devDependencies, because `npm run build` needs them
   and Netlify runs `npm run build`.
 - **Copied through** — everything else in `static/`.
 
