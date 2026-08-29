@@ -5,7 +5,7 @@
 // See docs/simplification-plan.md, Phase 1.
 import * as esbuild from 'esbuild'
 import { createHash } from 'node:crypto'
-import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, readdir, rm, stat, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -174,11 +174,25 @@ function svgo_pass(source, file, digits){
 // file is deliberately over-eager -- any edit here busts every entry -- but it
 // means nobody has to remember to bump a version constant after changing the
 // pipeline, which is exactly the mistake that would ship stale artwork.
-async function cached_svg(source, name, transform){
-    const key = createHash('sha256')
+function cache_key(source){
+    return createHash('sha256')
         .update(BUILD_SOURCE).update('\0').update(source)
-        .digest('hex').slice(0, 32);
-    const hit = path.join(svg_cache, `${key}.svg`);
+        .digest('hex').slice(0, 32) + '.svg';
+}
+
+// Every edit to this file changes BUILD_SOURCE and so changes all 54 keys.
+// Without pruning the cache grows by ~1.1 MB per revision of the build and
+// never shrinks -- measured: 54 entries became 162 after two trivial edits.
+// So each build drops whatever it did not use. Nothing here is precious; a
+// wrong prune costs one slow build.
+async function prune_svg_cache(keep){
+    for (const f of await readdir(svg_cache).catch(() => [])){
+        if (!keep.has(f)) await unlink(path.join(svg_cache, f)).catch(() => {});
+    }
+}
+
+async function cached_svg(source, transform){
+    const hit = path.join(svg_cache, cache_key(source));
     try {
         return await readFile(hit, 'utf8');
     } catch {
@@ -192,12 +206,14 @@ async function cached_svg(source, name, transform){
 
 async function minify_svgs(dir){
     const files = (await readdir(dir)).filter(f => f.endsWith('.svg'));
+    const keep = new Set();
     let before = 0, after = 0;
     for (const name of files){
         const file = path.join(dir, name);
         const source = await readFile(file, 'utf8');
 
-        const data = await cached_svg(source, name, () => {
+        keep.add(cache_key(source));
+        const data = await cached_svg(source, () => {
             const collapsed = svgo_pass(source, file, 4);   // structure, not size
             return svgo_pass(normalize_svg(collapsed, name), file, 0);
         });
@@ -213,6 +229,7 @@ async function minify_svgs(dir){
         after += Buffer.byteLength(data);
         await writeFile(file, data);
     }
+    await prune_svg_cache(keep);
     return { files: files.length, before, after };
 }
 
