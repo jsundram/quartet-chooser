@@ -444,7 +444,7 @@ So the precache question resolves to **precache everything static**, not shell +
 |---|---|---|---|
 | HTML | 280 | 3.16 MB | ~1.2 MB (the shuffle route list stops being inlined twice per page) |
 | Portrait SVGs | 54 | 2.58 MB | smaller; unminified today |
-| PNGs (icons, share cards, `icon.png`, `play.png`) | 32 | 1.06 MB | ~0.95 MB (`icon.png` stops shipping at 512×16-bit) |
+| PNGs (icons, share cards, `icon.png`) | 31 | ~1.05 MB | Phase 7 dropped `play.png` and stopped serving `icon.png` to browsers |
 | JS | 2 | 1 KB | |
 | **Total** | **368** | **7.7 MB** | **~4 MB** |
 
@@ -453,9 +453,10 @@ survive. **This is why Phase 7 runs first** — it roughly halves the payload, a
 reason the page is slow online, which no amount of caching would have fixed. Then:
 
 - [ ] **Two-tier precache.** Tier 1 at `install`, small and synchronous-feeling: `/`, `/about/`,
-      `/404.html`, the offline fallback, both JS files, the header icon, `play.png`, the manifest
-      icons. Tier 2 after `activate`, throttled and failure-tolerant in the background: all ~280
-      routes and every portrait. A tier-2 failure must never fail the install.
+      `/404.html`, the offline fallback, both JS files, the header icon (`/icons/icon-96x96.png`)
+      and the manifest icons. Tier 2 after `activate`, throttled and failure-tolerant in the
+      background: all ~280 routes and every portrait. A tier-2 failure must never fail the install.
+      (Not `play.png` — Phase 7 deleted it; the play glyph is inline SVG in the page now.)
 - [ ] `SHELL` and the tier-2 list derived from the build's route list (`test/fixtures/routes.json`
       is generated from the same source), never hand-maintained.
 - [ ] Version constant `V` with a numeric tail, bumped on every shell change; wire an

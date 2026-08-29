@@ -33,13 +33,18 @@
 # build manifest between the generator, the tests and Phase 5's precache list
 # for no measurable gain. Revisit if the client JS ever grows into a bundle.
 #
-# VERIFY ON THE DEPLOY PREVIEW, not locally: `npm run serve` sets its own
-# headers and knows nothing about this file. The extension globs below
-# (/*.svg, /*.png) are the part to check -- Netlify's path matcher is well
-# documented for directory splats like /icons/* and much less so for these:
-#   curl -sI https://<preview>/Bach.svg | grep -i cache-control
-# If an extension glob turns out not to match, the fallback is to serve the
-# portraits from a directory and glob that instead.
+# Verified on deploy preview 44 (2026-08-29), because `npm run serve` sets its
+# own headers and knows nothing about this file. The open question was whether
+# Netlify's matcher honours extension globs like /*.svg as well as it does
+# directory splats like /icons/*. It does:
+#   /Bach.svg              max-age=604800   <- the extension glob
+#   /                      max-age=0, must-revalidate
+#   /js/shuffle.js         max-age=300
+# The /icons/* and /og/* rules are therefore redundant with /*.png, and are
+# kept anyway: they cost nothing, the values are identical so an overlap
+# changes nothing, and nothing has established that /*.png reaches a
+# subdirectory the way /*.svg reaches the root. Netlify returned a single
+# Cache-Control per file, not one per matching rule.
 
 # There is deliberately no `for = "/*"` rule. HTML must revalidate on every
 # request -- a deploy has to be visible immediately -- and Netlify's default
@@ -59,12 +64,17 @@
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=2592000"
 
-# Client scripts: an hour fresh, a week of background refresh. An hour is
-# longer than any browsing session, which is where the round trips were.
+# Client scripts. Shorter than the assets above, and deliberately so: since
+# the nav's route lists moved out of the markup and into shuffle.js, this file
+# is data as well as code. The HTML on a page is always revalidated, so a
+# long-lived shuffle.js could have a visitor running a week-old route list on
+# an otherwise current page -- and a retired or renamed quartet would then make
+# the 🔀 link a 404. Five minutes still covers the round trips that mattered
+# (they were per-navigation, within a session), and bounds that window.
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=3600, stale-while-revalidate=604800"
+    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
 
 # The portraits and signatures, which live at the root because that is where
 # static/ copies them. The single biggest asset class on the site.

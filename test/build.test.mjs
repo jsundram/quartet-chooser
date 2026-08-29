@@ -882,15 +882,29 @@ describe('link integrity', () => {
         // and the file is carrying coordinates in a space up to 8x too large.
         for (const name of readdirSync(dist).filter(f => f.endsWith('.svg'))){
             const svg = readFileSync(path.join(dist, name), 'utf8');
-            assert.ok(!/<path\b[^>]*\stransform=/.test(svg), `${name} still has a path transform`);
+            // any transform, not just one on a <path>: svgo leaves them on a
+            // <g> whenever the group also carries clip-path, mask, filter or
+            // an unmergeable style, and one surviving on an ancestor is
+            // exactly the "fold silently declined" case this guards
+            assert.ok(!/\stransform=/.test(svg), `${name} still carries a transform`);
         }
     });
 
     test('every drawing is normalized to the same coordinate space', () => {
         // what makes "round to N places" mean one thing across all 54 files;
-        // see SVG_UNITS in scripts/build.mjs
-        for (const name of readdirSync(dist).filter(f => f.endsWith('.svg'))){
-            const svg = readFileSync(path.join(dist, name), 'utf8');
+        // see SVG_UNITS in scripts/build.mjs. An SVG without a viewBox is not
+        // one of the drawings -- the build ships it as authored -- so the set
+        // this walks is "everything with a viewBox", and it has to still be
+        // all 54, or a drawing quietly stopped being normalized.
+        const drawings = readdirSync(dist).filter(f => f.endsWith('.svg'))
+            .map(name => [name, readFileSync(path.join(dist, name), 'utf8')])
+            .filter(([, svg]) => /viewBox=/.test(svg));
+        const authored = readdirSync(path.join(root, 'static'))
+            .filter(f => f.endsWith('.svg'))
+            .filter(f => /viewBox=/.test(readFileSync(path.join(root, 'static', f), 'utf8')));
+        assert.equal(drawings.length, authored.length,
+            `${authored.length} drawings in static/, ${drawings.length} normalized in dist/`);
+        for (const [name, svg] of drawings){
             const vb = /viewBox="\s*[-\d.eE]+[,\s]+[-\d.eE]+[,\s]+[-\d.eE]+[,\s]+([-\d.eE]+)/.exec(svg);
             assert.ok(vb, `${name} has no viewBox`);
             assert.equal(Math.round(Math.abs(Number(vb[1]))), 16384,

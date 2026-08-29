@@ -169,8 +169,11 @@ const PHASES = [
                 { id: 'p4-blocked', label: 'Adblocker <b>on</b>: the site works normally, nothing broken in the console' },
                 { id: 'p4-counted', label: 'Adblocker <b>off</b>: the visit shows up in the <a href="https://quartet-roulette.goatcounter.com/">dashboard</a>' },
                 { id: 'p4-event', label: 'Tap or click a play control on a work page, then look for <span class="path">play-recording</span> under Events',
-                  note: `Only touch devices can produce this one. On desktop the recording is a Spotify
-                         iframe, and a play inside it is invisible to the page &mdash; nothing to count.` },
+                  note: `Any device can produce this one now. Until Phase&nbsp;7 a desktop recording
+                         was a Spotify iframe and a play inside it was invisible to the page; every
+                         device now has to click to summon the player, and that click is counted.
+                         Expect the numbers to step up when Phase&nbsp;7 lands &mdash; wider
+                         coverage, not more listening.` },
               ] },
         ],
         more: {

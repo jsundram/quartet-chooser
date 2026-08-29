@@ -137,10 +137,29 @@ function normalize_svg(text, name){
              + out.slice(d2.index + d2[0].length - 1);
     });
 
-    if (PATH_TAG.test(text) && /<path\b[^>]*\stransform=/.test(text)){
-        // svgpath declined one -- almost certainly a transform shape it does
-        // not treat as safe. Better to stop than to ship a reshaped portrait.
-        throw new Error(`${name} still has a transform on a path after folding`);
+    // ANY surviving transform, not just one on a <path>. svgo does not always
+    // push a group transform down: collapseGroups and moveGroupAttrsToElems
+    // bail when the <g> also carries clip-path, mask, filter, opacity or a
+    // style it cannot merge. A transform left on an ancestor still applies
+    // after this function has scaled the path data and the viewBox, and any
+    // translate in it is then unscaled -- a drawing rendered at the wrong
+    // offset, with nothing to notice it. Stop instead.
+    if (/\stransform=/.test(text)){
+        throw new Error(`${name} still has a transform after folding`);
+    }
+
+    // Only <path> coordinates are scaled above, but the viewBox is scaled for
+    // the whole document, so any other geometry would keep its old coordinates
+    // inside a viewBox up to 26x larger and render tiny in the corner. All 54
+    // drawings reduce to paths today, and preset-default does NOT convert
+    // <circle>/<ellipse> (that needs convertArcs) or <rect rx>, so the first
+    // drawing that contains one has to fail here rather than ship wrong.
+    const FOLDABLE = new Set(['svg', 'g', 'defs', 'path']);
+    for (const [, el] of text.matchAll(/<([a-zA-Z][\w:-]*)/g)){
+        if (!FOLDABLE.has(el)){
+            throw new Error(`${name} contains <${el}>, whose coordinates this`
+                + ' does not scale; only <path> geometry can be normalized');
+        }
     }
     const scaled = `viewBox="${(x*k).toFixed(4)} ${(y*k).toFixed(4)} `
                  + `${(w*k).toFixed(4)} ${(h*k).toFixed(4)}"`;
@@ -216,10 +235,21 @@ async function cached_svg(source, transform){
 async function minify_svgs(src_dir, out_dir){
     const names = (await readdir(src_dir)).filter(f => f.endsWith('.svg'));
     const keep = new Set();
-    let before = 0, after = 0;
+    let before = 0, after = 0, copied = 0;
     for (const name of names){
         const file = path.join(src_dir, name);
         const source = await readFile(file, 'utf8');
+
+        // Not every SVG at static/'s root is one of the drawings, and this
+        // pipeline is only meaningful for something with a viewBox to
+        // normalize against. scripts/make-icons.mjs documents static/icon.svg
+        // as its preferred input, so a file like that landing here must not
+        // hard-fail the build (and with it the deploy) -- it ships as authored.
+        if (!VIEWBOX.test(source)){
+            await writeFile(path.join(out_dir, name), source);
+            copied++;
+            continue;
+        }
 
         keep.add(cache_key(source));
         const data = await cached_svg(source, () => {
@@ -239,7 +269,7 @@ async function minify_svgs(src_dir, out_dir){
         await writeFile(path.join(out_dir, name), data);
     }
     await prune_svg_cache(keep);
-    return { files: names.length, before, after };
+    return { files: names.length, drawings: names.length - copied, copied, before, after };
 }
 
 // Everything a browser needs to install the site, derived from the manifest so
