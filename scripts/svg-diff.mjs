@@ -66,6 +66,11 @@ for (const name of names){
 </section>`);
 }
 
+// npm test builds into a temp directory and cleans up after itself, so a
+// fresh checkout has no dist/ at all -- in which case every drawing is
+// missing and a report of nothing would render `NaN% smaller` over a blank
+// page and still exit 0. Fail the way the empty-static/ case above does.
+if (!rows.length) throw new Error('nothing in dist/ -- run `npm run build` first');
 if (missing) console.warn(`${missing} drawing(s) not found in dist/ -- run \`npm run build\` first`);
 
 const html = `<!doctype html>
@@ -97,7 +102,7 @@ const html = `<!doctype html>
   /* identical pixels subtract to black; anything that moved glows, and the
      gain makes a fraction of a pixel of antialiasing visible */
   .diff { background: #000; filter: brightness(var(--gain)); }
-  /* top/left only, never `inset: 0`. With both left and right pinned and
+  /* top/left only, never \`inset: 0\`. With both left and right pinned and
      width:auto, the used width solves to the pane's width -- so the shipped
      drawing would be stretched to the authored one's width and any change in
      aspect ratio, the very thing this pane advertises catching, would render

@@ -635,12 +635,23 @@ async function build(){
             + ' minify_svgs only handles the top level');
     }
 
-    await rm(ssr, { recursive: true, force: true });
-    console.log(`built ${pages.length + redirects.length} pages to dist/`
+    // name the directory actually written: this script takes the output as
+    // an argument, and the test builds and sub-builds use it
+    const where = dist.startsWith(root + path.sep) ? path.relative(root, dist) : dist;
+    console.log(`built ${pages.length + redirects.length} pages to ${where}/`
         + ` (${card_count} share cards under ${OG_MAX_BYTES.toLocaleString()} bytes;`
         + ` ${svg.drawings} drawings ${(svg.before/1024).toFixed(0)} KB`
         + ` -> ${(svg.after/1024).toFixed(0)} KB`
         + (svg.copied ? `; ${svg.copied} SVG(s) copied as-is` : '') + ')');
 }
 
-await build();
+// Success or failure, this run's SSR scratch must not outlive it. The
+// per-output namespacing means no other build ever sweeps it -- a test
+// build's directory name is minted fresh per run -- so a build that threw
+// partway (a bad drawing, an oversized share card, an esbuild error) would
+// otherwise leak one .cache/ssg-* directory per failure, forever.
+try {
+    await build();
+} finally {
+    await rm(ssr, { recursive: true, force: true });
+}

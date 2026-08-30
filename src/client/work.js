@@ -112,11 +112,14 @@
     // for no reason a reader could see -- it recorded which rows you had
     // happened to click, which is not information anybody wants. One open
     // player reads as "this is the one playing", which is.
-    var open = null; // { box, link } -- the link is kept to put back
+    var open = null; // { box, link, table, table_class } -- link and class to put back
     function close_open(focus_link){
         if (!open) return;
         var link = open.link;
         open.box.parentNode.replaceChild(link, open.box);
+        // and narrow the Recording column again: a closed player must leave
+        // the page as it found it, not 400px wide around a 24px glyph
+        if (open.table) open.table.className = open.table_class;
         open = null;
         // only when the reader asked to close: putting focus back on the link
         // is right after pressing Escape or the close button, and wrong when
@@ -142,10 +145,13 @@
         frame.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
         frame.allowFullscreen = true;
 
-        // widen the Recording column, once, the first time a player appears --
-        // at rest it is sized for a 24px glyph, which an 80px player would
-        // spill out of. The list and single-player layouts have no table.
+        // widen the Recording column while a player is open -- at rest it is
+        // sized for a 24px glyph, which an 80px player would spill out of.
+        // The class to restore is read *after* close_open() above has put any
+        // previous player away, so it is always the rest layout. The list and
+        // single-player layouts have no table.
         var table = link.closest('table');
+        var table_class = table ? table.className : '';
         if (table) table.className = TABLE_PLAYING;
 
         // The player goes in a box with a way back out of it. On a page with
@@ -169,7 +175,7 @@
         box.appendChild(frame);
         box.appendChild(close);
         link.parentNode.replaceChild(box, link);
-        open = { box: box, link: link };
+        open = { box: box, link: link, table: table, table_class: table_class };
         // The close button, not the frame. The click that summoned this left
         // focus nowhere a keyboard user can find, so something here has to
         // take it -- and focusing the frame hands the keyboard to a

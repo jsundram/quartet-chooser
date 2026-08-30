@@ -807,6 +807,20 @@ describe('client scripts', () => {
     });
 });
 
+describe('the tool scripts parse', () => {
+    // The suite runs build.mjs and bundles render.js, but the tool scripts
+    // (svg-diff, make-icons, make-og, make-checklist) are only ever parsed
+    // when a person runs them -- and one of them once shipped with an
+    // unescaped backtick inside its big template literal, which no test
+    // could see. render.js is JSX and is excluded; everything else in
+    // scripts/ must at least be a valid module.
+    for (const f of readdirSync(path.join(root, 'scripts')).filter(f => f.endsWith('.mjs'))){
+        test(`scripts/${f} is valid JavaScript`, () => {
+            execFileSync(process.execPath, ['--check', path.join(root, 'scripts', f)]);
+        });
+    }
+});
+
 describe('link integrity', () => {
     // exact-case set membership, not existsSync: existsSync is
     // case-insensitive on macOS, so a /Haydn/ reference would pass
