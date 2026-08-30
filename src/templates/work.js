@@ -79,8 +79,11 @@ export default function Work({ pageContext }) {
                data-embed={m.spotify.replace("/track/", "/embed/track/")}
                /* the whole control is a glyph, so this is its accessible
                   name; "Play" on every row of a table says nothing about
-                  which row */
-               aria-label={"Play " + m.title}>
+                  which row. Beethoven's Op. 133 is the one work whose single
+                  movement has no title at all, which made this "Play " --
+                  a trailing space naming nothing -- so fall back to the work.
+                  Utils.get_work_title() is what the <h1> uses. */
+               aria-label={m.title ? "Play " + m.title : "Play " + title}>
                 {/* decorative twin of the label above it */}
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <circle cx="12" cy="12" r="10.6" fill="none"

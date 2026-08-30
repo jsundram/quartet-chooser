@@ -268,15 +268,17 @@ const PHASES = [
                      and paints in 7.6s against the SVG's 3.4s. Raster only wins on a 1&times;
                      screen. It looks worse too &mdash; softer at 200&nbsp;px, mush if you
                      pinch-zoom. <b>Nothing to decide; they stay as they are.</b>` },
-            { id: 'p7-headers', label: '<b>Check two cache headers on the deploy preview</b>',
-              note: `The only thing in this phase I could not test locally. Netlify documents
-                     directory globs; extension globs much less so, and the portraits live at the
-                     root. If <span class="path">/*.svg</span> does not match, the fallback is
-                     written down in <span class="path">netlify.toml</span>.`,
-              children: [
-                  { id: 'p7-headers-svg', label: '<span class="path">curl -sI &lt;preview&gt;/Bach.svg | grep -i cache-control</span> &mdash; wanted: <span class="path">max-age=604800</span>' },
-                  { id: 'p7-headers-html', label: 'The same on the page itself still says <span class="path">max-age=0, must-revalidate</span> &mdash; deploys must stay instant' },
-              ] },
+            { id: 'p7-headers', done: true, label: 'Verified: the <b>cache headers land</b> on the deploy preview',
+              note: `This was the one thing I could not test locally, because Netlify's own path
+                     matcher decides whether the rules apply &mdash; and the open question was
+                     whether it honours extension globs like <span class="path">/*.svg</span> as
+                     well as directory ones. It does. Checked 29&nbsp;Aug against preview 44:
+                     <span class="path">/Bach.svg</span> &rarr;
+                     <span class="path">max-age=604800</span>, the page itself &rarr;
+                     <span class="path">max-age=0, must-revalidate</span> so deploys stay instant,
+                     and <span class="path">/js/shuffle.js</span> &rarr;
+                     <span class="path">max-age=300</span>. Netlify also returns one
+                     Cache-Control per file rather than one per matching rule.` },
             { id: 'p7-spotify-real', label: 'On the preview, <b>click a play control and check the real Spotify player</b>',
               note: `I drove this in a headless browser with the embed stubbed, because
                      <span class="path">open.spotify.com</span> was not reachable from where I ran
@@ -359,8 +361,9 @@ const BLOCKING = [
         needs your eyes rather than my judgement.` },
     { tag: 'Review', body: `<b>Phase 7 is up as <a href="${REPO}/pull/44">PR&nbsp;#44</a>.</b> Merge it
         with <span class="path">--ff-only</span> or a merge commit &mdash; never squash or rebase,
-        because <span class="path">pwa.md</span> cites the commit hashes. While the preview is up,
-        two curl commands are the one thing I could not test locally; they are in the PR body.` },
+        because <span class="path">pwa.md</span> cites the commit hashes. The cache headers are
+        verified on the preview; what is left is a look at a work page's play control, which is the
+        one thing I could only test against a stubbed Spotify.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];

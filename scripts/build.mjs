@@ -15,41 +15,34 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // this file's own bytes, so the SVG cache invalidates whenever the pipeline
 // that filled it changes
 const BUILD_SOURCE = await readFile(fileURLToPath(import.meta.url), 'utf8');
-// ... and the versions of the two libraries that actually do the work. They
-// are pinned exactly in package.json, so upgrading one is a package.json edit
-// rather than a build.mjs edit -- without this, every cache key would stay
-// valid across the upgrade and the build would keep emitting the old svgo's
-// output forever, which is precisely the silent-staleness this cache is
-// otherwise designed to avoid.
-// read off disk rather than require()'d: svgo does not export its own
-// package.json, so `require('svgo/package.json')` throws
-// ERR_PACKAGE_PATH_NOT_EXPORTED. Falling back to the range declared in our
-// package.json keeps this working in an install layout where node_modules is
-// hoisted somewhere else -- it is a weaker key, but never a wrong one.
-async function tool_version(name){
-    for (const p of [path.join(root, 'node_modules', name, 'package.json'),
-                     path.join(root, 'package.json')]){
-        try {
-            const pkg = JSON.parse(await readFile(p, 'utf8'));
-            const v = p.endsWith(`${name}/package.json`) ? pkg.version
-                                                         : pkg.dependencies?.[name];
-            if (v) return v;
-        } catch { /* try the next one */ }
+// ... and the exact dependency tree, via package-lock.json. Hashing the two
+// top-level versions was not enough: svgo declares its own dependencies as
+// ranges, and csso/css-tree are what actually re-serialize the path data. An
+// `npm update` can move one inside svgo's range while package.json, build.mjs
+// and svgo's own version all stay put -- leaving every cache key valid and the
+// build emitting bytes from the old dependency until someone edits this file.
+// The lockfile changes exactly when any resolved version does.
+//
+// It is over-eager in the other direction (a react bump invalidates all 54
+// drawings), which is the same trade as hashing this file: a wasted rebuild
+// costs 4 seconds, and a stale drawing ships.
+async function svg_tool_fingerprint(){
+    for (const f of ['package-lock.json', 'package.json']){
+        try { return await readFile(path.join(root, f), 'utf8'); }
+        catch { /* try the next one */ }
     }
-    return 'unknown';
+    return 'no lockfile';
 }
-const SVG_TOOLS = (await Promise.all(['svgo', 'svgpath']
-    .map(async m => `${m}@${await tool_version(m)}`))).join(' ');
+const SVG_TOOLS = await svg_tool_fingerprint();
+
 // Where the site is written. Defaults to dist/, which is what netlify.toml
 // publishes; the argument exists so a test can build somewhere else instead of
 // mutating the tree every other test is reading.
 //
 // It is validated because build() opens by recursively removing this path with
 // force: true. Before the argument existed that was a hardcoded gitignored
-// constant; now it is the first argument to a routine command, and
-// `npm run build -- .` would take the repository with it. The only intended
-// callers are the default and the test suite, so: somewhere under the repo, or
-// somewhere under the system temp directory, and nothing else.
+// constant; now it is the first argument to a routine command.
+
 // resolve symlinks as far as the path actually exists, so that comparing two
 // paths compares the same thing. macOS matters here: os.tmpdir() is /var/...,
 // a symlink to /private/var/..., and mkdtemp hands back the unresolved form.
@@ -88,6 +81,7 @@ function output_dir(arg){
     }
     return out;
 }
+
 const dist = output_dir(process.argv[2]);
 const cache = path.join(root, '.cache'); // gitignored; may hold stale Gatsby output
 // scratch, namespaced by output, so two builds with different outputs do not
@@ -562,6 +556,8 @@ async function build(){
         define: {
             TABLE_PLAYING: script_json(CLASS_NAMES.tablePlaying),
             PLAY_ICON: script_json(CLASS_NAMES.playIcon),
+            PLAYER_BOX: script_json(CLASS_NAMES.playerBox),
+            CLOSE_PLAYER: script_json(CLASS_NAMES.closePlayer),
             PLAY_EVENT: script_json(GC_PLAY_EVENT),
             SHUFFLE_TARGETS: script_json(targets),
         },
@@ -588,8 +584,8 @@ async function build(){
         await writeFile(path.join(dir, 'index.html'), html);
     }
 
-    // 5. Render every page. The nav's 🔀 links put data-shuffle on every
-    // page, so every page loads shuffle.js.
+    // 5. Render every page. The nav's 🔀 links carry data-shuffle-key on every
+    // page (the lists themselves live in shuffle.js), so every page loads it.
     const pages = render_pages();
     for (const page of pages){
         let scripts = '<script src="/js/shuffle.js"></script>';

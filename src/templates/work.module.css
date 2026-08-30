@@ -27,6 +27,44 @@
     display: block;
 }
 
+/* The embedded player, and the way back out of it. Without a close control a
+   work page with a single recording (Beethoven's Op. 133) is a one-way door:
+   the play link is gone, so there is no way to reach Spotify itself, or to
+   cmd-click it, short of reloading. Elsewhere you could at least open another
+   movement to put this one back.
+
+   Sized below the 44px touch floor deliberately: a tap never embeds a player
+   (it follows the link to the Spotify app), so this control only ever appears
+   where there is a mouse or a keyboard. */
+.playerBox {
+    position: relative;
+    display: flex;
+    width: 100%;
+}
+
+.closePlayer {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid #11101133;
+    border-radius: 50%;
+    background: #fffffff2;
+    color: #111011;
+    font: inherit;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.closePlayer:hover,
+.closePlayer:focus-visible {
+    background: #fff;
+    border-color: #111011;
+}
+
 /* Two column layouts, and neither of them is about the device any more
    (pwa.md Phase 7). At rest every row holds a play control, so the Recording
    column is narrow everywhere; work.js widens it the moment a real Spotify

@@ -97,14 +97,22 @@ const html = `<!doctype html>
   /* identical pixels subtract to black; anything that moved glows, and the
      gain makes a fraction of a pixel of antialiasing visible */
   .diff { background: #000; filter: brightness(var(--gain)); }
-  .diff img:last-child { position: absolute; inset: 0; mix-blend-mode: difference; }
+  /* top/left only, never `inset: 0`. With both left and right pinned and
+     width:auto, the used width solves to the pane's width -- so the shipped
+     drawing would be stretched to the authored one's width and any change in
+     aspect ratio, the very thing this pane advertises catching, would render
+     as pure black. */
+  .diff img:last-child { position: absolute; top: 0; left: 0; right: auto;
+                         mix-blend-mode: difference; }
 </style></head>
 <body>
 <header>
   <h1>Drawings: authored vs shipped</h1>
   <p>Left is <code>static/</code> as delivered, middle is what the build ships. The right pane
      stacks them with a difference blend and turns the brightness up: <b>black means identical</b>,
-     and anything that moved glows. A faint outline everywhere is expected &mdash; that is
+     and anything that moved glows. The shipped drawing is placed at its own size, not fitted to the
+     pane, so a change in aspect ratio shows up as the two diverging across the width rather than
+     being hidden. A faint outline everywhere is expected &mdash; that is
      antialiasing on edges, and it is what all 54 should look like. <b>A solid bright shape means
      something actually moved, vanished or resized</b>, and it will be obvious.</p>
   <p>Rounding error scales with size, so drag the size up to see the worst case. The home page draws

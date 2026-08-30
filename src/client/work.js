@@ -10,7 +10,10 @@
 // an 80px embed on a phone.
 //
 // A click swaps the control for the real embed, in place, and widens the
-// Recording column to fit it. That costs a second click to actually start
+// Recording column to fit it. The embed carries a close button, and Escape
+// closes it too: without one, a work page with a single recording -- there is
+// exactly one, Beethoven's Op. 133 -- is a one-way door, with no link left to
+// reach Spotify itself and no other movement to open in order to put it back. That costs a second click to actually start
 // playback -- the embed cannot autoplay from a gesture outside its own frame
 // -- which is the price of not loading seven third-party frames on a page most
 // people open to read.
@@ -22,9 +25,9 @@
 // navigated the whole page off to Spotify, losing the work page. The event
 // knows which input made it, so ask the event.
 //
-// TABLE_PLAYING and PLAY_ICON are injected by scripts/build.mjs (esbuild
-// define) with the hashed CSS-module class names; PLAY_EVENT with the
-// GoatCounter event name from src/lib/site.js.
+// TABLE_PLAYING, PLAY_ICON, PLAYER_BOX and CLOSE_PLAYER are injected by
+// scripts/build.mjs (esbuild define) with the hashed CSS-module class names;
+// PLAY_EVENT with the GoatCounter event name from src/lib/site.js.
 (function () {
     // Whether this *device* could produce a touch. Only used as a fallback,
     // for browsers with no PointerEvent (Safari before 13), where the old
@@ -40,7 +43,24 @@
             pointer = e.pointerType;
         }, true);
     }
-    function is_tap(){
+    function is_tap(e){
+        // A click with no pointer behind it -- Enter or Space on a focused
+        // link, or an assistive-technology activation -- has detail 0 and no
+        // preceding pointerdown, so `pointer` would still hold whatever
+        // gesture last happened anywhere on the page. Scroll a work page with
+        // a finger, then tab to a control and press Enter, and without this
+        // the page would navigate off to Spotify.
+        //
+        // With no gesture to inspect, ask the device -- but ask the question
+        // that separates a phone from a touchscreen laptop, which
+        // maxTouchPoints cannot: does it have any fine pointer at all. A
+        // laptop has a trackpad and should get the in-place player; a phone
+        // has neither and should open the app.
+        if (e && e.detail === 0){
+            return window.matchMedia
+                ? !window.matchMedia('(any-pointer: fine)').matches
+                : touchable;
+        }
         return window.PointerEvent ? pointer === 'touch' : touchable;
     }
 
@@ -92,15 +112,25 @@
     // for no reason a reader could see -- it recorded which rows you had
     // happened to click, which is not information anybody wants. One open
     // player reads as "this is the one playing", which is.
-    var open = null; // { frame, link } -- the link is kept to put back
-    function close_open(){
+    var open = null; // { box, link } -- the link is kept to put back
+    function close_open(focus_link){
         if (!open) return;
-        open.frame.parentNode.replaceChild(open.link, open.frame);
+        var link = open.link;
+        open.box.parentNode.replaceChild(link, open.box);
         open = null;
+        // only when the reader asked to close: putting focus back on the link
+        // is right after pressing Escape or the close button, and wrong when
+        // this fires because they opened a different movement
+        if (focus_link) link.focus();
     }
 
+    // Escape closes, as it does for anything else that opens over a page.
+    document.addEventListener('keydown', function (e){
+        if (e.key === 'Escape' && open) close_open(true);
+    }, false);
+
     function embed(link){
-        close_open();
+        close_open(false);
         var frame = document.createElement('iframe');
         frame.src = link.getAttribute('data-embed');
         // the control's accessible name is "Play <movement>"; the frame that
@@ -118,11 +148,35 @@
         var table = link.closest('table');
         if (table) table.className = TABLE_PLAYING;
 
-        link.parentNode.replaceChild(frame, link);
-        open = { frame: frame, link: link };
-        // the click that summoned it was on the link, so focus went nowhere a
-        // keyboard user can find; the frame is the thing they asked for
-        frame.focus();
+        // The player goes in a box with a way back out of it. On a page with
+        // one recording -- Beethoven's Op. 133 -- replacing the link outright
+        // is a one-way door: nothing left to click through to Spotify itself,
+        // and no other movement to open in order to put this one back.
+        var box = document.createElement('span');
+        box.className = PLAYER_BOX;
+
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = CLOSE_PLAYER;
+        close.setAttribute('aria-label', 'Close player');
+        close.textContent = '\u00d7';
+        close.addEventListener('click', function (e){
+            e.preventDefault();
+            e.stopPropagation();   // the delegated handler must not see this
+            close_open(true);
+        }, false);
+
+        box.appendChild(frame);
+        box.appendChild(close);
+        link.parentNode.replaceChild(box, link);
+        open = { box: box, link: link };
+        // The close button, not the frame. The click that summoned this left
+        // focus nowhere a keyboard user can find, so something here has to
+        // take it -- and focusing the frame hands the keyboard to a
+        // cross-origin document, where our Escape handler never sees the
+        // keypress. This keeps the way out reachable, announces that the
+        // player opened, and leaves the frame one Tab away.
+        close.focus();
     }
 
     // One listener on the document rather than one per control: a work page
@@ -138,7 +192,7 @@
         // and for every click that means "somewhere else, please": a new tab,
         // a new window, a download, a middle click. Only a plain left click
         // is ours to take over.
-        if (is_tap()) return;
+        if (is_tap(e)) return;
         if (e.defaultPrevented || e.button !== 0) return;
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 

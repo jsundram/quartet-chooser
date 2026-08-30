@@ -15,7 +15,7 @@ import NotFoundPage, { Head as NotFoundHead } from '../src/pages/404'
 import Composer, { Head as ComposerHead } from '../src/templates/composer'
 import Work, { Head as WorkHead } from '../src/templates/work'
 
-import { tablePlaying, playIcon } from '../src/templates/work.module.css'
+import { tablePlaying, playIcon, playerBox, closePlayer } from '../src/templates/work.module.css'
 
 const COMPONENTS = {
     'index': { Page: IndexPage, Head: IndexHead },
@@ -44,7 +44,7 @@ function render_pages(){
 // class names come out of the CSS-modules build hashed; the client script
 // needs them to widen the Recording column when a player is embedded, and to
 // find the play controls it upgrades.
-const CLASS_NAMES = { tablePlaying, playIcon };
+const CLASS_NAMES = { tablePlaying, playIcon, playerBox, closePlayer };
 
 export { CLASS_NAMES, GC_ENDPOINT, GC_PLAY_EVENT, GC_SCRIPT, SITE_TITLE, SITE_URL,
          random_targets, render_pages };
