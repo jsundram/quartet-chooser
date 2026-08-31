@@ -33,9 +33,11 @@
    cmd-click it, short of reloading. Elsewhere you could at least open another
    movement to put this one back.
 
-   Sized below the 44px touch floor deliberately: a tap never embeds a player
-   (it follows the link to the Spotify app), so this control only ever appears
-   where there is a mouse or a keyboard. */
+   The glyph is 26px but the hit area is not (the ::before below): a tap
+   never *creates* a player, but input is decided per gesture, not per
+   device -- a trackpad click on a 2-in-1 opens one, and a finger can be
+   what reaches for the only way back out. That finger gets the same 44px
+   floor the play controls honour. */
 .playerBox {
     position: relative;
     display: flex;
@@ -57,6 +59,16 @@
     font-size: 15px;
     line-height: 1;
     cursor: pointer;
+}
+
+/* the touch target, drawn at nothing: 26px of button plus 9px of ring is
+   the Phase 3 floor. The pseudo-element is part of the button for hit
+   testing, and the button (positioned) paints above the iframe (static),
+   so the ring wins the overlap where it covers the player's corner. */
+.closePlayer::before {
+    content: '';
+    position: absolute;
+    inset: -9px;
 }
 
 .closePlayer:hover,

@@ -24,8 +24,15 @@
 #
 # Nothing here is content-hashed, so nothing here is `immutable`. The lever
 # used instead is stale-while-revalidate: serve from cache immediately, always,
-# and refresh in the background afterwards. A changed file is then at most one
-# navigation behind, and no visitor ever waits on a revalidation.
+# and refresh in the background afterwards. Note what that buys and what it
+# costs: SWR extends a response's usefulness *past* max-age rather than
+# shortening it (the /js/* comment below works the same arithmetic), so a
+# changed file here is up to seven days stale with no revalidation at all,
+# and only "one navigation behind" in the thirty-day window after that. For
+# artwork, icons and share cards that change about never, that is the
+# accepted price of removing the round trips -- but a redrawn portrait or a
+# regenerated card under the same filename can look like the deploy did not
+# take for up to a week.
 #
 # Deliberately NOT hashing /js/* filenames. It is the textbook answer and it
 # would buy `immutable`, but the two scripts total about 1 KB: the whole cost

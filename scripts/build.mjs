@@ -356,9 +356,13 @@ async function minify_svgs(src_dir, out_dir){
 
         // Not every SVG at static/'s root is one of the drawings, and this
         // pipeline is only meaningful for something with a viewBox to
-        // normalize against. scripts/make-icons.mjs documents assets/icon.svg
-        // as its preferred input, so a file like that landing here must not
-        // hard-fail the build (and with it the deploy) -- it ships as authored.
+        // normalize against: one without ships as authored. That is as far
+        // as the tolerance goes. Anything *with* a viewBox is taken for a
+        // drawing, and a stray decorative SVG -- assets/icon.svg has one,
+        // make-icons.mjs requires it -- stops the build, and with it the
+        // deploy, at its first non-<path> element. Failing loudly beats
+        // shipping art this pipeline was never meant for; it does mean
+        // static/'s root is not a dumping ground for icons.
         if (!VIEWBOX.test(source)){
             await writeFile(path.join(out_dir, name), source);
             copied++;
