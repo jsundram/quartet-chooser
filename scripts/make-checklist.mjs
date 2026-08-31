@@ -223,9 +223,11 @@ const PHASES = [
         ],
     },
     {
-        n: 'Phase 7', title: 'Page load performance', chip: 'waiting-c', status: 'In review &middot; PR #44',
-        blurb: `You said the site feels slower than it should, and asked why a page this small
-                weighs so much. Answer below &mdash; it is the drawings, and there is one more thing
+        n: 'Phase 7', title: 'Page load performance', chip: 'shipped', status: 'Merged &middot; live',
+        blurb: `Merged 2026-08-31 after seven review rounds
+                (<span class="path">a5ad2b9</span>&ndash;<span class="path">b2da4b1</span>) and live
+                on production. You said the site feels slower than it should, and asked why a page
+                this small weighs so much. Answer below &mdash; it is the drawings, and there is one more thing
                 that could be done to them. <b>For what it is worth, every page is already under a
                 second on 4G</b> (home 0.80s, a work page 0.21s); the multi-second numbers I have
                 been quoting are all a deliberately awful two-bar connection. The drawings are now
@@ -279,11 +281,14 @@ const PHASES = [
                      and <span class="path">/js/shuffle.js</span> &rarr;
                      <span class="path">max-age=300</span>. Netlify also returns one
                      Cache-Control per file rather than one per matching rule.` },
-            { id: 'p7-spotify-real', label: 'On the preview, <b>click a play control and check the real Spotify player</b>',
+            { id: 'p7-spotify-real', label: 'On production, <b>click a play control and check the real Spotify player</b> &mdash; and close it again',
               note: `I drove this in a headless browser with the embed stubbed, because
                      <span class="path">open.spotify.com</span> was not reachable from where I ran
-                     it. The swap, the column widening and the keyboard path all work; the real
-                     player inside the frame is the one thing that was faked.` },
+                     it. The swap, the column widening and narrowing, the keyboard path, the
+                     &times; button, Escape, and the 44px ring around the &times; all work; the
+                     real player inside the frame is the one thing that was faked. Worth a finger
+                     as well as a mouse: on anything with a touchscreen, a trackpad click opens the
+                     player and a finger should be able to close it.` },
             { id: 'p7-work', done: true, label: 'Fixed: work pages built <b>seven Spotify iframes</b> nobody asked for',
               note: `And then threw them away again on phones &mdash; after they had started
                      loading, which a throttled render confirmed. Now nothing cross-origin loads
@@ -359,11 +364,6 @@ const BLOCKING = [
         hundred times more geometry than a 200&nbsp;px render can use, and that is the last real
         lever on page weight. It would change Marusya's linework, not just its file size, so it
         needs your eyes rather than my judgement.` },
-    { tag: 'Review', body: `<b>Phase 7 is up as <a href="${REPO}/pull/44">PR&nbsp;#44</a>.</b> Merge it
-        with <span class="path">--ff-only</span> or a merge commit &mdash; never squash or rebase,
-        because <span class="path">pwa.md</span> cites the commit hashes. The cache headers are
-        verified on the preview; what is left is a look at a work page's play control, which is the
-        one thing I could only test against a stubbed Spotify.` },
     { tag: 'Decide', body: `<b>Phase 6 &mdash; dark mode: yes or no?</b> Real design work, because the
         theme colours come out of the portrait SVGs. Explicitly optional.` },
 ];

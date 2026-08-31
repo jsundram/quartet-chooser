@@ -42,17 +42,23 @@ load performance**, which was missing from the plan entirely. Phase 7 runs first
 online for reasons caching would not fix, and its precache list is a performance budget. So the
 remaining order is **7, then 5**, with Phase 6 still an open gate.
 
-Phase 7 implemented 2026-08-28 on the branch `phase-7-performance`, 23 commits, open for review as
-**[PR #44](https://github.com/jsundram/quartet-chooser/pull/44)** — remember `--ff-only`, since this
-file cites those hashes. Reviewed 2026-08-29: eight findings, all addressed in `3c47a4e`; two were
-real holes in the fold guards (they checked `<path>` when the risk lives anywhere in the document).
-Rendered and driven under headless Chrome with throttling, which reversed one of its findings and
-sized the rest. On Slow 3G at phone density, served the way Netlify serves it: **work pages went
-from 3.8s and 7 third-party frames to 1.5s and none; the home page from 5.2s to 4.6s and 550 KB to
-386 KB.** Two questions got settled by experiment rather than argument — lazy-loading the home grid
-(worse, reverted) and rasterizing the portraits (worse at any real phone density, not done). The two
-`netlify.toml` extension globs still cannot be checked until it is deployed, and are the only thing
-left.
+Phase 7 implemented 2026-08-28 on the branch `phase-7-performance`, reviewed as
+**[PR #44](https://github.com/jsundram/quartet-chooser/pull/44)** over seven rounds 2026-08-29 to
+2026-08-31, and **merged 2026-08-31 as a fast-forward** — main is still linear, and every hash
+cited here still resolves. One commit per round: `3c47a4e`, `02f50fc`, `18c2bab`, `643c06a`,
+`e247ad0`, `0f46b92`, `b2da4b1`, each message carrying the findings it answers. The shape of the
+arc: the early rounds found real holes in the fold guards (they checked `<path>` when the risk
+lives anywhere in the document), the middle rounds mostly caught what earlier fixes had themselves
+broken — including `npm run svg-diff` shipping unparseable in round 5, caught in round 6 and now
+guarded by a test — and the last round was a 44px hit area for the player's close control plus two
+comments whose claims the code did not deliver. Rendered and driven under headless Chrome with
+throttling, which reversed one finding and sized the rest. On Slow 3G at phone density, served the
+way Netlify serves it: **work pages went from 3.8s and 7 third-party frames to 1.5s and none; the
+home page from 5.2s to 4.6s and 550 KB to 386 KB.** Two questions got settled by experiment rather
+than argument — lazy-loading the home grid (worse, reverted) and rasterizing the portraits (worse
+at any real phone density, not done). The header globs were verified against deploy preview 44;
+what remains is hands-on — the play control against the real Spotify embed, now including its
+close button, which was only ever driven stubbed.
 
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
@@ -500,7 +506,7 @@ in both modes, second `theme-color` meta (one per scheme), flip `color-scheme` m
 
 ---
 
-## Phase 7 — Page load performance  ✅ implemented, in review (PR #44)
+## Phase 7 — Page load performance  ✅ merged 2026-08-31, live
 
 Added 2026-08-28: "page load time … should be part of any of these phases … the site feels slower
 than it should." It wasn't in the plan; it is now. It runs **before** Phase 5 for two reasons: the
@@ -508,8 +514,10 @@ precache list is a performance budget (Phase 5's table above), and caching a pag
 the 1.3 MB it asks for on the first visit.
 
 Implemented 2026-08-28 on `phase-7-performance` in `a5ad2b9`, `c1d1a02`, `d70f2ec`, `91974e0` and
-`e578c8b`. All 54 tests pass, and the built site has been rendered and driven in headless Chrome
-(17 behavioural checks, all passing). **Not merged.**
+`e578c8b`; review grew the suite from 54 to 65 tests, all passing, and the built site has been
+rendered and driven in headless Chrome throughout — the 17 behavioural checks at implementation,
+then per-round runs for the player's open/close/restore behaviour and its 44px close target.
+**Merged 2026-08-31 as a fast-forward** (review record at the top of this file).
 
 One finding was reversed by measurement: the home page's 36 image preloads looked like the headline
 problem and are not, so `a5ad2b9`'s change to `index.js` was put back in `e578c8b`. The first bullet
