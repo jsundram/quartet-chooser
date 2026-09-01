@@ -193,11 +193,18 @@ async function main(){
         const size = await rasterize(svg, name);
         total += size;
         console.log(`  static/og/${name}.png  ${size.toLocaleString()} bytes`);
+        // Who is actually on the committed card, for check_og_cards() to
+        // compare against site.js. In assets/, not static/og/: a record, not a
+        // file to serve. Written the moment og.png exists rather than after
+        // all 19 cards, because a failure in a later one -- the size gate,
+        // rsvg, pngquant -- would otherwise leave the new card on disk beside
+        // a record of the old quartet, and the next build would report stale
+        // provenance for a card that is in fact correct.
+        if (name === 'og'){
+            await writeFile(path.join(root, 'assets', 'og-quartet.json'),
+                JSON.stringify(OG_SITE_QUARTET) + '\n');
+        }
     }
-    // Who is actually on the committed card, for check_og_cards() to compare
-    // against site.js. In assets/, not static/og/: a record, not a file to serve.
-    await writeFile(path.join(root, 'assets', 'og-quartet.json'),
-        JSON.stringify(OG_SITE_QUARTET) + '\n');
 
     console.log(`wrote ${cards.length} cards (${total.toLocaleString()} bytes total)`);
 }

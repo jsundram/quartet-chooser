@@ -107,6 +107,17 @@ const OG_MAX_BYTES = 250_000;
 // static/og/ because it is a build-time record, not a file the site serves.
 const OG_QUARTET_RECORD = path.join(root, 'assets', 'og-quartet.json');
 
+// site_card() reads 'Name', { name } and { name, flip: false } as the same
+// portrait, so the record and the list are compared as normalized entries and
+// not as raw JSON text: a key order or a spelled-out default would otherwise
+// fail the build over a card that is not stale at all. Anything that is not a
+// list normalizes to null, which no real quartet matches.
+const og_entries = q => Array.isArray(q)
+    ? JSON.stringify(q.map(e => typeof e === 'string'
+        ? { name: e, flip: false }
+        : { name: e?.name, flip: !!e?.flip }))
+    : null;
+
 async function check_og_cards(dir){
     const cards = (await readdir(dir)).filter(f => f.endsWith('.png'));
     if (cards.length === 0){
@@ -124,8 +135,18 @@ async function check_og_cards(dir){
     // its og:image:alt is derived from OG_SITE_QUARTET. Edit that list, skip
     // `npm run og`, and the site ships a picture whose alt text names someone
     // who is not in it. make-og.mjs records what it drew; this is the check.
-    const drawn = await readFile(OG_QUARTET_RECORD, 'utf8').then(JSON.parse).catch(() => null);
-    if (JSON.stringify(drawn) !== JSON.stringify(OG_SITE_QUARTET)){
+    let drawn;
+    try {
+        drawn = JSON.parse(await readFile(OG_QUARTET_RECORD, 'utf8'));
+    } catch (e) {
+        // Kept separate from the mismatch below, and carrying the original
+        // error: missing, unreadable and half-merged are three different
+        // things to be told, and a conflict in a one-line generated file is
+        // the likeliest way anyone gets here.
+        throw new Error(`assets/og-quartet.json is missing or unreadable (${e.message}): `
+            + 'run `npm run og`');
+    }
+    if (og_entries(drawn) !== og_entries(OG_SITE_QUARTET)){
         throw new Error(`static/og/og.png was drawn from ${JSON.stringify(drawn)}, but `
             + `OG_SITE_QUARTET is ${JSON.stringify(OG_SITE_QUARTET)}: run \`npm run og\``);
     }
@@ -519,6 +540,13 @@ function sitemap_xml(site_url, paths){
 }
 
 async function build(){
+    // First, before anything is deleted: this reads only committed files --
+    // static/og/ and src/lib/site.js -- so it can say no while the previous
+    // dist/ is still standing. Run at step 7 it did the same work, but a typo
+    // in the quartet had by then cost a full build and left a dist/ that looks
+    // finished and serves pages with no manifest and no portraits.
+    const card_count = await check_og_cards(path.join(root, 'static', 'og'));
+
     await rm(dist, { recursive: true, force: true });
     // not the whole of .cache: svg/ is a content-addressed cache worth keeping
     // between builds (see minify_svgs). ssg/ is scratch and goes.
@@ -634,9 +662,9 @@ async function build(){
         await writeFile(path.join(dist, 'sitemap', name), xml);
     }
 
-    // 7. Static assets, copied through -- but the share cards get their size
-    // checked on the way past, and the portraits get minified.
-    const card_count = await check_og_cards(path.join(root, 'static', 'og'));
+    // 7. Static assets, copied through; the portraits get minified. The share
+    // cards were checked at the top of the build rather than here on the way
+    // past -- see check_og_cards.
     const static_dir = path.join(root, 'static');
     await cp(static_dir, dist, {
         recursive: true,
