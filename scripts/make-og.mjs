@@ -57,11 +57,18 @@ const TITLE_EMS = 7.92;
 // file resolution at render time. The sources are pure <path> data -- no
 // url(#...) references anywhere -- so their ids are inert and get stripped:
 // two files in one document would otherwise collide on id="path100".
+//
+// <image> is rejected for a different reason than the rest of that guard: it
+// is the one element that would reach outside the document, and rasterize_svg
+// feeds rsvg on stdin, where a relative reference resolves to nothing at exit
+// code 0. A redelivered drawing carrying an embedded raster would inline
+// cleanly and render a blank slot -- and pass the card's size gate, because
+// the miss makes the PNG smaller rather than larger.
 async function inline_svg(file, { x, y, width, height, align = 'xMidYMid' }){
     const src = await readFile(path.join(static_dir, file), 'utf8');
     const view_box = src.match(/viewBox="([^"]*)"/);
     if (!view_box) throw new Error(`${file}: no viewBox`);
-    if (/url\(#|<use\b|<text\b/.test(src)) throw new Error(`${file}: not a plain-path SVG`);
+    if (/url\(#|<use\b|<text\b|<image\b/.test(src)) throw new Error(`${file}: not a plain-path SVG`);
 
     const open = src.indexOf('>', src.indexOf('<svg'));
     const close = src.lastIndexOf('</svg>');

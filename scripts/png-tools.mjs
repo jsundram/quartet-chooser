@@ -35,6 +35,14 @@ function quantize(file){
 // every later build -- minify_svgs only handles static/'s top level and
 // build.mjs refuses a drawing below it. Both callers had that bug. No file, no
 // cleanup, nothing to leave behind.
+//
+// The precondition that buys: **the document must resolve nothing relative to
+// a path** -- no <image href>, no <use>, no @font-face at a relative URL. On
+// stdin librsvg has no base directory, and it does not treat that as an error:
+// the reference resolves to nothing, silently, at exit code 0, and you get a
+// blank where the art was. Both callers hold this today by inlining every
+// drawing and passing the icon as a data: URI, and inline_svg() in make-og.mjs
+// rejects <image> so a redelivered portrait cannot quietly break it.
 function rasterize_svg(svg, { width, height, out }){
     execFileSync('rsvg-convert', ['-w', String(width), '-h', String(height), '-o', out],
                  { input: svg });
