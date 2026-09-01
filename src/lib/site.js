@@ -12,8 +12,22 @@ export const OG_HEIGHT = 630;
 
 // The one card that stands for the whole site: home, about, 404.
 export const OG_SITE_CARD = "/og/og.png";
-export const OG_SITE_CARD_ALT =
-    "Quartet Roulette, over illustrated portraits of Haydn, Beethoven, Debussy and Bartok";
+
+// Who is on that card, left to right -- chosen in og-tool.html (issue #39):
+// the quartet form's early masters running into the twentieth century.
+// scripts/make-og.mjs draws the card from this list and the alt text below is
+// derived from it, so the picture and the words describing it cannot drift.
+// They did drift once: the card changed and the alt text kept naming Debussy,
+// which no test could see because the only assertion on it is that it is
+// non-empty. An entry may be `{ name, flip }` to mirror a portrait.
+export const OG_SITE_QUARTET = ["Boccherini", "Haydn", "Beethoven", "Bartok"];
+
+const and_list = xs => xs.length < 2
+    ? xs.join("")
+    : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`;
+
+export const OG_SITE_CARD_ALT = "Quartet Roulette, over illustrated portraits of "
+    + and_list(OG_SITE_QUARTET.map(c => typeof c === "string" ? c : c.name));
 
 // Analytics: hosted GoatCounter (pwa.md Phase 4). Cookie-free, so no consent
 // banner; the site code is `quartet-roulette`, hyphenated, which is not what

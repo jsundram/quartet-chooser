@@ -102,17 +102,23 @@ function client(COMPOSERS, ICON){
         const svg = card();
         $('big').innerHTML = svg;
         $('small').innerHTML = svg;
-        // Shaped to drop straight into site_card(): a plain name unless the
-        // portrait is mirrored, in which case the { name, flip } form it takes.
+        // Reported in site_card()'s own vocabulary, because that is where each
+        // of these has to land. `portraits` is the only one that is literally
+        // paste-able -- it is OG_SITE_QUARTET in src/lib/site.js, and a plain
+        // name unless the portrait is mirrored, in which case the { name, flip }
+        // form site_card() takes. `portrait_y`/`portrait_height` are the y and
+        // height passed to inline_svg(), not the gap the slider above shows,
+        // and the tagline is a string literal in site_card(). All three are
+        // hand-edits into make-og.mjs.
         $('config').textContent = JSON.stringify({
-            tagline: state.tagline,
             portraits: state.slots.map(p => p.flip ? { name: p.name, flip: true } : p.name),
-            gap: state.gap,
-            portraitHeight: state.ph,
+            tagline: state.tagline,
+            portrait_y: TAG_Y + state.gap,
+            portrait_height: state.ph,
         }, null, 2);
     }
 
-    function renderSlots(){
+    function render_slots(){
         $('slots').innerHTML = state.slots.map((p, i) => `<span class="slot">
             <select data-i="${i}">${COMPOSERS.map(c =>
                 `<option${c === p.name ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select>
@@ -147,18 +153,18 @@ function client(COMPOSERS, ICON){
         if (b.dataset.act === 'left') [s[i - 1], s[i]] = [s[i], s[i - 1]];
         if (b.dataset.act === 'right') [s[i], s[i + 1]] = [s[i + 1], s[i]];
         if (b.dataset.act === 'remove') s.splice(i, 1);
-        renderSlots(); render();
+        render_slots(); render();
     });
     $('add').onclick = () => {
         const used = new Set(state.slots.map(p => p.name));
         const fresh = COMPOSERS.filter(c => !used.has(c));
         state.slots.push({ name: fresh[0] || COMPOSERS[0], flip: false });
-        renderSlots(); render();
+        render_slots(); render();
     };
     $('spin').onclick = () => {
         const n = state.slots.length;
         state.slots = shuffle(COMPOSERS.slice()).slice(0, n).map(name => ({ name, flip: false }));
-        renderSlots(); render();
+        render_slots(); render();
     };
     $('tagline').oninput = e => { state.tagline = e.target.value; render(); };
     $('presets').innerHTML = PRESETS.map((t, i) =>
@@ -187,7 +193,7 @@ function client(COMPOSERS, ICON){
     };
 
     $('tagline').value = state.tagline;
-    renderSlots();
+    render_slots();
     render();
 }
 
@@ -253,7 +259,9 @@ const html = `<!doctype html>
   <figure><div id="small"></div><figcaption>&asymp; chat-bubble size</figcaption></figure>
 </div>
 <div class="out">
-  <b>config</b> &mdash; paste this back to lock a variant in
+  <b>config</b> &mdash; the numbers to lock a variant in. <code>portraits</code> is
+  <code>OG_SITE_QUARTET</code> in <code>src/lib/site.js</code> verbatim; the rest name where they
+  land in <code>site_card()</code> and are hand-edits.
   <pre id="config"></pre>
 </div>
 <script>(${client.toString()})(${JSON.stringify(composers)}, ${JSON.stringify(icon)});</script>

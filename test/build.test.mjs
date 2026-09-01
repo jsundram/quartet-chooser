@@ -809,7 +809,7 @@ describe('client scripts', () => {
 
 describe('the tool scripts parse', () => {
     // The suite runs build.mjs and bundles render.js, but the tool scripts
-    // (svg-diff, make-icons, make-og, make-checklist) are only ever parsed
+    // (svg-diff, og-tool, make-icons, make-og, make-checklist) are only parsed
     // when a person runs them -- and one of them once shipped with an
     // unescaped backtick inside its big template literal, which no test
     // could see. render.js is JSX and is excluded; everything else in

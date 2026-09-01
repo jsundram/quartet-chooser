@@ -113,7 +113,8 @@ Tasks (all `cfc3777`):
 - [x] Size budget: every card **< 250 KB** after compression; the build fails if over
       (pattern: pwa-starter `scripts/og-lint.py`). A too-big card previews as a grey box.
       → gated twice: `make-og.mjs` at generation, `check_og_cards()` in `scripts/build.mjs` on
-      every build (so a hand-edited card can't ship), plus a test. Largest card is 72 KB.
+      every build (so a hand-edited card can't ship), plus a test. Largest card is 83 KB, the
+      site-wide one redesigned for #39; the per-composer cards are all under 49 KB.
 - [x] Head tags, all pages: `meta[name=description]` (real prose, distinct from title),
       `og:title`, `og:description`, `og:url` (absolute, from `SITE_URL` in `src/lib/site.js`),
       `og:image` (absolute https PNG), `og:image:width`, `og:image:height`, `og:image:alt`,

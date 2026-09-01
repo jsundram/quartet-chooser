@@ -14,11 +14,12 @@
 // Cards are hard-gated at MAX_BYTES: a card too big to scrape previews as a
 // silent grey box, so this fails loudly instead of shipping one. scripts/build.mjs
 // re-checks the committed files, so a stale oversized card can't sneak in.
-import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { quantize, rasterize_svg, require_tools } from './png-tools.mjs'
+import { OG_SITE_QUARTET } from '../src/lib/site.js'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const static_dir = path.join(root, 'static');
@@ -55,11 +56,6 @@ const SANS = 'Helvetica Neue, Helvetica, Arial, sans-serif';
 // difference -- one more reason to vendor a face (issue #39).
 // Keep in sync with scripts/og-tool.mjs.
 const TITLE_EMS = 7.92;
-
-function xml_escape(s){
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-}
 
 // Inline one of the site's SVGs as a nested <svg>, positioned in the card's
 // coordinate system. Nesting (rather than <image href>) keeps everything one
@@ -148,16 +144,24 @@ async function site_card(quartet, icon){
         + '</svg>';
 }
 
+// The scratch SVG goes to a private temp directory, not next to the cards: the
+// `finally` in rasterize() cannot run if the process is killed outright (a
+// broken pipe, a Ctrl-C), and a leftover .svg under static/og/ fails the next
+// build -- minify_svgs only handles the top level of static/, and build.mjs
+// throws when it finds a drawing in a subdirectory. Nothing in the composed
+// document resolves relative to its own path (portraits are inlined, the icon
+// is a data URI), so it can live anywhere.
+//
+// mkdtemp rather than a name built from the pid: that name is guessable, and
+// on a shared /tmp someone can leave a symlink waiting for writeFile to follow.
+// A 0700 directory nobody can predict also keeps an abandoned scratch file to
+// one place instead of scattering them under distinct names.
+let scratch_dir;
+
 async function rasterize(svg, name){
     const png = path.join(out_dir, `${name}.png`);
-    // The scratch SVG goes to the OS temp dir, not next to the cards: the
-    // `finally` below cannot run if the process is killed outright (a broken
-    // pipe, a Ctrl-C), and a leftover .svg under static/og/ fails the next
-    // build outright -- minify_svgs only handles the top level of static/, and
-    // build.mjs throws when it finds a drawing in a subdirectory. Nothing in
-    // the composed document resolves relative to its own path (portraits are
-    // inlined, the icon is a data URI), so it can live anywhere.
-    const tmp = path.join(tmpdir(), `qr-og-${name}-${process.pid}.svg`);
+    scratch_dir ??= await mkdtemp(path.join(tmpdir(), 'qr-og-'));
+    const tmp = path.join(scratch_dir, `${name}.svg`);
     await writeFile(tmp, svg);
     try {
         rasterize_svg(tmp, { width: W, height: H, out: png });
@@ -192,18 +196,23 @@ async function main(){
     // from assets/, not static/: it is a build-time source and is not deployed
     const icon = await data_uri('icon.png', path.join(root, 'assets'));
 
-    // Jason's pick, via og-tool.html (issue #39): the quartet form's early
-    // masters left to right into the twentieth century.
-    const cards = [['og', await site_card(['Boccherini', 'Haydn', 'Beethoven', 'Bartok'], icon)]];
+    // The quartet lives in site.js, next to the alt text derived from it: the
+    // card and its description have to name the same four people, and they
+    // stopped doing so the last time this list was edited on its own.
+    const cards = [['og', await site_card(OG_SITE_QUARTET, icon)]];
     for (const c of composers){
         cards.push([`og-${c.toLowerCase()}`, await composer_card(c, icon)]);
     }
 
     let total = 0;
-    for (const [name, svg] of cards){
-        const size = await rasterize(svg, name);
-        total += size;
-        console.log(`  static/og/${name}.png  ${size.toLocaleString()} bytes`);
+    try {
+        for (const [name, svg] of cards){
+            const size = await rasterize(svg, name);
+            total += size;
+            console.log(`  static/og/${name}.png  ${size.toLocaleString()} bytes`);
+        }
+    } finally {
+        if (scratch_dir) await rm(scratch_dir, { recursive: true, force: true });
     }
     console.log(`wrote ${cards.length} cards (${total.toLocaleString()} bytes total)`);
 }

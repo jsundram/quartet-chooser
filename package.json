@@ -1,6 +1,7 @@
 {
   "name": "quartet-chooser",
   "private": true,
+  "type": "module",
   "description": "Quartet Chooser",
   "author": "Jason Sundram",
   "engines": {
