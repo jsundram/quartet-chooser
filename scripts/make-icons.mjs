@@ -28,8 +28,7 @@
 //             square); art outside that centred 80% circle can be cut off.
 //             The wheel being circular is lucky here -- a circle in a circular
 //             safe zone wastes no space.
-import { access, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { access, mkdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { quantize, rasterize_svg, require_tools } from './png-tools.mjs'
@@ -94,29 +93,11 @@ function compose(source, size, { opaque, inset }){
         + '</svg>';
 }
 
-// Scratch SVGs go to a private temp directory rather than alongside the icons
-// they rasterize into. The `finally` below cannot run if the process is killed
-// outright, and this wrote `static/icons/icon-48x48.png.svg` -- a drawing in a
-// subdirectory of static/, which minify_svgs does not handle and build.mjs
-// refuses outright, so one interrupted `npm run icons` broke every later build
-// and test until someone found the file. make-og.mjs had the same flaw.
-// mkdtemp rather than a name built from the pid: an unguessable 0700 directory
-// cannot be pre-empted by a symlink on a shared /tmp.
-let scratch_dir;
-
 async function rasterize(svg, size, file){
-    scratch_dir ??= await mkdtemp(path.join(tmpdir(), 'qr-icons-'));
-    const tmp = path.join(scratch_dir, path.basename(file) + '.svg');
-    await writeFile(tmp, svg);
-    let quantized;
-    try {
-        rasterize_svg(tmp, { width: size, height: size, out: file });
-        // false means pngquant declined because it would not have helped; the
-        // rsvg output already at `file` is the right answer. See png-tools.mjs.
-        quantized = quantize(file);
-    } finally {
-        await rm(tmp, { force: true });
-    }
+    rasterize_svg(svg, { width: size, height: size, out: file });
+    // false means pngquant declined because it would not have helped; the
+    // rsvg output already at `file` is the right answer. See png-tools.mjs.
+    const quantized = quantize(file);
     return { bytes: (await stat(file)).size, quantized };
 }
 
@@ -140,18 +121,13 @@ async function main(){
     ];
 
     let total = 0;
-    try {
-        for (const job of jobs){
-            const svg = compose(source, job.size, job);
-            const { bytes, quantized } =
-                await rasterize(svg, job.size, path.join(out_dir, job.file));
-            total += bytes;
-            console.log(`  static/icons/${job.file.padEnd(28)} ${job.kind.padEnd(9)}`
-                + `${bytes.toLocaleString().padStart(7)} bytes`
-                + (quantized ? '' : '   (pngquant declined; kept the rsvg output)'));
-        }
-    } finally {
-        if (scratch_dir) await rm(scratch_dir, { recursive: true, force: true });
+    for (const job of jobs){
+        const svg = compose(source, job.size, job);
+        const { bytes, quantized } = await rasterize(svg, job.size, path.join(out_dir, job.file));
+        total += bytes;
+        console.log(`  static/icons/${job.file.padEnd(28)} ${job.kind.padEnd(9)}`
+            + `${bytes.toLocaleString().padStart(7)} bytes`
+            + (quantized ? '' : '   (pngquant declined; kept the rsvg output)'));
     }
     console.log(`wrote ${jobs.length} icons from ${source.name}`
         + ` (${total.toLocaleString()} bytes total)`);

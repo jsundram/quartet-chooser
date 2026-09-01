@@ -120,21 +120,14 @@ async function check_og_cards(dir){
         }
     }
 
-    // og.png is drawn from OG_SITE_QUARTET and the og:image:alt text is
-    // derived from the same list, so those two agree by construction -- but
-    // the card is a *committed* PNG, and nothing in a build can see who is
-    // actually painted on it. Edit the list, skip `npm run og`, and the site
-    // ships a picture whose alt text names someone who is not in it: exactly
-    // the bug the shared constant was meant to end, one level up. make-og.mjs
-    // records what it drew and this compares the two.
-    const drawn = await readFile(OG_QUARTET_RECORD, 'utf8')
-        .then(JSON.parse)
-        .catch(() => { throw new Error('assets/og-quartet.json is missing or unreadable: '
-            + 'run `npm run og`'); });
+    // og.png is committed, so nothing here can see who is painted on it -- but
+    // its og:image:alt is derived from OG_SITE_QUARTET. Edit that list, skip
+    // `npm run og`, and the site ships a picture whose alt text names someone
+    // who is not in it. make-og.mjs records what it drew; this is the check.
+    const drawn = await readFile(OG_QUARTET_RECORD, 'utf8').then(JSON.parse).catch(() => null);
     if (JSON.stringify(drawn) !== JSON.stringify(OG_SITE_QUARTET)){
-        throw new Error(`static/og/og.png was drawn from ${JSON.stringify(drawn)} but `
-            + `OG_SITE_QUARTET in src/lib/site.js is now ${JSON.stringify(OG_SITE_QUARTET)}: `
-            + 'run `npm run og` so the card matches the alt text derived from that list');
+        throw new Error(`static/og/og.png was drawn from ${JSON.stringify(drawn)}, but `
+            + `OG_SITE_QUARTET is ${JSON.stringify(OG_SITE_QUARTET)}: run \`npm run og\``);
     }
 
     return cards.length;

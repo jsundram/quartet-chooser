@@ -14,8 +14,7 @@
 // Cards are hard-gated at MAX_BYTES: a card too big to scrape previews as a
 // silent grey box, so this fails loudly instead of shipping one. scripts/build.mjs
 // re-checks the committed files, so a stale oversized card can't sneak in.
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { quantize, rasterize_svg, require_tools } from './png-tools.mjs'
@@ -43,17 +42,12 @@ const MAX_BYTES = 250_000;
 // vendoring and embedding a face so generation is reproducible anywhere.
 const SANS = 'Helvetica Neue, Helvetica, Arial, sans-serif';
 
-// Advance width of "Quartet Roulette" in ems (Helvetica Neue bold), 7.92em =
-// 570.5px at font-size 72. This is the *advance*, not the ink extent: it was
-// measured by rendering the string twice with rsvg-convert, once anchored at
-// the start and once at the end, and solving the two trimmed ink boxes for the
-// side bearings (2px each at 72px). Verified on the shipped card, whose header
-// row lands centered to within a pixel.
-//
-// It has to be a constant because rsvg cannot report text width and librsvg
-// 2.62 ignores textLength, so nothing at generation time can measure the type.
-// A machine that resolves a different font shifts the row by half the width
-// difference -- one more reason to vendor a face (issue #39).
+// Advance width of "Quartet Roulette" in Helvetica Neue bold -- the *advance*,
+// not the ink: measured by rendering it anchored at each end and solving the
+// two ink boxes for the side bearings. A constant because rsvg cannot report
+// text width and librsvg 2.62 ignores textLength, so nothing here can measure
+// type; it is what centers the header row, and it drifts with the font, which
+// is the other half of why #39 wants a vendored face.
 // Keep in sync with scripts/og-tool.mjs.
 const TITLE_EMS = 7.92;
 
@@ -150,35 +144,14 @@ async function site_card(quartet, icon){
         + '</svg>';
 }
 
-// The scratch SVG goes to a private temp directory, not next to the cards: the
-// `finally` in rasterize() cannot run if the process is killed outright (a
-// broken pipe, a Ctrl-C), and a leftover .svg under static/og/ fails the next
-// build -- minify_svgs only handles the top level of static/, and build.mjs
-// throws when it finds a drawing in a subdirectory. Nothing in the composed
-// document resolves relative to its own path (portraits are inlined, the icon
-// is a data URI), so it can live anywhere.
-//
-// mkdtemp rather than a name built from the pid: that name is guessable, and
-// on a shared /tmp someone can leave a symlink waiting for writeFile to follow.
-// A 0700 directory nobody can predict also keeps an abandoned scratch file to
-// one place instead of scattering them under distinct names.
-let scratch_dir;
-
 async function rasterize(svg, name){
     const png = path.join(out_dir, `${name}.png`);
-    scratch_dir ??= await mkdtemp(path.join(tmpdir(), 'qr-og-'));
-    const tmp = path.join(scratch_dir, `${name}.svg`);
-    await writeFile(tmp, svg);
-    try {
-        rasterize_svg(tmp, { width: W, height: H, out: png });
-        // Palette-quantize: a card that rasterized fine but never got
-        // compressed is exactly the one that previews as a grey box. If
-        // pngquant declines (it would not have helped), the rsvg output
-        // already at `png` stands, and the size gate below still applies.
-        quantize(png);
-    } finally {
-        await rm(tmp, { force: true });
-    }
+    rasterize_svg(svg, { width: W, height: H, out: png });
+    // Palette-quantize: a card that rasterized fine but never got compressed
+    // is exactly the one that previews as a grey box. If pngquant declines (it
+    // would not have helped), the rsvg output already at `png` stands, and the
+    // size gate below still applies.
+    quantize(png);
 
     const { size } = await stat(png);
     if (size > MAX_BYTES){
@@ -202,30 +175,20 @@ async function main(){
     // from assets/, not static/: it is a build-time source and is not deployed
     const icon = await data_uri('icon.png', path.join(root, 'assets'));
 
-    // The quartet lives in site.js, next to the alt text derived from it: the
-    // card and its description have to name the same four people, and they
-    // stopped doing so the last time this list was edited on its own.
+    // From site.js, where the alt text is derived from the same list.
     const cards = [['og', await site_card(OG_SITE_QUARTET, icon)]];
     for (const c of composers){
         cards.push([`og-${c.toLowerCase()}`, await composer_card(c, icon)]);
     }
 
     let total = 0;
-    try {
-        for (const [name, svg] of cards){
-            const size = await rasterize(svg, name);
-            total += size;
-            console.log(`  static/og/${name}.png  ${size.toLocaleString()} bytes`);
-        }
-    } finally {
-        if (scratch_dir) await rm(scratch_dir, { recursive: true, force: true });
+    for (const [name, svg] of cards){
+        const size = await rasterize(svg, name);
+        total += size;
+        console.log(`  static/og/${name}.png  ${size.toLocaleString()} bytes`);
     }
-    // Record who ended up on the site-wide card. The cards are committed, so
-    // without this nothing downstream can tell whether og.png was regenerated
-    // after OG_SITE_QUARTET changed -- and the alt text derived from that list
-    // would then describe a card that no longer matches it. check_og_cards()
-    // in build.mjs compares the two and fails the build if they have parted.
-    // In assets/, not static/og/: a build-time record, not a file to serve.
+    // Who is actually on the committed card, for check_og_cards() to compare
+    // against site.js. In assets/, not static/og/: a record, not a file to serve.
     await writeFile(path.join(root, 'assets', 'og-quartet.json'),
         JSON.stringify(OG_SITE_QUARTET) + '\n');
 

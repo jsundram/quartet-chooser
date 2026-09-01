@@ -13,20 +13,11 @@ export const OG_HEIGHT = 630;
 // The one card that stands for the whole site: home, about, 404.
 export const OG_SITE_CARD = "/og/og.png";
 
-// Who is on that card, left to right -- chosen in og-tool.html (issue #39):
-// the quartet form's early masters running into the twentieth century.
-// scripts/make-og.mjs draws the card from this list and the alt text below is
-// derived from it, so the two agree by construction. They did drift once: the
-// card changed and the alt text kept naming Debussy, which no test could see
-// because the only assertion on it is that it is non-empty.
-//
-// Editing this list is therefore only half of the change -- the card itself is
-// a committed PNG and has to be redrawn with `npm run og`. make-og.mjs records
-// what it drew in assets/og-quartet.json and check_og_cards() in build.mjs
-// fails the build when that record and this list disagree, so forgetting is
-// loud rather than silent.
-//
-// An entry may be `{ name, flip }` to mirror a portrait.
+// Who is on that card, left to right -- chosen in og-tool.html (issue #39).
+// make-og.mjs draws it from this list and the alt text below is derived from
+// the same one, so they cannot name different people. The card is a committed
+// PNG, so **editing this means rerunning `npm run og`** -- the build fails if
+// you forget. An entry may be `{ name, flip }` to mirror that portrait.
 export const OG_SITE_QUARTET = ["Boccherini", "Haydn", "Beethoven", "Bartok"];
 
 const and_list = xs => xs.length < 2

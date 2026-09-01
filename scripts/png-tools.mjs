@@ -29,9 +29,15 @@ function quantize(file){
     }
 }
 
-function rasterize_svg(svg_path, { width, height, out }){
-    execFileSync('rsvg-convert', ['-w', String(width), '-h', String(height),
-                                  svg_path, '-o', out]);
+// Takes the SVG document itself, not a path to one: rsvg-convert reads stdin,
+// and a scratch .svg written beside the output is a trap. Its cleanup cannot
+// run if the process is killed, and a stray drawing under static/ then fails
+// every later build -- minify_svgs only handles static/'s top level and
+// build.mjs refuses a drawing below it. Both callers had that bug. No file, no
+// cleanup, nothing to leave behind.
+function rasterize_svg(svg, { width, height, out }){
+    execFileSync('rsvg-convert', ['-w', String(width), '-h', String(height), '-o', out],
+                 { input: svg });
 }
 
 function require_tools(){
