@@ -27,6 +27,12 @@ modules + `data.json`) for Node, React renders every route in `src/lib/routes.js
 - **`npm run svg-diff`** writes `svg-diff.html`: every drawing as authored, as shipped, and the two
   stacked with a difference blend, with size and glow sliders. This is how you check that a change to
   the SVG pipeline did not alter the artwork — black means identical. See "The portrait SVGs" below.
+- **`npm run og-tool`** writes `og-tool.html`, the design playground for the site-wide share card
+  (issue #39): pick, reorder and mirror portraits, try taglines, tune spacing, and paste the
+  resulting config block back to lock a variant into `site_card()` in `scripts/make-og.mjs`. It
+  duplicates that function's layout numbers deliberately — **keep the two in sync** — reads
+  `static/` live from the repo root, and is gitignored like `svg-diff.html`; the script is the
+  committed artifact.
 - The optimized drawings are cached in `.cache/svg/`, keyed on each drawing's bytes plus
   `scripts/build.mjs` itself, so editing the build invalidates them automatically and each build
   prunes what it did not use. A cold build is ~4.6s and a warm one ~0.8s; deleting `.cache/` only

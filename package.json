@@ -11,6 +11,7 @@
     "checklist": "node scripts/make-checklist.mjs",
     "icons": "node scripts/make-icons.mjs",
     "og": "node scripts/make-og.mjs",
+    "og-tool": "node scripts/og-tool.mjs",
     "serve": "npx serve dist",
     "test": "node --test \"test/*.test.mjs\"",
     "test:update": "node scripts/build.mjs && node scripts/update-fixtures.mjs",

@@ -15,6 +15,7 @@
 // silent grey box, so this fails loudly instead of shipping one. scripts/build.mjs
 // re-checks the committed files, so a stale oversized card can't sneak in.
 import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { quantize, rasterize_svg, require_tools } from './png-tools.mjs'
@@ -40,6 +41,20 @@ const MAX_BYTES = 250_000;
 // Helvetica Neue regenerates a subtly different card -- issue #39 tracks
 // vendoring and embedding a face so generation is reproducible anywhere.
 const SANS = 'Helvetica Neue, Helvetica, Arial, sans-serif';
+
+// Advance width of "Quartet Roulette" in ems (Helvetica Neue bold), 7.92em =
+// 570.5px at font-size 72. This is the *advance*, not the ink extent: it was
+// measured by rendering the string twice with rsvg-convert, once anchored at
+// the start and once at the end, and solving the two trimmed ink boxes for the
+// side bearings (2px each at 72px). Verified on the shipped card, whose header
+// row lands centered to within a pixel.
+//
+// It has to be a constant because rsvg cannot report text width and librsvg
+// 2.62 ignores textLength, so nothing at generation time can measure the type.
+// A machine that resolves a different font shifts the row by half the width
+// difference -- one more reason to vendor a face (issue #39).
+// Keep in sync with scripts/og-tool.mjs.
+const TITLE_EMS = 7.92;
 
 function xml_escape(s){
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -71,6 +86,10 @@ async function data_uri(file, dir = static_dir){
     return `data:image/png;base64,${bytes.toString('base64')}`;
 }
 
+// Width of the icon + name row, so a caller can center it without restating
+// how wordmark() spaces its two halves.
+const wordmark_width = size => size * (1.05 + 0.45 + TITLE_EMS);
+
 // The site wordmark: roulette icon + name, as it reads in the site header.
 function wordmark({ x, y, size, icon }){
     const gap = size * 0.45;
@@ -98,22 +117,31 @@ async function composer_card(composer, icon){
 }
 
 // Site-wide card for /, /about/ and /404/: four portraits, because four
-// players is the whole point, under the wordmark. The icon sits *above* the
-// name rather than beside it: centering an icon+text row needs the rendered
-// text width, which we have no way to measure here, and a guess drifts as
-// soon as the wordmark or the font changes. A centered stack cannot drift.
+// players is the whole point, under the wordmark. Icon and name share a line,
+// which keeps the header short and buys the tagline clear air and the
+// portraits another 50px of height.
+//
+// The quartet is `'Name'` or `{ name, flip }` -- flip mirrors a portrait about
+// its own slot, for when two sitters face away from each other and the row
+// reads as bookends rather than a group. Variants are tried in og-tool.html
+// (npm run og-tool), which mirrors these numbers and emits a config in exactly
+// this shape.
 async function site_card(quartet, icon){
-    const slot = (W - 2 * 70) / 4;
-    const portraits = await Promise.all(quartet.map((c, i) =>
-        inline_svg(`${c}.svg`, { x: 70 + i * slot, y: 250, width: slot, height: 300 })));
+    const players = quartet.map(c => typeof c === 'string' ? { name: c } : c);
+    const slot = (W - 2 * 70) / players.length;
+    const portraits = await Promise.all(players.map(async ({ name, flip }, i) => {
+        const x = 70 + i * slot;
+        const svg = await inline_svg(`${name}.svg`, { x, y: 219, width: slot, height: 350 });
+        // mirror about the slot's own centerline, so the portrait stays put
+        return flip ? `<g transform="translate(${2 * x + slot} 0) scale(-1 1)">${svg}</g>` : svg;
+    }));
 
+    const size = 72;
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`
         + `<rect width="${W}" height="${H}" fill="${WHITE}"/>`
         + `<rect x="0" y="0" width="${W}" height="14" fill="${RED}"/>`
-        + `<image x="${W / 2 - 42}" y="48" width="84" height="84" href="${icon}"/>`
-        + `<text x="${W / 2}" y="204" text-anchor="middle" font-family="${SANS}" font-size="72"`
-        + ` font-weight="700" fill="${CYAN}">Quartet Roulette</text>`
-        + `<text x="${W / 2}" y="244" text-anchor="middle" font-family="${SANS}" font-size="28"`
+        + wordmark({ x: (W - wordmark_width(size)) / 2, y: 110, size, icon })
+        + `<text x="${W / 2}" y="173" text-anchor="middle" font-family="${SANS}" font-size="28"`
         + ` fill="${BLACK}" opacity="0.72">What should we play next?</text>`
         + portraits.join('')
         + `<rect x="0" y="${H - 14}" width="${W}" height="14" fill="${CYAN}"/>`
@@ -122,7 +150,14 @@ async function site_card(quartet, icon){
 
 async function rasterize(svg, name){
     const png = path.join(out_dir, `${name}.png`);
-    const tmp = path.join(out_dir, `.${name}.svg`);
+    // The scratch SVG goes to the OS temp dir, not next to the cards: the
+    // `finally` below cannot run if the process is killed outright (a broken
+    // pipe, a Ctrl-C), and a leftover .svg under static/og/ fails the next
+    // build outright -- minify_svgs only handles the top level of static/, and
+    // build.mjs throws when it finds a drawing in a subdirectory. Nothing in
+    // the composed document resolves relative to its own path (portraits are
+    // inlined, the icon is a data URI), so it can live anywhere.
+    const tmp = path.join(tmpdir(), `qr-og-${name}-${process.pid}.svg`);
     await writeFile(tmp, svg);
     try {
         rasterize_svg(tmp, { width: W, height: H, out: png });
@@ -157,8 +192,9 @@ async function main(){
     // from assets/, not static/: it is a build-time source and is not deployed
     const icon = await data_uri('icon.png', path.join(root, 'assets'));
 
-    // Haydn first -- the site's namesake enthusiasts -- then a spread of eras.
-    const cards = [['og', await site_card(['Haydn', 'Beethoven', 'Debussy', 'Bartok'], icon)]];
+    // Jason's pick, via og-tool.html (issue #39): the quartet form's early
+    // masters left to right into the twentieth century.
+    const cards = [['og', await site_card(['Boccherini', 'Haydn', 'Beethoven', 'Bartok'], icon)]];
     for (const c of composers){
         cards.push([`og-${c.toLowerCase()}`, await composer_card(c, icon)]);
     }
