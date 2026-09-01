@@ -60,6 +60,25 @@ at any real phone density, not done). The header globs were verified against dep
 what remains is hands-on — the play control against the real Spotify embed, now including its
 close button, which was only ever driven stubbed.
 
+The site-wide share card was then revisited under #39 on the branch
+`share-card-playground`, reviewed as
+**[PR #45](https://github.com/jsundram/quartet-chooser/pull/45)** over four rounds 2026-09-01, and
+**merged 2026-09-01 as a fast-forward** — main is still linear, and every hash cited here still
+resolves. `f763a6c` added `npm run og-tool`, a browser playground that rebuilds `site_card()`'s
+layout over the live drawings so the portraits, the tagline and the spacing could be chosen by
+looking rather than by reading the generator; the quartet it settled on is Boccherini, Haydn,
+Beethoven, Bartok, and the icon and wordmark now share a line. The review rounds are `302cc37`,
+`5234ab1`, `d5ac34a`, `8f39c20` and `862c914`. One real bug: the card changed and its
+`og:image:alt` kept naming Debussy, which shipped, because the only assertion on that string was
+that it is non-empty — fixed at the root by deriving both the card and the alt text from
+`OG_SITE_QUARTET` in `src/lib/site.js` and failing the build when the committed PNG and that list
+disagree. The arc is worth remembering for its shape: two rounds answered "an interrupted run
+leaves a stray file that breaks every later build" with more machinery, and the third deleted the
+temp file instead — `rsvg-convert` reads stdin — which removed 95 lines and made the failure
+impossible rather than handled. Phase 1's card entries below are updated; #39 itself stays open
+for the vendored typeface, since the header still centers on a constant measured against a locally
+installed Helvetica Neue.
+
 Baseline audit: **2026-08-20**, from the pwa-starter audit workflow. Summary: icons ✅;
 share cards, manifest completeness, install metas, offline, dark mode, analytics all ❌/⚠️.
 
@@ -109,7 +128,10 @@ Tasks (all `cfc3777`):
       their composer's card; giving each of the 256 its own is #40.
 - [x] One site-wide card for home / about / 404 (roulette icon + wordmark on theme background).
       → `static/og/og.png`: icon, wordmark, "What should we play next?", and four portraits,
-      because four players is the point. Its design is deliberately provisional — #39.
+      because four players is the point. Designed provisionally to unblock Phase 1, then revisited
+      properly in PR #45 (above): the portraits are Boccherini, Haydn, Beethoven and Bartok, chosen
+      in `npm run og-tool`, and the icon and wordmark share a line. #39 stays open for the
+      vendored typeface.
 - [x] Size budget: every card **< 250 KB** after compression; the build fails if over
       (pattern: pwa-starter `scripts/og-lint.py`). A too-big card previews as a grey box.
       → gated twice: `make-og.mjs` at generation, `check_og_cards()` in `scripts/build.mjs` on
