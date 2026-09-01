@@ -349,9 +349,12 @@ const PHASES = [
                 work-page cards and any new type on the site card both need a vendored, embedded font,
                 because everything today is pure path data with no font dependency at all.`,
         tasks: [
-            { id: 'i39', label: `<a href="${REPO}/issues/39">#39</a> &mdash; revisit the site-wide card&rsquo;s design`,
-              note: `Hard-coded portrait choice, crops that do not agree, an invented tagline, and type
-                     set in a system font stack that silently changes on a machine without it.` },
+            { id: 'i39', label: `<a href="${REPO}/issues/39">#39</a> &mdash; vendor a typeface for the site card`,
+              note: `The design half is done: the portraits were chosen in <code>npm run og-tool</code>
+                     and the header was shortened (PR&nbsp;#45). What is left is the font. The card is
+                     set in a system stack, and the header centres on a constant measured against a
+                     locally installed Helvetica&nbsp;Neue, so a machine without it regenerates a
+                     subtly different card.` },
             { id: 'i40', label: `<a href="${REPO}/issues/40">#40</a> &mdash; give every work page its own card`,
               note: `Composer pages already have their own. The 256 work pages reuse them. Costs roughly
                      +11&nbsp;MB committed unless the cards get lighter or move to on-demand generation.` },
@@ -400,10 +403,12 @@ function sharecards() {
   <h3>The card behind home, about and 404</h3>
   <figure class="hero-card card">
     <img src="${uri('static/og/og.png')}" alt="Site-wide share card: roulette icon, wordmark, tagline, four portraits"/>
-    <figcaption>Its design is deliberately provisional &mdash; that is
-      <a href="${REPO}/issues/39">issue #39</a>. Worth an opinion while you are looking: the four
-      portraits are hard-coded and arbitrary, the crops do not quite agree, and the tagline is my
-      paraphrase of your about page.</figcaption>
+    <figcaption>Redesigned in PR&nbsp;#45: you picked these four in
+      <code>npm run og-tool</code> &mdash; Boccherini, Haydn, Beethoven, Bartok, the form&rsquo;s
+      early masters running into the twentieth century &mdash; and the icon and wordmark now share a
+      line, which bought the tagline air and the portraits height. Still open as
+      <a href="${REPO}/issues/39">issue #39</a>: the type is set in a system font stack, so this card
+      is only reproducible on a machine with Helvetica&nbsp;Neue installed.</figcaption>
   </figure>
   <details class="more">
     <summary>All ${cards.length} composer cards</summary>
