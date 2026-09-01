@@ -82,17 +82,23 @@ async function data_uri(file, dir = static_dir){
     return `data:image/png;base64,${bytes.toString('base64')}`;
 }
 
+// How wordmark() spaces its two halves, in ems of the type size: the icon is
+// square and a little taller than the caps, and stands this far off the name.
+// Named because wordmark() lays the row out and wordmark_width() measures it,
+// and the two must not disagree about the same row.
+const ICON_EMS = 1.05, ICON_GAP_EMS = 0.45;
+
 // Width of the icon + name row, so a caller can center it without restating
 // how wordmark() spaces its two halves.
-const wordmark_width = size => size * (1.05 + 0.45 + TITLE_EMS);
+const wordmark_width = size => size * (ICON_EMS + ICON_GAP_EMS + TITLE_EMS);
 
 // The site wordmark: roulette icon + name, as it reads in the site header.
 function wordmark({ x, y, size, icon }){
-    const gap = size * 0.45;
-    return `<image x="${x}" y="${y - size * 0.82}" width="${size * 1.05}" height="${size * 1.05}"`
+    const icon_size = size * ICON_EMS;
+    return `<image x="${x}" y="${y - size * 0.82}" width="${icon_size}" height="${icon_size}"`
         + ` href="${icon}" preserveAspectRatio="xMidYMid meet"/>`
-        + `<text x="${x + size * 1.05 + gap}" y="${y}" font-family="${SANS}" font-size="${size}"`
-        + ` font-weight="700" fill="${CYAN}">Quartet Roulette</text>`;
+        + `<text x="${x + icon_size + size * ICON_GAP_EMS}" y="${y}" font-family="${SANS}"`
+        + ` font-size="${size}" font-weight="700" fill="${CYAN}">Quartet Roulette</text>`;
 }
 
 // Per-composer card: portrait on the left, their own signature on the right.
@@ -214,6 +220,15 @@ async function main(){
     } finally {
         if (scratch_dir) await rm(scratch_dir, { recursive: true, force: true });
     }
+    // Record who ended up on the site-wide card. The cards are committed, so
+    // without this nothing downstream can tell whether og.png was regenerated
+    // after OG_SITE_QUARTET changed -- and the alt text derived from that list
+    // would then describe a card that no longer matches it. check_og_cards()
+    // in build.mjs compares the two and fails the build if they have parted.
+    // In assets/, not static/og/: a build-time record, not a file to serve.
+    await writeFile(path.join(root, 'assets', 'og-quartet.json'),
+        JSON.stringify(OG_SITE_QUARTET) + '\n');
+
     console.log(`wrote ${cards.length} cards (${total.toLocaleString()} bytes total)`);
 }
 

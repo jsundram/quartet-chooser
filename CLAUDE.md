@@ -46,6 +46,11 @@ Three categories, and the rule is about what Netlify's build image can run, not 
   (`npm run og`). Their tools are `rsvg-convert` and `pngquant`, which Netlify does not have. The
   build re-checks the cards' size on the way past, because a stale or hand-edited oversized card
   would otherwise ship silently and break link previews.
+  Who appears on the site-wide card is `OG_SITE_QUARTET` in `src/lib/site.js`, and the
+  `og:image:alt` text is derived from that same list — so **editing it means rerunning `npm run
+  og`**, or the site ships a picture whose alt text names someone who is not in it. `make-og.mjs`
+  records what it drew in `assets/og-quartet.json` and `check_og_cards()` fails the build when the
+  two disagree, so forgetting is loud. Try layouts in `npm run og-tool` (below) before editing.
 - **Generated in the build** — the portrait SVGs (below), read from `static/` and written to the
   output directory the way esbuild handles JS and CSS. `svgo` and `svgpath` are pure JS and run
   anywhere, so `static/` keeps the drawings as delivered and there is no 54-file diff whenever the

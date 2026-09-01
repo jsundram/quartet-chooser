@@ -10,6 +10,7 @@ import os from 'node:os'
 import { cp, mkdir, readFile, readdir, rename, rm, stat, unlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { OG_SITE_QUARTET } from '../src/lib/site.js'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // this file's own bytes, so the SVG cache invalidates whenever the pipeline
@@ -102,6 +103,10 @@ const BROWSER_TARGET = ['chrome80', 'edge80', 'firefox75', 'safari12'];
 // sync with MAX_BYTES in scripts/make-og.mjs.
 const OG_MAX_BYTES = 250_000;
 
+// What make-og.mjs last drew on the site-wide card. In assets/ rather than
+// static/og/ because it is a build-time record, not a file the site serves.
+const OG_QUARTET_RECORD = path.join(root, 'assets', 'og-quartet.json');
+
 async function check_og_cards(dir){
     const cards = (await readdir(dir)).filter(f => f.endsWith('.png'));
     if (cards.length === 0){
@@ -114,6 +119,24 @@ async function check_og_cards(dir){
                 + 'rerun `npm run og` or simplify the card layout');
         }
     }
+
+    // og.png is drawn from OG_SITE_QUARTET and the og:image:alt text is
+    // derived from the same list, so those two agree by construction -- but
+    // the card is a *committed* PNG, and nothing in a build can see who is
+    // actually painted on it. Edit the list, skip `npm run og`, and the site
+    // ships a picture whose alt text names someone who is not in it: exactly
+    // the bug the shared constant was meant to end, one level up. make-og.mjs
+    // records what it drew and this compares the two.
+    const drawn = await readFile(OG_QUARTET_RECORD, 'utf8')
+        .then(JSON.parse)
+        .catch(() => { throw new Error('assets/og-quartet.json is missing or unreadable: '
+            + 'run `npm run og`'); });
+    if (JSON.stringify(drawn) !== JSON.stringify(OG_SITE_QUARTET)){
+        throw new Error(`static/og/og.png was drawn from ${JSON.stringify(drawn)} but `
+            + `OG_SITE_QUARTET in src/lib/site.js is now ${JSON.stringify(OG_SITE_QUARTET)}: `
+            + 'run `npm run og` so the card matches the alt text derived from that list');
+    }
+
     return cards.length;
 }
 

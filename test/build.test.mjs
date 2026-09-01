@@ -9,6 +9,7 @@ import path from 'node:path'
 import { after, before, describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { routes_in, walk } from './routes.mjs'
+import { OG_SITE_QUARTET } from '../src/lib/site.js'
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 // The suite builds into a temp directory of its own, never into dist/. Two
@@ -194,6 +195,28 @@ describe('share / link previews (pwa.md Phase 1)', () => {
             assert.ok(title === bare || title === bare + ' | Quartet Roulette',
                 `${route}: <title> "${title}" vs og:title "${bare}"`);
         }
+    });
+
+    test('the site-wide card was drawn from the quartet site.js names', () => {
+        // The alt text is derived from OG_SITE_QUARTET, so those two agree by
+        // construction -- but og.png is a committed PNG and no build can see
+        // who is painted on it. Editing the list without rerunning
+        // `npm run og` once shipped a card whose alt text named Debussy, who
+        // was not in it, and the only other assertion on that string is that
+        // it is longer than ten characters. make-og.mjs records what it drew;
+        // this is that record against the list the site describes it with.
+        //
+        // In practice check_og_cards() reaches this first: the suite's
+        // before() hook runs a real build, so drift takes the whole file down
+        // with the build's own message rather than this assertion. That is the
+        // right order -- a stale card should not deploy -- and this test is
+        // the backstop if that gate is ever loosened, plus the place the
+        // invariant is written down where someone reading the tests will see
+        // that the card and its description are supposed to be one decision.
+        const drawn = JSON.parse(
+            readFileSync(path.join(root, 'assets', 'og-quartet.json'), 'utf8'));
+        assert.deepEqual(drawn, OG_SITE_QUARTET,
+            'static/og/og.png is stale: run `npm run og`');
     });
 
     test('every og:image is an absolute https PNG that exists, 1200x630, under 250 KB', () => {
