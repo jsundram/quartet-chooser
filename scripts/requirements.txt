@@ -1,3 +1,3 @@
 # used by scripts in this directory (update.py needs only the standard library)
 spotipy==2.26.0
-svgpathtools==1.7.4
+svgpathtools==1.8.0
