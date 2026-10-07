@@ -313,7 +313,7 @@ Pages** instead of GitHub Pages (edge certs are instant) — same workflow, diff
 
 ## Runbook
 
-- **Update content:** edit the Google Sheet → `python scripts/update.py -c 0` → commit
+- **Update content:** edit the Google Sheet → `python3 scripts/update.py` → commit
   `src/data/data.json` → `npm run test:update` if the route set changed → push (auto-deploys).
 - **Add a composer/work:** the TODO.md checklist (`DISPATCHER`/`HIDDEN` in `src/lib/utils.js`, then
   `npm run test:update`).
