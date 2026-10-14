@@ -5291,36 +5291,14 @@
         },
         {
             "composer": "Boccherini",
-            "title": "Minuetto",
+            "title": "Minuetto e Larghetto",
             "catalog": "G202",
             "grouping": "Opus 32",
             "work_number": "2",
             "movement_number": "2",
             "key": "",
             "spotify": "https://open.spotify.com/track/7Kqy0tlegmMRo9Tj2SuMy8",
-            "notes": ""
-        },
-        {
-            "composer": "Boccherini",
-            "title": "Larghetto",
-            "catalog": "G202",
-            "grouping": "Opus 32",
-            "work_number": "2",
-            "movement_number": "3",
-            "key": "",
-            "spotify": "https://open.spotify.com/track/7Kqy0tlegmMRo9Tj2SuMy8",
-            "notes": "Minuetto - Larghetto - Minuetto all in one track"
-        },
-        {
-            "composer": "Boccherini",
-            "title": "Minuetto (same!)",
-            "catalog": "G202",
-            "grouping": "Opus 32",
-            "work_number": "2",
-            "movement_number": "4",
-            "key": "",
-            "spotify": "https://open.spotify.com/track/7Kqy0tlegmMRo9Tj2SuMy8",
-            "notes": ""
+            "notes": "The manuscript says \"Da Capo il Minuetto e il Larghetto e poi Segue Rondeau\""
         },
         {
             "composer": "Boccherini",
@@ -5328,7 +5306,7 @@
             "catalog": "G202",
             "grouping": "Opus 32",
             "work_number": "2",
-            "movement_number": "5",
+            "movement_number": "3",
             "key": "",
             "spotify": "https://open.spotify.com/track/7obIBNEF6nxiDsqVTI3i4F",
             "notes": ""
