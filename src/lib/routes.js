@@ -1,7 +1,7 @@
 // The site's page manifest: which pages exist, at what paths, with what
 // context. This is the port of gatsby-node.js's createPages.
 import data from '../data/data.json'
-import { HIDDEN, composer_url, slugify } from './utils'
+import { composer_url, slugify, standard } from './utils'
 
 function underscore_keys(obj){
     // data.json composer entries have keys like "full name"; gatsby-transformer-json
@@ -10,17 +10,28 @@ function underscore_keys(obj){
 }
 
 function with_counts(composers, greats){
-    // add a count of quartets by each composer to their entry. Don't hard code
-    // work counts because e.g. schubert and mendelssohn could get more quartets added ...
+    // add counts of quartets by each composer to their entry: `quartets` is
+    // the standard repertoire, `extras` the rest. Don't hard code work counts
+    // because e.g. schubert and mendelssohn could get more quartets added ...
     let counts = {};
-    composers.forEach(c => counts[c.name] = 0);
-    greats.forEach(w => counts[w.composer] += 1);
-    return composers.map(c => ({...underscore_keys(c), quartets: counts[c.name]}));
+    composers.forEach(c => counts[c.name] = {quartets: 0, extras: 0});
+    greats.forEach(w => counts[w.composer][w.extra ? 'extras' : 'quartets'] += 1);
+    return composers.map(c => ({...underscore_keys(c), ...counts[c.name]}));
+}
+
+function check(greats){
+    // the sheet's Extra column decides what the Quartet 🔀 can pick, so a row
+    // that lost it must fail the build, not quietly join (or leave) the pool
+    const bad = greats.filter(w => typeof w.extra !== 'boolean');
+    if (bad.length)
+        throw new Error(`data.json: ${bad.length} quartets have no boolean "extra", e.g. `
+            + `${bad[0].composer} ${bad[0].catalog}. Rerun scripts/update.py.`);
+    return greats;
 }
 
 function get_data(){
     return {
-        composers: with_counts(data.composers, data.greats),
+        composers: with_counts(data.composers, check(data.greats)),
         greats: data.greats,
         movements: data.movements,
     };
@@ -56,11 +67,11 @@ function get_pages(){
 
 function random_targets(){
     // Candidate lists for the nav 🔀 links (data-shuffle) and the /random
-    // redirect pages. Quartets by HIDDEN composers are excluded; the
-    // composer list is not filtered.
+    // redirect pages. Extra quartets are excluded (all of Boccherini, for
+    // one); the composer list is not filtered.
     const d = get_data();
     return {
-        'random': d.greats.filter(w => !HIDDEN[w.composer]).map(slugify),
+        'random': standard(d.greats).map(slugify),
         'random-composer': d.composers.map(c => composer_url(c.name)),
     };
 }

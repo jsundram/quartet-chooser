@@ -1,5 +1,5 @@
 import * as React from "react"
-import { COMPOSERS, composer_url, get_portrait, get_signature } from  "../lib/utils"
+import { COMPOSERS, composer_url, get_portrait, get_signature, standard } from  "../lib/utils"
 import { OG_SITE_CARD, OG_SITE_CARD_ALT, SITE_TITLE } from "../lib/site"
 import data from "../data/data.json"
 
@@ -73,8 +73,9 @@ const IndexPage = () => {
 }
 
 // counted, not hard-coded: quartets get added, and a description that quietly
-// goes stale is worse than one that never mentioned a number
-const DESCRIPTION = `${data.greats.length} string quartets by ${COMPOSERS.length} composers: `
+// goes stale is worse than one that never mentioned a number. Extras are not
+// part of the "purposely small" list, so they are not in the number.
+const DESCRIPTION = `${standard(data.greats).length} string quartets by ${COMPOSERS.length} composers: `
     + `a purposely small standard-repertoire list, with recordings and a shuffle button.`;
 
 export const Head = ({ path }) => (

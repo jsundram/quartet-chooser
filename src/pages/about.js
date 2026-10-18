@@ -1,6 +1,6 @@
 // Step 1: Import your component
 import * as React from 'react'
-import { COMPOSERS } from  "../lib/utils"
+import { COMPOSERS, standard } from  "../lib/utils"
 import { OG_SITE_CARD, OG_SITE_CARD_ALT } from "../lib/site"
 import data from "../data/data.json"
 
@@ -10,7 +10,7 @@ import Meta from '../components/meta'
 
 // Step 2: Define your component
 const AboutPage = () => {
-    let work_count = data.greats.length;
+    let work_count = standard(data.greats).length;
 
     return (
         <Layout>
@@ -53,7 +53,7 @@ const AboutPage = () => {
 export const Head = ({ path }) => (
     <Meta
         title="About"
-        description={`Who made Quartet Roulette and why: ${data.greats.length} `
+        description={`Who made Quartet Roulette and why: ${standard(data.greats).length} `
             + `standard-repertoire string quartets, picked by some of The Haydn Enthusiasts.`}
         path={path}
         image={OG_SITE_CARD}

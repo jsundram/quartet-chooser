@@ -38,6 +38,21 @@ modules + `data.json`) for Node, React renders every route in `src/lib/routes.js
   prunes what it did not use. A cold build is ~4.6s and a warm one ~0.8s; deleting `.cache/` only
   costs one slow build.
 
+## The data
+
+`src/data/data.json` is pulled from the Google Sheet by `python3 scripts/update.py`; never edit it
+by hand. The script matches columns **by header name**, so columns can be reordered in the sheet,
+and it fails on a header it does not know — add new columns to `COLUMNS` (or `IGNORED`) there.
+
+- **Extra** (a TRUE/FALSE checkbox on every quartet row) marks a quartet outside the standard
+  repertoire. It still gets a page and is listed, but the Quartet 🔀 never picks it, the site's
+  quartet counts leave it out, and composer pages list it under "Other quartets". All of Boccherini
+  is extra. The build fails if any row lacks a boolean `extra`.
+- **Other Catalog** is shown after the title — Dvořák's Burghauser numbers, Schubert's opus numbers.
+  Page URLs come from Catalog Number only, so it can change freely.
+- A work whose Title is not a number is titled by name ("Cypresses, B. 152").
+- New works add routes, so rerun `npm run test:update` and review the fixture diff.
+
 ## Assets: what is committed and what the build generates
 
 Three categories, and the rule is about what Netlify's build image can run, not preference.
