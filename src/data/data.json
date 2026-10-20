@@ -3879,8 +3879,8 @@
             "full name": "Luigi Boccherini",
             "wikipedia": "https://en.wikipedia.org/wiki/Luigi_Boccherini",
             "portrait": "FALSE",
-            "extra link": "",
-            "extra link title": ""
+            "extra link": "https://quartets.boccherini.org/",
+            "extra link title": "The Periodic Table of Boccherini Quartets"
         },
         {
             "name": "Brahms",
@@ -3939,8 +3939,8 @@
             "full name": "Joseph Haydn",
             "wikipedia": "https://en.wikipedia.org/wiki/Joseph_Haydn",
             "portrait": "FALSE",
-            "extra link": "http://viz.runningwithdata.com/haydn-dashboard/",
-            "extra link title": "The Haydn Dashboard"
+            "extra link": "https://jsundram.github.io/haydn-info-card/",
+            "extra link title": "The Periodic Table of Haydn Quartets"
         },
         {
             "name": "Mendelssohn",
