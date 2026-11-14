@@ -1,0 +1,68 @@
+name: find recordings
+
+# Weekly search of Spotify for recordings of the Boccherini quartets. Every
+# recording found goes into docs/boccherini-recordings.csv, committed. New
+# recordings, and quartets whose sheet recording stopped playing, get issues
+# assigned to Jason. See scripts/find_recordings.py.
+on:
+  schedule:
+    - cron: "0 13 * * 1"  # Mondays
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+# two runs at once would both push the record and file the same issues
+concurrency:
+  group: find-recordings
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      # album track lists don't change, so a run only fetches albums it hasn't
+      # seen. Saved even when a later step fails: otherwise a failing recall
+      # check would refetch all ~5,000 albums every week.
+      - uses: actions/cache/restore@v6
+        with:
+          path: .cache/spotify
+          key: spotify-${{ github.run_id }}
+          restore-keys: spotify-
+      - run: uv run scripts/find_recordings.py --issues "$RUNNER_TEMP/issues.json" --lost "$RUNNER_TEMP/lost.md"
+        env:
+          SPOTIPY_CLIENT_ID: ${{ secrets.SPOTIPY_CLIENT_ID }}
+          SPOTIPY_CLIENT_SECRET: ${{ secrets.SPOTIPY_CLIENT_SECRET }}
+      - uses: actions/cache/save@v6
+        if: always()
+        with:
+          path: .cache/spotify
+          key: spotify-${{ github.run_id }}
+      # Issues before the commit: a recording in the committed record is never
+      # new again, so if filing failed after the commit its notification would
+      # be lost. This way round, the worst case is a duplicate. Gone-recording
+      # issues are skipped while one for that quartet is open.
+      - name: open issues
+        run: |
+          [ -f "$RUNNER_TEMP/issues.json" ] || exit 0
+          uv run scripts/find_recordings.py --file-issues "$RUNNER_TEMP/issues.json"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      # the record gains rows for reissues too, so commit whenever it changed
+      - name: commit the record
+        run: |
+          git diff --quiet docs/boccherini-recordings.csv && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Record Boccherini recordings found on Spotify" docs/boccherini-recordings.csv
+          git pull --rebase
+          git push
+      # a sheet track that still plays but wasn't found is a hole in the
+      # search; fail, so it's emailed every week until it's fixed
+      - name: check recall
+        run: |
+          [ -f "$RUNNER_TEMP/lost.md" ] || exit 0
+          cat "$RUNNER_TEMP/lost.md" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit 1

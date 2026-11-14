@@ -58,6 +58,15 @@ so check its list before renaming anything in the sheet, and update the doc when
   Page URLs come from Catalog Number only, so it can change freely.
 - A work whose Title is not a number is titled by name ("Cypresses, B. 152").
 - New works add routes, so rerun `npm run test:update` and review the fixture diff.
+- **`docs/boccherini-recordings.csv`** records every recording of every Boccherini quartet found on
+  Spotify, one row per track; the sheet holds only the one chosen per movement. It is written by
+  `uv run scripts/find_recordings.py`, which a weekly workflow (`find-recordings.yml`) runs: it
+  commits the record, opens an issue when a quartet turns up by new performers, and opens one per
+  quartet whose sheet recording no longer plays, listing what to paste instead. Rows are only
+  added, never removed, and labels are unreliable — match on the Gérard number, not the opus.
+- **Most sheet Spotify links point at withdrawn album variants.** Spotify relinks them to a current
+  copy of the same recording, so they still play — but their track ids won't match a fresh search.
+  Check a link with `market=` set; without it, `is_playable` is absent and it looks dead.
 
 ## Assets: what is committed and what the build generates
 
