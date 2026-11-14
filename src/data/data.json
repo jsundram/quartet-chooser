@@ -3879,8 +3879,8 @@
             "full name": "Luigi Boccherini",
             "wikipedia": "https://en.wikipedia.org/wiki/Luigi_Boccherini",
             "portrait": "FALSE",
-            "extra link": "",
-            "extra link title": ""
+            "extra link": "https://quartets.boccherini.org/",
+            "extra link title": "The Periodic Table of Boccherini Quartets"
         },
         {
             "name": "Brahms",
@@ -3939,8 +3939,8 @@
             "full name": "Joseph Haydn",
             "wikipedia": "https://en.wikipedia.org/wiki/Joseph_Haydn",
             "portrait": "FALSE",
-            "extra link": "http://viz.runningwithdata.com/haydn-dashboard/",
-            "extra link title": "The Haydn Dashboard"
+            "extra link": "https://jsundram.github.io/haydn-info-card/",
+            "extra link title": "The Periodic Table of Haydn Quartets"
         },
         {
             "name": "Mendelssohn",
@@ -4978,7 +4978,7 @@
             "work_number": "3",
             "movement_number": "1",
             "key": "",
-            "spotify": "",
+            "spotify": "https://open.spotify.com/track/1HqABoKz8qYfIr73y5Sdql",
             "notes": ""
         },
         {
@@ -4989,7 +4989,7 @@
             "work_number": "3",
             "movement_number": "2",
             "key": "",
-            "spotify": "",
+            "spotify": "https://open.spotify.com/track/2L7Orj5ulfZkV5OW0dFhhO",
             "notes": ""
         },
         {
@@ -5000,7 +5000,7 @@
             "work_number": "3",
             "movement_number": "3",
             "key": "",
-            "spotify": "",
+            "spotify": "https://open.spotify.com/track/22PEkvN1SWGpi48bNVuXnE",
             "notes": ""
         },
         {
