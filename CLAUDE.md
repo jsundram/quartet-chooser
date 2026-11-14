@@ -44,7 +44,12 @@ modules + `data.json`) for Node, React renders every route in `src/lib/routes.js
 `src/data/data.json` is pulled from the Google Sheet by `python3 scripts/update.py`; never edit it
 by hand. The script matches columns **by header name**, so columns can be reordered in the sheet,
 and it fails on a header it does not know — add new columns to `COLUMNS` (or `IGNORED`) there.
+**`docs/sheet.md` describes every column in every tab** — format, whether it is required, and which
+ones `boccherini-quartet-data` also reads by name. That repo fails *silently* on a renamed column,
+so check its list before renaming anything in the sheet, and update the doc when columns change.
 
+- **Spotify Track ID** holds a full `https://open.spotify.com/track/…` URL, not a bare ID; the site
+  uses it as the link as-is.
 - **Extra** (a TRUE/FALSE checkbox on every quartet row) marks a quartet outside the standard
   repertoire. It still gets a page and is listed, but the Quartet 🔀 never picks it, the site's
   quartet counts leave it out, and composer pages list it under "Other quartets". All of Boccherini
