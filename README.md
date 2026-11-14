@@ -3,7 +3,7 @@
 
 The code behind https://quartetroulette.com. See more at [https://quartetroulette.com/about/](https://quartetroulette.com/about/).
 
-* Data is sourced from [this Google Sheet](https://docs.google.com/spreadsheets/d/1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4/edit#gid=0)
+* Data is sourced from [this Google Sheet](https://docs.google.com/spreadsheets/d/1Q9MVjq5rOm-vZsfmm1ACg47Q4086W_8Obvn2UqjvrP4/edit#gid=0); its columns are described in [docs/sheet.md](docs/sheet.md)
 * Feedback is welcome [here](https://forms.gle/chvU7wmH7vunk9MX6).
 
 ## Build

@@ -11,6 +11,8 @@ and no dependencies beyond the standard library.
 Columns are matched by their header, not their position, so they can be
 reordered in the sheet freely. A header this script does not know is an error
 rather than silently dropped: add it to COLUMNS (or IGNORED) below.
+
+docs/sheet.md describes every column, and which ones other repos read by name.
 """
 
 import csv
