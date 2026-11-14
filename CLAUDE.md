@@ -1,7 +1,8 @@
 # Working in this repo
 
-Quartet Roulette (<https://quartetroulette.com>) — 256 string quartets by 18 composers, one static
-page per work and per composer. Deployed on Netlify from `main`.
+Quartet Roulette (<https://quartetroulette.com>) — 165 standard-repertoire string quartets by 18
+composers, plus 110 "extra" ones (all of Boccherini, and early Dvořák, Schubert and Grieg), one
+static page per work and per composer. Deployed on Netlify from `main`.
 
 ## The build
 

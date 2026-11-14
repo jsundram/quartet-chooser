@@ -76,8 +76,7 @@ let title_number_catalog = w => isNaN(parseInt(w.title))
     ? w.title + ', ' + w.catalog
     : 'Quartet #' + w.title + ', ' + w.catalog;
 
-// "B. 17" -> "b-17": Dvorak's early quartets have only a Burghauser number
-let slugify_catalog = w => w.catalog.toLowerCase().replaceAll(".", "").split(" ").join("-") + (w.work_number ? '-' + w.work_number : '');
+let slugify_catalog = w => w.catalog.toLowerCase().split(" ").join("-") + (w.work_number ? '-' + w.work_number : '');
 let slugify_number = w => w.title;
 let slugify_singular = w => 'quartet';
 
