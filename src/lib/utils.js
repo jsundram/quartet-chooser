@@ -31,14 +31,16 @@ function sentence_case(s){
 }
 
 function work_nickname(w, siblings){
+    let nickname = "";
     if (w.work_nickname !== "")
-        return w.work_nickname;
+        nickname = w.work_nickname;
     else if (w.opus_nickname !== "" && siblings.length === 1 && w.composer !== "Mozart" && w.composer !== "Beethoven" && w.composer !== "Boccherini")
-        return w.opus_nickname;
+        nickname = w.opus_nickname;
     else if (w.title !== "Quartet" && isNaN(parseInt(w.title))) // Grosse Fuge vs "12"
-        return w.title;
+        nickname = w.title;
 
-    return "";
+    // an unnumbered work's title is its name ("Cypresses, B. 152"): don't say it twice
+    return get_work_title(w).includes(nickname) ? "" : nickname;
 }
 
 function get_image(composer_name) {
@@ -69,7 +71,10 @@ function get_card_alt(full_name) {
 
 let title_catalog = w => 'Quartet ' + w.catalog + (w.work_number ? '#' + w.work_number : '');
 let title_number = w => 'Quartet #' + w.title;
-let title_number_catalog = w => 'Quartet #' + w.title + ', ' + w.catalog;
+// works with no number (Dvorak's Cypresses, Schubert's D 89) are titled by name
+let title_number_catalog = w => isNaN(parseInt(w.title))
+    ? w.title + ', ' + w.catalog
+    : 'Quartet #' + w.title + ', ' + w.catalog;
 
 let slugify_catalog = w => w.catalog.toLowerCase().split(" ").join("-") + (w.work_number ? '-' + w.work_number : '');
 let slugify_number = w => w.title;
@@ -128,12 +133,14 @@ let DISPATCHER = {
     },
     'Dvorak': {
         'slugify_work': slugify_catalog,
-        'title_work': title_catalog,
+        // numbered: his opus numbers are out of order (Op. 80 is No. 8, Op. 34 No. 9)
+        'title_work': title_number_catalog,
         'group_work': group_catalog,
         'name_works': group_name_default,
     },
     'Grieg': {
-        'slugify_work': slugify_singular,
+        // /grieg-quartet/ predates the unfinished second quartet; keep its URL
+        'slugify_work': w => w.catalog === "Opus 27" ? slugify_singular(w) : slugify_catalog(w),
         'title_work': title_catalog,
         'group_work': group_none,
         'name_works': group_name_default,
@@ -195,7 +202,8 @@ let DISPATCHER = {
 }
 
 function get_work_title(w){
-    return DISPATCHER[w.composer]['title_work'](w);
+    let title = DISPATCHER[w.composer]['title_work'](w);
+    return w.other_catalog ? title + ' (' + w.other_catalog + ')' : title;
 }
 
 function slugify(w){
@@ -220,12 +228,17 @@ function group_name(group){
 }
 
 const COMPOSERS = Object.keys(DISPATCHER);
-const HIDDEN = {"Boccherini": true};
+
+// "Extra" quartets (the sheet's Extra column) have pages and are listed, but
+// sit outside the standard repertoire: the Quartet 🔀 never picks them and the
+// site's quartet counts leave them out. All of Boccherini is extra.
+const standard = works => works.filter(w => !w.extra);
+const extras = works => works.filter(w => w.extra);
 
 export {
     COMPOSERS,
-    HIDDEN,
     composer_url,
+    extras,
     get_card,
     get_card_alt,
     get_image,
@@ -238,5 +251,6 @@ export {
     to_roman,
     sentence_case,
     slugify,
+    standard,
     work_nickname,
 };

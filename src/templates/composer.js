@@ -5,10 +5,12 @@ import {
     get_portrait,
     get_signature,
     get_work_title,
+    extras,
     group_name,
     groupby,
     grouper,
     slugify,
+    standard,
     work_nickname,
 } from  "../lib/utils"
 import Layout from '../components/layout'
@@ -27,6 +29,12 @@ import {
 export default function Composer({ pageContext }) {
     let composer = pageContext.node;
     const works = pageContext.data.filter(w => w.composer === composer.name);
+    const core = standard(works);
+    const more = extras(works);
+    // the composer's own 🔀 stays within the standard repertoire, like the
+    // nav's -- except for a composer who has none (Boccherini), where it
+    // would otherwise vanish from a page of 91 quartets
+    const pool = core.length ? core : more;
     const siblings = groupby(works, w => w.catalog); // {catalog => list of works with that catalog number}
     let wrap = s => ( <i> &mdash;&nbsp;{s}</i> );
     let dash = s => s !== "" ? wrap(s) : null;
@@ -80,62 +88,75 @@ export default function Composer({ pageContext }) {
                    href={day(composer.death)}>{composer.death}</a>
             </p>
             {composer.extra_link_title !== "" ? <p>Check out <a href={composer.extra_link}>{composer.extra_link_title}</a>!</p> : null}
-            { works.length > 1 ?
-                (<p>Pick a <a className={button} {...shuffle(works)}>random quartet 🔀</a></p>) :
+            { pool.length > 1 ?
+                (<p>Pick a <a className={button} {...shuffle(pool)}>random quartet 🔀</a></p>) :
                 null
             }
 
-            <ul>
-            {
+            {core.length ? <ul>{list(core)}</ul> : null}
 
-                Object.entries(groupby(works, grouper(composer.name))).map(([grouping, group]) => {
-                    let work = group[0];
-                    if (group.length === 1){
-                        return (
-                            <li key={get_work_title(work)}>
-                                    <a key={get_work_title(work)} href={slugify(work)}>{get_work_title(work)}</a>
-                                    &nbsp;in {work.key}
-                                    {nick(work)}
-                            </li>
-                        )
-                    }
-                    else {
-                        return (
-                            <li key={grouping}>
-                                <i>{group_name(group)}&nbsp;</i>
-                                <a className={button} aria-label={"Random quartet from " + group_name(group)}
-                                   title={"Random quartet from " + group_name(group)}
-                                   {...shuffle(group)}>🔀</a>
-                                <ul>
-                                {
-                                    group.map(work => (
-                                        <li key={get_work_title(work)}>
-                                                <a key={get_work_title(work)} href={slugify(work)}>{get_work_title(work)}</a>
-                                                &nbsp;in {work.key}
-                                                {nick(work)}
-                                        </li>
-                                    ))
-
-                                }
-                                </ul>
-                            </li>
-                        )
-                    }
-                })
-            }
-          </ul>
+            {more.length ? (<>
+                {core.length ? <h2>Other quartets</h2> : null}
+                <p><i>Outside the standard repertoire, so the Quartet 🔀 never picks {core.length ? "these" : "them"}.</i></p>
+                <ul>{list(more)}</ul>
+            </>) : null}
         </Layout>
     )
+
+    function list(works){
+        return (
+            Object.entries(groupby(works, grouper(composer.name))).map(([grouping, group]) => {
+                let work = group[0];
+                if (group.length === 1){
+                    return (
+                        <li key={get_work_title(work)}>
+                                <a key={get_work_title(work)} href={slugify(work)}>{get_work_title(work)}</a>
+                                &nbsp;in {work.key}
+                                {nick(work)}
+                        </li>
+                    )
+                }
+                else {
+                    return (
+                        <li key={grouping}>
+                            <i>{group_name(group)}&nbsp;</i>
+                            <a className={button} aria-label={"Random quartet from " + group_name(group)}
+                               title={"Random quartet from " + group_name(group)}
+                               {...shuffle(group)}>🔀</a>
+                            <ul>
+                            {
+                                group.map(work => (
+                                    <li key={get_work_title(work)}>
+                                            <a key={get_work_title(work)} href={slugify(work)}>{get_work_title(work)}</a>
+                                            &nbsp;in {work.key}
+                                            {nick(work)}
+                                    </li>
+                                ))
+
+                            }
+                            </ul>
+                        </li>
+                    )
+                }
+            })
+        );
+    }
 }
 
 function getDescription(pageContext){
     let composer = pageContext.node;
+    let more = composer.extras;
+    if (composer.quartets === 0){
+        return `${more} string quartets by ${composer.full_name}, outside the standard `
+            + `repertoire, with keys and nicknames, or roll for a random one.`;
+    }
+    let plus = more === 0 ? "" : ` Plus ${more} more outside it.`;
     if (composer.quartets === 1){
         return `The single ${composer.full_name} work in the standard string quartet `
-            + `repertoire, with its key and its movements.`;
+            + `repertoire, with its key and its movements.` + plus;
     }
     return `Every ${composer.full_name} quartet in the standard repertoire — all `
-        + `${composer.quartets}, with keys and nicknames, or roll for a random one.`;
+        + `${composer.quartets}, with keys and nicknames, or roll for a random one.` + plus;
 }
 
 export const Head = ({ path, pageContext }) => (

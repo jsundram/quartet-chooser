@@ -72,6 +72,16 @@ describe('page content', () => {
         assert.ok(html.includes('<script src="/js/work.js">'));
     });
 
+    test('extra quartets say why the Quartet 🔀 skips them; standard ones do not', () => {
+        const data = JSON.parse(readFileSync(path.join(root, 'src', 'data', 'data.json'), 'utf8'));
+        const note = 'Outside the standard repertoire';
+        assert.ok(data.greats.some(w => w.extra), 'there is at least one extra quartet (all of Boccherini)');
+        assert.ok(read('/boccherini-g159/').includes(note), 'an extra work page carries the note');
+        assert.ok(read('/boccherini/').includes(note), 'its composer page does too');
+        assert.ok(!read('/haydn-opus-76-3/').includes(note), 'a standard work page does not');
+        assert.ok(!read('/haydn/').includes(note), 'nor a composer with no extras');
+    });
+
     test('active nav link carries aria-current', () => {
         const count = html => (html.match(/aria-current="page"/g) || []).length;
         assert.equal(count(read('/')), 2, 'home: site title + Home nav');
@@ -636,8 +646,12 @@ describe('random redirect pages', () => {
         }
     });
 
-    test('HIDDEN composers excluded from random quartets, not random composers', () => {
-        assert.ok(!targets('/random/').some(s => s.startsWith('/boccherini-')));
+    test('extra quartets excluded from random quartets; every composer in random composers', () => {
+        const data = JSON.parse(readFileSync(path.join(root, 'src', 'data', 'data.json'), 'utf8'));
+        const t = new Set(targets('/random/'));
+        assert.equal(t.size, data.greats.filter(w => !w.extra).length, 'one target per standard quartet');
+        // Boccherini is all extra: the composer is reachable, the quartets are not
+        assert.ok(![...t].some(s => s.startsWith('/boccherini-')));
         assert.ok(targets('/random-composer/').includes('/boccherini/'));
     });
 });
@@ -688,7 +702,7 @@ describe('🔀 shuffle links', () => {
             'shuffle.js does');
     });
 
-    test('nav shuffle targets are real routes; HIDDEN quartets excluded, composers not', () => {
+    test('nav shuffle targets are real routes; extra quartets excluded, composers not', () => {
         const routes = new Set(fixtures('routes.json'));
         const [quartets, composers] = nav_lists();
         for (const slug of [...quartets, ...composers]){

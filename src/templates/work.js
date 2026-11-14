@@ -143,11 +143,17 @@ export default function Work({ pageContext }) {
             {(work.opus_nickname !== "") ?
                 (<p>Group nickname: {work.opus_nickname}</p>) : null
             }
+            {/* said up front, so nobody wonders why the Quartet 🔀 never
+                brought them here */}
+            {work.extra ?
+                (<p><i>Outside the standard repertoire, so the Quartet 🔀 never picks it.</i></p>) : null
+            }
 
             <p>
                 Completed in {work.completed}, the year he turned {aged}.
                 &nbsp;{Utils.sentence_case(work.notes)}
-                &nbsp;Read more on <a href={work.wikipedia}>wikipedia</a>.
+                {/* not every extra has an article (Grieg's unfinished second) */}
+                {work.wikipedia ? <>&nbsp;Read more on <a href={work.wikipedia}>wikipedia</a>.</> : null}
             </p>
 
             {
@@ -170,7 +176,7 @@ export default function Work({ pageContext }) {
             }
 
             <p>
-            {composerInfo.quartets > 1 ?
+            {composerInfo.quartets + composerInfo.extras > 1 ?
                 (<i>See other quartets by <a href={composer_url}>{work.composer}</a>. </i>) : null
             }
 
